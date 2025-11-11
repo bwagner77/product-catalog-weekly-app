@@ -45,6 +45,51 @@ Branch: 001-product-catalog
 - Rationale: Matches spec and constitution; feasible locally.
 - Validation: Manual via Playwright scripts measuring render and API timings.
 
+## Performance Validation Steps (Playwright) — MVP (T041)
+
+Tools: Playwright (Chromium), Node 20. Run frontend (5173) and backend (3000) locally (Docker Compose or dev servers).
+
+1) API latency sample (p95 rough):
+
+```
+// scripts/api-latency.mjs (optional scratch)
+import { performance } from 'node:perf_hooks';
+
+const runs = 10;
+const times = [];
+for (let i = 0; i < runs; i++) {
+	const t0 = performance.now();
+	const res = await fetch('http://localhost:3000/api/products');
+	await res.json();
+	times.push(performance.now() - t0);
+}
+times.sort((a, b) => a - b);
+const p95 = times[Math.floor(0.95 * (times.length - 1))];
+console.log({ runs, p95_ms: Math.round(p95), times_ms: times.map(t => Math.round(t)) });
+```
+
+2) Page render timing (catalog first paint to list ready):
+
+```
+// scripts/page-render.spec.ts (Playwright)
+import { test, expect } from '@playwright/test';
+
+test('ProductList first render under 2000ms (local)', async ({ page }) => {
+	const t0 = Date.now();
+	await page.goto('http://localhost:5173');
+	await page.getByRole('list', { name: /product list/i }).waitFor({ state: 'visible' });
+	const elapsed = Date.now() - t0;
+	console.log('first render ms:', elapsed);
+	expect(elapsed).toBeLessThanOrEqual(2000);
+});
+```
+
+3) Notes:
+- Warm-up one request before measuring to avoid cold-start artifact.
+- Run 3× and average locally; capture worst-case.
+- Ensure no other heavy processes during measurement.
+- Network is localhost; cloud targets and budgets TBD in future scope.
+
 ## Tasks for Research Execution
 
 - Create simple Playwright script to capture page load to first list render (manual run).

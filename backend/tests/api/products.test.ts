@@ -1,0 +1,50 @@
+import request from 'supertest';
+import app from '../../src/app';
+import { connectDB, disconnectDB } from '../../src/config/db';
+import seedProducts from '../../src/seed/seedProducts';
+import Product from '../../src/models/product';
+import { getErrorCount } from '../../src/utils/traceId';
+
+describe('GET /api/products integration', () => {
+  beforeAll(async () => {
+    await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_test');
+    await seedProducts();
+  });
+
+  afterAll(async () => {
+    await Product.deleteMany({});
+    await disconnectDB();
+  });
+
+  it('should have at least 5 seeded products in the database', async () => {
+    const count = await Product.countDocuments({});
+    expect(count).toBeGreaterThanOrEqual(5);
+  });
+
+  it('GET /api/products returns array of products (≥5) with required fields', async () => {
+    const res = await request(app).get('/api/products');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThanOrEqual(5);
+    const first = res.body[0];
+    expect(first).toHaveProperty('id');
+    expect(first).toHaveProperty('name');
+    expect(first).toHaveProperty('description');
+    expect(first).toHaveProperty('price');
+    expect(first).toHaveProperty('createdAt');
+    expect(first).toHaveProperty('updatedAt');
+  });
+
+  it('increments error counter when route throws', async () => {
+    const before = getErrorCount();
+    // Force Product.find to throw synchronously
+    const originalFind = (Product as any).find;
+    (Product as any).find = () => { throw new Error('forced failure'); };
+    const res = await request(app).get('/api/products');
+    // Restore original implementation
+    (Product as any).find = originalFind;
+    expect(res.status).toBe(500);
+    const after = getErrorCount();
+    expect(after).toBe(before + 1);
+  });
+});
