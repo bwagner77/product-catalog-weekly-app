@@ -57,8 +57,7 @@ const ProductSchema = new Schema(
   } as any
 );
 
-// Optional: ensure unique index on id
-ProductSchema.index({ id: 1 }, { unique: true });
+// Unique constraint already applied at path level via `unique: true` above
 
 // Export a permissively-typed model (avoids Mongoose TS generic friction)
 export const Product = (mongoose.models.Product as any) || mongoose.model('Product', ProductSchema);
