@@ -5,6 +5,12 @@
 **Status**: Draft  
 **Input**: User description: "Product Catalog app: frontend lists products (name, description, price), fetch from API; backend exposes GET /api/products returning JSON; persistent DB with 'products' collection; preload at least 5 sample products; clean responsive accessible UI; prices formatted to 2 decimals; tests in frontend/src/__tests__/ and backend/tests/."
 
+## Clarifications
+
+### Session 2025-11-10
+
+- Q: What observability signals are required for the MVP? → A: Basic request logging + error count metric + seed verification log.
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -100,6 +106,7 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 - **FR-008**: System MUST preload at least five sample products available on first run.
 - **FR-009**: Frontend tests MUST reside in frontend/src/__tests__/ covering rendering, formatting, and accessibility.
 - **FR-010**: Backend tests MUST reside in backend/tests/ covering unit logic, integration for the endpoint, and seed validation.
+- **FR-011**: System MUST log each GET /api/products request with status code and duration, emit a one-time startup seed verification log entry, and increment an error counter metric on failed requests.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -122,6 +129,7 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 - **SC-003**: 100% of visible prices display a currency symbol and exactly two decimal places.
 - **SC-004**: 0 critical accessibility violations in automated checks; keyboard navigation covers primary flows.
 - **SC-005**: On first run, at least five products are visible without manual data entry.
+- **SC-006**: 100% of failed GET /api/products requests increment the error counter; a single seed verification log entry appears at startup; 95% of request log entries include status and duration.
 
 ## Assumptions
 
