@@ -104,6 +104,7 @@ description: "Task list for Product Catalog MVP"
  - [X] T043 [P] Configure Vitest coverage thresholds (branches/functions/lines/statements ≥80%) in `frontend/vitest.config.ts`
  - [X] T044 [P] [US1] Backend model validation tests for Product schema (UUID immutability, required fields) in `backend/tests/models/productModel.test.ts`
  - [X] T045 [P] Seed verification tests (idempotency, ≥5 products on first run, seed verification log present) in `backend/tests/seed/seedProducts.test.ts`
+ - [X] T046 [P] Remove duplicate Mongoose index warning by eliminating redundant index declaration in `backend/src/models/product.ts` and keep a single unique constraint on id
 
 ---
 
@@ -146,3 +147,20 @@ description: "Task list for Product Catalog MVP"
 - All tests reside in `frontend/src/__tests__/` and `backend/tests/` per constitution
 - Observability: log format `[timestamp] [traceId] [method] [path] [status] [duration_ms]` and error counter per spec
 - VITE_API_BASE_URL must be used directly via `import.meta.env`
+
+## Phase N: Post-Implementation Fixes
+- [X] T046 [P] Remove redundant schema index from Product model in `backend/src/models/product.ts`
+       - Delete `ProductSchema.index({ id: 1 }, { unique: true })`
+       - Keep only the inline `unique: true` on the `id` field
+       - This prevents Mongoose duplicate index warnings
+
+- [X] T047 [P] Install and configure `@vitejs/plugin-react` in frontend
+       - Run `npm install --save-dev @vitejs/plugin-react` in `frontend/`
+       - Ensure `vite.config.ts` imports and uses `react()` in `plugins: [react()]`
+       - This enables JSX support and React Fast Refresh in Vite
+
+- [X] T048 [P] Fix TypeScript error for `process.env` in frontend
+       - Install Node.js types: `npm install --save-dev @types/node`
+       - Add `"node"` to `types` array in `frontend/tsconfig.json`
+       - This enables TypeScript to recognize `process.env` in `vite.config.ts`
+
