@@ -100,7 +100,7 @@ frontend/
 │   │   ├── states.test.tsx
 │   │   └── a11y.test.tsx
 │   └── api/
-│       └── products.ts   # API utilities for ProductList
+│       └── products.ts   # (planned; see T050) API utilities for ProductList
 └── test/
     └── setup.ts
 ```

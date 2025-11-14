@@ -112,6 +112,7 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 - **FR-010**: Backend tests MUST reside in backend/tests/ covering unit logic, integration for the endpoint, and seed validation.
 - **FR-011**: System MUST log each GET /api/products request with status code and duration, emit a one-time startup seed verification log entry, and increment an error counter metric on failed requests.
 - **FR-012**: MVP assumes up to 100 products returned by the list endpoint and no pagination; the UI presents a single-page list.
+- **FR-013**: System MUST expose simple health endpoints for frontend and backend to support container healthchecks.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -130,7 +131,7 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 ### Measurable Outcomes
 
 - **SC-001**: 95% of catalog page loads complete in ≤ 2 seconds on a typical connection.
-- **SC-002**: 99% of API responses for GET /api/products complete in ≤ 1 second under typical load.
+- **SC-002**: 99% of API responses for GET /api/products complete in ≤ 1 second under typical load (defined as local Docker Compose environment, seeded DB, no artificial network throttling).
 - **SC-003**: 100% of visible prices display a currency symbol and exactly two decimal places.
 - **SC-004**: 0 critical accessibility violations in automated checks; keyboard navigation covers primary flows.
 - **SC-005**: On first run, at least five products are visible without manual data entry.
@@ -142,3 +143,5 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 - Single catalog view only; no CRUD or authentication in this iteration.
 - Persistent storage available per project deployment environment.
 - Product volume ≤ 100 items; single-page list with no pagination.
+- Long product names/descriptions should wrap across lines (no truncation required in MVP).
+- “Typical load” for performance measurements refers to local development with Docker Compose, seeded database, and no network throttling.
