@@ -10,6 +10,7 @@
 ### Session 2025-11-14
 
 - Q: What is the expected product list size and pagination approach? → A: Up to 100 items, no pagination.
+- Q: What exact fields does GET /api/products return? → A: id, name, description, price, createdAt, updatedAt.
 
 ### Session 2025-11-10
 
@@ -105,7 +106,7 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 - **FR-003**: System MUST format prices with a currency symbol and exactly two decimal places.
 - **FR-004**: System MUST provide loading, empty, and error states with clear, accessible messages.
 - **FR-005**: System MUST meet basic accessibility standards (keyboard navigation, ARIA, color contrast).
-- **FR-006**: API MUST expose GET /api/products that returns a JSON array of products with fields: name (string), description (string), price (number).
+- **FR-006**: API MUST expose GET /api/products that returns a JSON array of products with fields: id (UUID string), name (string), description (string), price (number), createdAt (ISO date-time), updatedAt (ISO date-time).
 - **FR-007**: Database MUST persist products in a collection/table named "products".
 - **FR-008**: System MUST preload at least five sample products available on first run.
 - **FR-009**: Frontend tests MUST reside in frontend/src/__tests__/ covering rendering, formatting, and accessibility.
@@ -117,9 +118,12 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 ### Key Entities *(include if feature involves data)*
 
 - **Product**: An item in the catalog with attributes:
+  - id: UUID string (immutable)
   - name: string
   - description: string
   - price: decimal number (two decimal places)
+  - createdAt: ISO date-time string
+  - updatedAt: ISO date-time string
 
 ## Success Criteria *(mandatory)*
 

@@ -35,6 +35,26 @@ describe('GET /api/products integration', () => {
     expect(first).toHaveProperty('updatedAt');
   });
 
+  it('GET /api/products limits results to 100 items when more exist', async () => {
+    // Insert additional >100 products to exceed the cap
+    const bulk: Array<Partial<import('../../src/models/product').ProductDocument>> = [];
+    for (let i = 0; i < 120; i++) {
+      bulk.push({
+        name: `Extra Product ${i}`,
+        description: `Extra description ${i}`,
+        price: i + 0.99,
+      });
+    }
+    await Product.insertMany(bulk);
+
+    const res = await request(app).get('/api/products');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeLessThanOrEqual(100);
+    // Given ≥125 products in DB now, we expect the hard cap to be exactly 100
+    expect(res.body.length).toBe(100);
+  });
+
   it('increments error counter when route throws', async () => {
     const before = getErrorCount();
     // Force Product.find to throw synchronously

@@ -25,15 +25,18 @@ const ProductCard = ({ product }: ProductCardProps) => {
       aria-describedby={descId}
       role="article"
     >
-      <header className="mb-2 flex items-start justify-between">
-        <h2 id={titleId} className="text-lg font-semibold text-gray-900">
+      <header className="mb-2 flex items-start justify-between min-w-0">
+        <h2
+          id={titleId}
+          className="text-lg font-semibold text-gray-900 flex-1 min-w-0 break-words"
+        >
           {product.name}
         </h2>
         <span className="ml-4 shrink-0 text-right text-indigo-600 font-medium">
           {formatPrice(product.price)}
         </span>
       </header>
-      <p id={descId} className="text-sm text-gray-700">
+      <p id={descId} className="text-sm text-gray-700 break-words">
         {product.description}
       </p>
     </article>

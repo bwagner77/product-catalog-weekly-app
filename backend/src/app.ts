@@ -1,10 +1,23 @@
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import { traceIdMiddleware, errorHandler, getErrorCount } from './utils/traceId';
 import productsRoute from './routes/products';
 
 const app = express();
 
 // Core middleware
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+app.use(
+	cors({
+		origin: (origin, callback) => {
+			// Allow same-origin/no-origin (like curl, server-to-server) and the configured FRONTEND_URL
+			if (!origin) return callback(null, true);
+			if (origin.replace(/\/$/, '') === FRONTEND_URL) return callback(null, true);
+			// Disallow other origins (no CORS headers added)
+			return callback(null, false as any);
+		},
+	})
+);
 app.use(traceIdMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

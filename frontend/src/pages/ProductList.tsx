@@ -4,6 +4,7 @@ import ProductCard from '../components/ProductCard';
 import Loading from '../components/Loading';
 import EmptyState from '../components/EmptyState';
 import ErrorMessage from '../components/ErrorMessage';
+import { fetchProducts } from '../api/products';
 
 const ProductList = () => {
   const [products, setProducts] = React.useState([] as Product[]);
@@ -12,17 +13,12 @@ const ProductList = () => {
 
   React.useEffect(() => {
     const controller = new AbortController();
-    const apiBase = (import.meta.env.VITE_API_BASE_URL as string) || '';
-    const base = apiBase.replace(/\/$/, '');
-    const url = `${base}/api/products`;
 
     async function load() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-        const data = (await res.json()) as Product[];
+        const data = await fetchProducts({ signal: controller.signal });
         setProducts(data);
       } catch (e: any) {
         if (e?.name !== 'AbortError') {

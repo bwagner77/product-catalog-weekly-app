@@ -12,6 +12,7 @@ This quickstart gets the Product Catalog running locally with Docker Compose.
   - MONGODB_URI=mongodb://mongo:27017/product_catalog
   - PORT_BACKEND=3000
   - PORT_FRONTEND=5173
+  - FRONTEND_URL=http://localhost:5173
 
 ## Run locally
 

@@ -166,39 +166,39 @@ description: "Task list for Product Catalog MVP"
 
 Context: Clarification decided “Up to 100 items, no pagination.” Plan also calls for a small API utility layer and explicit CORS env mapping.
 
-- [ ] T049 [P] Enforce ≤100 items in API response
+- [X] T049 [P] Enforce ≤100 items in API response
        - Backend route `GET /api/products` must apply `.limit(100)` to the query
        - Add/extend integration test in `backend/tests/api/products.test.ts` to insert >100 products and assert response length ≤100
        - Acceptance: Even with >100 rows in DB, API returns at most 100; no pagination fields present
 
-- [ ] T050 [P] Frontend API utility for products
+- [X] T050 [P] Frontend API utility for products
        - Create `frontend/src/api/products.ts` exporting `fetchProducts(): Promise<Product[]>`
        - Add unit test(s) for the utility (mock fetch) in `frontend/src/__tests__/ProductList.test.tsx` or a new `api.test.ts`
        - Refactor `ProductList.tsx` to use the utility (no behavior change)
        - Acceptance: All existing frontend tests still pass; no pagination UI introduced
 
-- [ ] T051 [P] CORS origin via env mapping
+- [X] T051 [P] CORS origin via env mapping
        - Configure backend CORS to use `FRONTEND_URL` (default `http://localhost:5173`)
        - Document env var in `specs/001-product-catalog/quickstart.md` and `.env.example`
        - Add a lightweight test or config assertion to ensure CORS middleware is registered
        - Acceptance: Requests from configured origin succeed; other origins blocked by default
 
-- [ ] T052 [P] Contract and docs reflect no pagination
+- [X] T052 [P] Contract and docs reflect no pagination
        - Update `specs/001-product-catalog/contracts/openapi.yaml` description for `GET /api/products` to note “Returns up to 100 products. No pagination.”
        - Add a short note to `research.md` about tradeoff and potential future pagination
        - Acceptance: OpenAPI and docs synced with clarification
 
-- [ ] T053 [P] Compose env pass‑through for URLs
+- [X] T053 [P] Compose env pass‑through for URLs
        - Ensure `docker-compose.yml` passes `VITE_API_BASE_URL` to frontend and `FRONTEND_URL` to backend
        - Verify `public/health` remains reachable and service healthchecks still pass
        - Acceptance: `docker compose up` yields healthy services; frontend fetches from backend using env URL
 
-- [ ] T054 [P] Long text rendering test (names/descriptions)
+- [X] T054 [P] Long text rendering test (names/descriptions)
        - Add frontend test to render products with very long name/description and assert content is visible and wraps (no crash, no horizontal overflow)
        - Prefer Tailwind utilities already in use; no new plugins required in MVP
        - Acceptance: Test passes; UI remains readable without truncation
 
-- [ ] T055 [P] Performance measurement guidance and probes
+- [X] T055 [P] Performance measurement guidance and probes
        - Define “typical load” explicitly in `specs/001-product-catalog/research.md` (local dev, Docker Compose up, seeded DB, no throttling)
        - Add a minimal timing probe/log for API latency in backend integration test or a documented manual step with thresholds for SC‑001/SC‑002
        - Acceptance: Documentation includes exact steps and thresholds; optional probe produces timings within targets locally

@@ -8,10 +8,11 @@ paths:
   /api/products:
     get:
       summary: List products
+      description: Returns up to 100 products. No pagination in MVP.
       operationId: listProducts
       responses:
         '200':
-          description: OK
+          description: OK — array of Product (max 100 items; no pagination)
           content:
             application/json:
               schema:

@@ -7,7 +7,7 @@ const router = Router();
 router.get('/products', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     // Use lean for performance and exclude internal _id
-    const products = await Product.find({}, { _id: 0 }).lean().exec();
+    const products = await Product.find({}, { _id: 0 }).limit(100).lean().exec();
     res.status(200).json(products);
   } catch (err) {
     next(err);

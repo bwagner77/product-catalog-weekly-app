@@ -98,3 +98,70 @@ test('ProductList first render under 2000ms (local)', async ({ page }) => {
 ## Outcomes
 
 All NEEDS CLARIFICATION resolved or deferred explicitly with rationale. Proceed to Phase 1 design.
+
+## List Size and Pagination (Clarification A)
+
+- Decision: Cap GET /api/products at ≤100 items; no pagination in MVP. UI presents a single-page list.
+- Rationale: Simplicity and speed for MVP; small dataset assumption makes pagination unnecessary now.
+- Trade-offs: Large lists may increase initial render time and scrolling. No server- or client-side paging means no incremental fetch or navigation controls.
+- Future options: Add `limit`/`offset` or cursor-based pagination with sorting when scale or UX requirements change; update OpenAPI accordingly.
+
+## T055: Performance Guidance and Probes
+
+This section formalizes the “typical load,” targets, and adds an optional local probe to measure API latency. It complements the MVP Playwright notes above without introducing new runtime deps.
+
+### Typical Load (Local)
+
+- Environment: Local dev on Windows or macOS
+- Services: Docker Compose up (MongoDB, backend, frontend) OR dev servers running locally
+- Database: Seeded with default products (≥5)
+- Network: localhost (no throttling)
+- Browser: Chromium-based or Firefox (no extensions interfering)
+
+### Targets (local, non-throttled)
+
+- SC-001 API latency: GET /api/products p95 ≤ 1000 ms
+- SC-002 Frontend first render to list visible: p95 ≤ 2000 ms
+
+Notes: These are local sanity thresholds, not production SLOs. They aim to catch regressions and obvious slowdowns.
+
+### Optional Backend API Probe (Jest + Supertest)
+
+An opt-in test exists at `backend/tests/api/perf.test.ts`. It is skipped by default and activates only when the environment variable `PERF=1` is set. It warms up the route, measures N requests, and logs average and p95 in milliseconds.
+
+Run (Windows PowerShell):
+
+```powershell
+cd backend
+$env:PERF = '1'
+# Optional: configure runs/thresholds
+# $env:PERF_RUNS = '20'; $env:PERF_THRESHOLD_MS = '1000'; $env:PERF_ASSERT = '0'
+npm test -- --runInBand backend/tests/api/perf.test.ts
+```
+
+Output example:
+
+```
+{"runs":20,"avg_ms":42,"p95_ms":85,"times_ms":[...]} 
+```
+
+To enforce a threshold locally (optional):
+
+```powershell
+$env:PERF='1'; $env:PERF_ASSERT='1'; $env:PERF_THRESHOLD_MS='1000'; npm test -- --runInBand backend/tests/api/perf.test.ts
+```
+
+### Optional Frontend Page Timing (Manual)
+
+We avoid adding E2E deps in MVP. For a quick manual check, use DevTools Performance panel or run the Playwright snippet from the MVP section. Alternatively, use the browser console to approximate first render timing:
+
+```js
+performance.mark('start');
+// reload the page from the address bar, then once products render:
+const t = performance.measure('render', 'start'); console.log('ms', t.duration);
+```
+
+Recommendations:
+- Warm up once before timing.
+- Run at least 3 trials and consider the worst case.
+- Close heavy background apps.
