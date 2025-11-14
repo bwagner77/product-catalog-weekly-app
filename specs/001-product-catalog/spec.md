@@ -7,6 +7,10 @@
 
 ## Clarifications
 
+### Session 2025-11-14
+
+- Q: What is the expected product list size and pagination approach? → A: Up to 100 items, no pagination.
+
 ### Session 2025-11-10
 
 - Q: What observability signals are required for the MVP? → A: Basic request logging + error count metric + seed verification log.
@@ -107,6 +111,7 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 - **FR-009**: Frontend tests MUST reside in frontend/src/__tests__/ covering rendering, formatting, and accessibility.
 - **FR-010**: Backend tests MUST reside in backend/tests/ covering unit logic, integration for the endpoint, and seed validation.
 - **FR-011**: System MUST log each GET /api/products request with status code and duration, emit a one-time startup seed verification log entry, and increment an error counter metric on failed requests.
+- **FR-012**: MVP assumes up to 100 products returned by the list endpoint and no pagination; the UI presents a single-page list.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -136,3 +141,4 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 - Currency symbol: USD ($) for this phase. Future localization may adjust.
 - Single catalog view only; no CRUD or authentication in this iteration.
 - Persistent storage available per project deployment environment.
+- Product volume ≤ 100 items; single-page list with no pagination.
