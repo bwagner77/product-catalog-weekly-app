@@ -11,6 +11,26 @@ This document follows the **Spec Kit Detailed Workflow**:
 It outlines each step of the build process, including commands, validations, and output artifacts.
 
 
+## 📌 Navigation
+
+- [Design Artifacts](#📦-design-artifacts)
+- [Specification (SDD)](#📊-specification-sdd)
+  - [Goals & Why](#goals--why)
+  - [Functional Requirements](#📊-functional-requirements)
+  - [Non-Functional Requirements](#📊-non-functional-requirements)
+- [User Journeys](#🧾-user-journeys)
+- [Constraints (Constitution)](#📊-constraints-constitution)
+- [Plan → Tasks → Implement](#🛠️-plan-→-tasks-→-implement)
+  - [Plan](#plan)
+  - [Tasks](#tasks)
+  - [Implement](#implement)
+- [Build Log](#📝-build-log)
+  - [Conversion of Design Artifacts to Spec](#1-conversion-of-design-artifacts-to-spec)
+  - [Spec Kit Commands, Validation, Agent Handoffs](#2-spec-kit-commands-validation-agent-handoffs)
+  - [Iteration Summary](#3-iteration-summary)
+  - [Screenshots](#4-screenshots)
+- [Containerize & Deploy](#🚀-containerize--deploy)
+
 
 ## 📦 Design Artifacts
 
