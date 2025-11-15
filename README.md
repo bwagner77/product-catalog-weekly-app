@@ -22,9 +22,9 @@ The Product Catalog System design artifacts were systematically transformed into
 | Component Diagram   | Shows high-level components: UI, Backend, Database, and their interactions.                                      | [component-diagram.png](/docs/design-artifacts/component-diagram.png) |
 | Sequence Diagram    | Illustrates interactions between the User and Product Catalog App for requesting and displaying product details. | [sequence-diagram.png](/docs/design-artifacts/sequence-diagram.png)   |
 | Use Case Diagram    | Depicts primary and secondary use cases, including “View Product List” and handling empty/loading/error states.  | [use-case-diagram.png](/docs/design-artifacts/use-case-diagram.png)   |
-| Constitution Prompt | Defines project rules, constraints, and architecture principles for Spec Kit.                                    | [constitution.txt](/docs/prompts/constitution.txt)                    |
-| Specify Prompt      | Instructs the agent to create functional requirements, API contracts, and component definitions.                 | [specify.txt](/docs/prompts/specify.txt)                              |
-| Plan Prompt         | Guides the agent to generate a structured plan and gated phases for specification and implementation.            | [plan.txt](/docs/prompts/plan.txt)                                    |
+| Constitution Prompt | Defines project rules, constraints, and architecture principles for Spec Kit.                                    | [constitution.txt](/docs/ai-prompts/constitution.txt)                    |
+| Specify Prompt      | Instructs the agent to create functional requirements, API contracts, and component definitions.                 | [specify.txt](/docs/ai-prompts/specify.txt)                              |
+| Plan Prompt         | Guides the agent to generate a structured plan and gated phases for specification and implementation.            | [plan.txt](/docs/ai-prompts/plan.txt)                                    |
 
 
 
@@ -171,7 +171,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 * Component Diagram → Frontend components + backend routes
 * Sequence Diagram → API endpoints + frontend state management
 * Use Case Diagram → User stories, acceptance criteria
-* Prompts ([Constitution](../prompts/constitution.txt), [Plan](../prompts/plan.txt), [Specify](../prompts/specify.txt)) guided agent to structured spec and tasks
+* Prompts ([Constitution](../docs/ai-prompts/constitution.txt), [Plan](../docs/ai-prompts/plan.txt), [Specify](../docs/ai-prompts/specify.txt)) guided agent to structured spec and tasks
 
 
 ### 2. Spec Kit Commands, Validation, Agent Handoffs
