@@ -1,0 +1,134 @@
+Generate a detailed technical implementation plan for the Product Catalog MVP, based on the following specifications:
+
+Specifications Overview
+- Frontend: A simple React 18 app built with TypeScript, Vite, and TailwindCSS. It fetches a list of products from an Express API and displays them on a dedicated ProductList.tsx page.
+- Backend: An Express API with TypeScript, featuring a single GET /api/products endpoint that fetches product data from a MongoDB database.
+- MongoDB Schema: Includes a product model with `name`, `description`, and `price` as required fields, along with `createdAt` and `updatedAt` timestamps. The schema must support idempotent seeding of at least 5 products on the first run.
+- Application Scope: Read-only, with no user authentication or modification features (CRUD operations).
+- Exclusions for this Phase: No authentication, no caching/CDN, and no advanced image processing.
+- Containerization: Use Docker containers for local development (frontend, backend, MongoDB) with a Docker Compose setup for an easy one-command environment spin-up.
+- Performance Goals:
+  - Frontend render time: ≤1s typical (p95), goal ≤2s
+  - API response time: ≤1s typical (p95)
+
+---
+
+1. Database Setup:
+   - MongoDB schema with `name`, `description`, `price`, and timestamps (`createdAt`, `updatedAt`).
+   - Implement the schema using Mongoose with TypeScript support.
+   - Use Mongoose’s timestamps: true option to auto-generate createdAt and updatedAt.
+   - Ensure idempotency in data seeding, with at least 5 products seeded on the first run.
+   - Ensure that the schema and seeding process are clearly defined in tasks.md.
+   - Seed logic MUST use Mongoose’s query methods to check for existing products before inserting.
+   - Define schema and seeding logic in backend/src/models/ and backend/src/seed/.
+
+2. Backend API Development:
+   - Create the `GET /api/products` route with basic error handling (500 errors). 
+   - Explicitly mention the use of traceId middleware for tracing request lifecycles and handling latency.
+   - Use lean queries for optimized MongoDB interaction.
+   - Ensure the backend is implemented using TypeScript for type safety and enhanced maintainability.
+   - The backend dev script should use ts-node-dev with the correct CLI flags: --respawn --transpile-only.
+   - Ensure tsconfig.json uses "rootDir": "." to support direct execution from the backend folder.
+   - Each product MUST include an immutable UUID (id) as its primary identifier. This MUST be generated at creation and never modified.
+   - Use Mongoose to define the product schema and interact with MongoDB.
+   - The schema MUST include name, description, price, createdAt, updatedAt, and an immutable UUID (id) as the primary identifier.
+   - Ensure Mongoose is initialized with proper connection handling and error logging.
+   - Add basic request logging using traceId and console output.
+   - Logs MUST follow the format: [timestamp] [traceId] [method] [path] [status] for consistency.
+   - Add CORS support with the frontend URL:
+     ```ts
+     import cors from 'cors';
+     app.use(cors({
+       origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+       methods: ['GET', 'POST', 'PUT', 'DELETE'],
+     }));
+     ```
+   - Ensure the following files are generated:
+     - backend/src/app.ts to configure and export the Express app
+     - backend/src/server.ts to import the app and start the server
+     - backend/src/routes/products.ts for the /api/products route
+     - backend/src/models/product.ts for the schema
+     - backend/src/utils/traceId.ts for request tracing
+     - backend/src/seed/seedProducts.ts for idempotent product seeding
+
+3. Frontend Development:
+   - Use Vite + React 18 + TypeScript + TailwindCSS.
+   - Display products in frontend/src/pages/ProductList.tsx.
+   - Display product details: `name`, `description`, and `price`.
+   - Use frontend/src/components/ for ProductCard, Loading, ErrorMessage, EmptyState.
+   - Implement error handling and display appropriate error states (e.g., if the backend is down or the API returns an error).
+   - The frontend MUST access VITE_API_BASE_URL via import.meta.env directly. No fallback logic, dynamic evaluation, or alternate access patterns are allowed.
+   - Ensure that TypeScript types are used for API responses and components to enforce type safety.
+   - vite.config.ts MUST include a proxy rule that forwards /api requests to the backend (http://localhost:3000).
+   - Recommended refactor: create a separate API utility file for data fetching, e.g., frontend/src/api/products.ts, instead of placing fetch logic directly in the Page component. This promotes separation of concerns, reusability, and easier testing.
+   - Ensure the following files are generated:
+     - frontend/index.html with root div and Vite script
+     - frontend/src/main.tsx
+     - frontend/src/App.tsx
+     - frontend/src/pages/ProductList.tsx
+     - frontend/src/api/products.ts
+     - frontend/vite.config.ts
+
+4. Testing:
+   - All frontend tests MUST be placed in frontend/src/__tests__/. This includes rendering, loading, error, and accessibility tests.
+   - All backend tests MUST be placed in backend/tests/. This includes API route tests, model validation, and seed logic verification.
+   - Write unit tests for frontend and backend (e.g., component rendering, API response handling).
+   - Write integration tests using Supertest for the API and React Testing Library (RTL) for frontend fetch/rendering.
+   - Ensure ≥80% test coverage on critical paths.
+   - Add "prebuild": "npm test -- --coverage" to both package.json files.
+   - Ensure tests are wired into the build process (e.g., `npm run test` executed manually during development).
+   - Use TypeScript for testing to ensure compatibility with the TypeScript codebase.
+   - Update Jest config tasks to explicitly enforce coverage thresholds per project (branches/functions/lines/statements ≥80%).
+   - Backend: Jest + Supertest
+   - Frontend: Vitest + React Testing Library
+
+5. Performance Validation:
+   - Performance will be manually validated in local environments using headless browser tools (e.g., Puppeteer or Playwright).
+   - Include a manual performance check task to track render times and API latency using local tools.
+   - Document p95 render and API latency in research.md.
+
+6. Containerization:
+   - Use Docker Compose to set up containers for the frontend, backend, and MongoDB.
+   - Ensure the `.env` file is correctly mapped in the Docker Compose configuration.
+   - Replace env_file usage with environment/build args:
+     - backend:
+       environment:
+         - FRONTEND_URL=http://localhost:5173
+     - frontend:
+       build:
+         args:
+           VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000}
+       ports:
+         - "${VITE_PORT_FRONTEND:-5173}:80"
+   - Add a task to implement health checks for frontend, backend, and MongoDB in `docker-compose.yml` (HTTP GET /health or equivalent).
+   - The backend MUST expose port 3000, and the frontend MUST expose port 5173 in Docker Compose
+   - Health checks MUST use HTTP GET /health endpoints for frontend and backend. MongoDB health MAY be validated via connection status.
+
+7. Technical Context Updates:
+   - Add TailwindCSS as a required dependency for styling.
+   - Add Vite as the development server (ensure it is included as a dependency).
+   - Ensure that Tailwind CSS is used exclusively for styling, and this is clearly stated in the plan.
+   - Add TypeScript as a required dependency for both the frontend and backend.
+   - Ensure that the Vite and TailwindCSS setup is compatible with TypeScript.
+   - Ensure the frontend includes index.html and src/main.tsx as required files for Vite setup.
+   - The .env file should be used directly (not .env.example) and mapped correctly in both frontend and backend environments.
+   - Add ESLint with TypeScript support for static analysis.
+   - Enforce Prettier formatting with 2-space indentation across frontend and backend.
+   - .env.example MAY be provided for onboarding purposes, but .env MUST be used directly in all runtime environments.
+   - Add npm run dev scripts for both frontend and backend.
+   - Ensure ts-node-dev is used for backend with --respawn --transpile-only.
+   - tsconfig.json MUST include "strict": true and "esModuleInterop": true for type safety and compatibility.
+   - Add backend dependencies: `cors` and `@types/cors` for CORS support.
+   - Add frontend devDependencies: `@testing-library/dom`, `@testing-library/jest-dom`, `jsdom`.
+
+8. Constitution Alignment:
+   - CI/CD tasks are not included in this phase as the CI pipeline is deferred to future iterations.
+   - Manual testing will be performed locally, and performance checks (frontend API latency and rendering times) will be tracked manually using tools like Puppeteer or Playwright in local development environments.
+   - No automated health checks for CI/CD pipelines; health checks will be manual during local development.
+
+---
+
+Additional Notes:
+   - Ensure that performance targets in the plan are consistently phrased as "≤1s (typical/p95)" for API latency and frontend rendering.
+   - Update the specification status to "Approved" or clarify the ratification process to avoid confusion before implementation.
+   - Add an optional task to implement ESLint with TypeScript support for static analysis and code quality improvement.

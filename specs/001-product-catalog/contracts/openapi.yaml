@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: Product Catalog API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/products:
+    get:
+      summary: List products
+      description: Returns up to 100 products. No pagination in MVP.
+      operationId: listProducts
+      responses:
+        '200':
+          description: OK — array of Product (max 100 items; no pagination)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '500':
+          description: Server error
+components:
+  schemas:
+    Product:
+      type: object
+      required: [id, name, description, price, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: double
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

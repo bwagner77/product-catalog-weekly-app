@@ -1,0 +1,63 @@
+# Product Catalog Specification
+
+## Project Overview
+
+Develop a simple Product Catalog application. The goal is to allow users to view a list of products, including basic details like the product name, description, and price. This is a static catalog with no user authentication or other user actions like creating or updating products.
+
+### Key Features:
+1. Product List Display:
+   - The application should show a list of products with the following attributes for each product:
+     - Name (string)
+     - Description (string)
+     - Price (decimal number)
+   
+2. Fetch Product Data:
+   - Product data will be fetched from a backend API and displayed on the frontend. The product list should be presented in a clean, organized manner.
+
+3. Backend API:
+   - A backend API will expose a single endpoint that returns the list of products:
+     - `GET /api/products` – Returns a list of products from the database in JSON format.
+   
+4. Data Storage:
+   - The application will use a persistent database to store product data.
+
+---
+
+## Functional Specifications:
+
+### Frontend:
+- As a user, I want to view a list of products with details such as name, description, and price.
+- The products should be fetched from an API and displayed in a readable, structured format.
+- The UI MUST be clean, responsive, and accessible.
+- The products will be displayed in a simple, clean UI (e.g., a list with product names, descriptions, and prices).
+- Product prices MUST be formatted with two decimal places and a currency symbol.
+- All frontend tests MUST be placed in frontend/src/__tests__/. This includes rendering, accessibility, and utility tests.
+
+### Backend:
+- As a developer, I want to expose a `GET /api/products` endpoint to return all products stored in the database.
+- All backend tests MUST be placed in backend/tests/. This includes unit tests, integration tests, and seed logic validation.
+- The endpoint should return the products as a JSON array containing the following attributes for each product:
+  - `name`: String
+  - `description`: String
+  - `price`: Decimal number (float or double, depending on pricing requirements).
+
+### Database:
+- The system MUST store product data in a collection named `products` in a persistent database.
+- Each product in the database will have the following schema:
+  - `name`: String
+  - `description`: String
+  - `price`: A decimal number representing the product’s cost, formatted to two decimal places.
+- At least 5 sample products should be pre-loaded in the database to display when the app is first loaded.
+
+---
+
+## Clarification Notes:
+- Frontend: No advanced interactions (e.g., no login, no CRUD actions). It will simply display the products.
+- Backend: Only a `GET /api/products` endpoint is required for this stage. No other endpoints (e.g., for adding or modifying products) will be needed.
+- No user authentication or authorization should be implemented.
+- The application will be static, meaning there will be no dynamic features beyond fetching data from the API and displaying it.
+
+---
+
+## Notes:
+- This is a simplified version of the product catalog. Future iterations may involve CRUD operations, user authentication, etc.
