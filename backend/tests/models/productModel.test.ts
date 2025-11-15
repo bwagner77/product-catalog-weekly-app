@@ -65,4 +65,21 @@ describe('Product model validation', () => {
     const fetched = await Product.find({ id: originalId }).limit(1).lean();
     expect(fetched[0].id).toBe(originalId);
   });
+
+  it('removes internal _id from toJSON transform', async () => {
+    const prod = await (Product as any).create({ name: 'Json Transform', description: 'desc', price: 2 });
+    const json = (prod as any).toJSON();
+    // _id should not be present on serialized output
+    expect(json._id).toBeUndefined();
+    // but id and timestamps remain
+    expect(json.id).toBeDefined();
+    expect(json.createdAt).toBeDefined();
+    expect(json.updatedAt).toBeDefined();
+  });
+
+  it('rejects invalid manual id that is not UUID v4', async () => {
+    await expect(
+      (Product as any).create({ id: 'not-a-uuid', name: 'Bad ID', description: 'desc', price: 1 })
+    ).rejects.toThrow(/id must be a valid UUID v4/);
+  });
 });

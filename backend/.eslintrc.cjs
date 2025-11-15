@@ -13,5 +13,14 @@ module.exports = {
   rules: {
     'no-console': 'off'
   },
-  ignorePatterns: ['dist/', 'coverage/']
+  ignorePatterns: ['dist/', 'coverage/'],
+  overrides: [
+    {
+      files: ['tests/**/*.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/ban-types': 'off'
+      }
+    }
+  ]
 };

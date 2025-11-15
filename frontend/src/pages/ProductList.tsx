@@ -20,9 +20,10 @@ const ProductList = () => {
         setError(null);
         const data = await fetchProducts({ signal: controller.signal });
         setProducts(data);
-      } catch (e: any) {
-        if (e?.name !== 'AbortError') {
-          setError(e?.message || 'Failed to load products');
+      } catch (e: unknown) {
+        if (!(e instanceof DOMException && e.name === 'AbortError')) {
+          const message = e instanceof Error ? e.message : 'Failed to load products';
+          setError(message);
           // eslint-disable-next-line no-console
           console.error('[ProductList] load error', e);
         }

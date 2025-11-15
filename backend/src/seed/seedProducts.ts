@@ -42,25 +42,24 @@ const SEED_PRODUCTS = [
 ] as const;
 
 export async function seedProducts(): Promise<SeedResult> {
-  const P = Product as any;
-  const beforeCount = await P.countDocuments({});
+  const beforeCount = await Product.countDocuments({});
 
   let inserted = 0;
   let matched = 0;
 
   for (const p of SEED_PRODUCTS) {
-  const res = await P.updateOne(
+  const res = await Product.updateOne(
       { id: p.id },
       { $setOnInsert: p },
       { upsert: true }
     );
     // In Mongoose 8, UpdateResult may have upsertedCount
-    const upserted = (res as any).upsertedCount === 1 || Boolean((res as any).upsertedId);
+  const upserted = (res as { upsertedCount?: number; upsertedId?: unknown }).upsertedCount === 1 || Boolean((res as { upsertedId?: unknown }).upsertedId);
     if (upserted) inserted += 1;
     else matched += 1;
   }
 
-  const afterCount = await P.countDocuments({});
+  const afterCount = await Product.countDocuments({});
 
   // Seed verification log
   // eslint-disable-next-line no-console

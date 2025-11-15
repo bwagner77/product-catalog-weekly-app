@@ -14,7 +14,7 @@ app.use(
 			if (!origin) return callback(null, true);
 			if (origin.replace(/\/$/, '') === FRONTEND_URL) return callback(null, true);
 			// Disallow other origins (no CORS headers added)
-			return callback(null, false as any);
+			return callback(null, false);
 		},
 	})
 );

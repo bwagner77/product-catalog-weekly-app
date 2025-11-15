@@ -37,6 +37,15 @@ describe('db.connectDB branches', () => {
     errSpy.mockRestore();
   });
 
+  it('wraps non-Error rejection values into Error with message', async () => {
+    mockedMongoose.connect.mockRejectedValue('stringy-error');
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    await expect(db.connectDB('mongodb://localhost:27017/wraptest')).rejects.toThrow('stringy-error');
+    const call = errSpy.mock.calls.find(c => String(c[0]).includes('db_connect_error'));
+    expect(call).toBeTruthy();
+    errSpy.mockRestore();
+  });
+
   it('leaves URI unchanged when no credentials present', async () => {
     mockedMongoose.connect.mockResolvedValue({} as any);
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -65,12 +74,12 @@ describe('db.connectDB branches', () => {
     mockedMongoose.connect.mockResolvedValue({} as any);
     const originalURL = URL;
     // Force constructor to throw
-    // @ts-ignore
+    // Force constructor to throw; cast to unknown then to URL type to bypass TS without error expectation
     global.URL = class BadURL {
       constructor() {
         throw new Error('boom');
       }
-    } as any;
+    } as unknown as typeof URL;
     const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
     const raw = 'not-a-valid-url-but-mongoose-accepts-maybe';
     await db.connectDB(raw);

@@ -49,17 +49,18 @@ const ProductSchema = new Schema(
     versionKey: false,
     toJSON: {
       virtuals: true,
-      transform: (_doc: any, ret: any) => {
-        delete ret._id;
+      transform: (_doc: mongoose.Document, ret: Record<string, unknown>) => {
+        // Remove internal Mongo _id from API surface
+        delete (ret as Record<string, unknown>)._id;
         return ret;
       },
     },
-  } as any
+  }
 );
 
 // Unique constraint already applied at path level via `unique: true` above
 
 // Export a permissively-typed model (avoids Mongoose TS generic friction)
-export const Product = (mongoose.models.Product as any) || mongoose.model('Product', ProductSchema);
+export const Product = (mongoose.models.Product as mongoose.Model<ProductDocument>) || mongoose.model<ProductDocument>('Product', ProductSchema);
 
-export default Product as any;
+export default Product;

@@ -29,14 +29,15 @@ async function start() {
       // eslint-disable-next-line no-console
       console.log(`[startup] backend listening on port ${PORT}`);
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
     // eslint-disable-next-line no-console
     console.error(
       JSON.stringify({
         ts: new Date().toISOString(),
         level: 'error',
         event: 'startup_error',
-        message: err?.message || String(err),
+        message,
       })
     );
     process.exit(1);

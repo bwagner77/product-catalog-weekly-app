@@ -18,5 +18,14 @@ module.exports = {
   rules: {
     'react/react-in-jsx-scope': 'off'
   },
-  ignorePatterns: ['dist/', 'coverage/']
+  ignorePatterns: ['dist/', 'coverage/'],
+  overrides: [
+    {
+      files: ['src/__tests__/**/*.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/ban-types': 'off'
+      }
+    }
+  ]
 };

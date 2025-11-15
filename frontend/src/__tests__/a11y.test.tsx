@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import React from 'react';
 import ProductList from '../pages/ProductList';
 

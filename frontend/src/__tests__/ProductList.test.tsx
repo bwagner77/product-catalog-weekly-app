@@ -1,4 +1,4 @@
-import { describe, it, expect, test } from 'vitest';
+import { describe, test } from 'vitest';
 
 // NOTE: Component not implemented yet (T026). These are TDD placeholders to be filled when UI exists.
 

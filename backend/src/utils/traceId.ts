@@ -53,16 +53,20 @@ export function traceIdMiddleware(req: Request, res: Response, next: NextFunctio
   next();
 }
 
-export function errorHandler(err: any, req: Request, res: Response, _next: NextFunction) {
+export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) { // eslint-disable-line @typescript-eslint/no-unused-vars
   const traceId = res.locals.traceId;
   incrementErrorCount();
 
   const status = res.statusCode >= 400 ? res.statusCode : 500;
   const isProd = process.env.NODE_ENV === 'production';
-  const message = isProd ? 'Internal Server Error' : (err?.message || 'Internal Server Error');
+  const message = isProd
+    ? 'Internal Server Error'
+    : err instanceof Error
+      ? err.message || 'Internal Server Error'
+      : 'Internal Server Error';
 
   // Capture error name for branch coverage and path for debugging
-  const errorName = err?.name || 'Error';
+  const errorName = err instanceof Error ? err.name : 'Error';
   const path = req.originalUrl || req.url;
 
   log({

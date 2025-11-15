@@ -203,3 +203,9 @@ Context: Clarification decided “Up to 100 items, no pagination.” Plan also c
        - Add a minimal timing probe/log for API latency in backend integration test or a documented manual step with thresholds for SC‑001/SC‑002
        - Acceptance: Documentation includes exact steps and thresholds; optional probe produces timings within targets locally
 
+- [X] T056 [P] Lint cleanup & config refinement
+       - Adjust ESLint configs to allow flexible typing in test files without failing CI (`no-explicit-any`, `ban-types` disabled only in tests)
+       - Remove unused vitest globals imports and variables in `frontend/src/__tests__/ProductList.test.tsx` and `frontend/vitest.config.ts`
+       - Replace obvious `any` uses in backend source with safer `unknown` or specific types (error handlers, catches)
+       - Acceptance: `npm run lint:ci` passes in both `backend/` and `frontend/` with 0 errors
+       
