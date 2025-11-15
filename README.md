@@ -191,7 +191,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 * Component Diagram → Frontend components + backend routes
 * Sequence Diagram → API endpoints + frontend state management
 * Use Case Diagram → User stories, acceptance criteria
-* Prompts ([Constitution](../docs/ai-prompts/constitution.txt), [Plan](../docs/ai-prompts/plan.txt), [Specify](../docs/ai-prompts/specify.txt)) guided agent to structured spec and tasks
+* Prompts ([Constitution](/docs/ai-prompts/constitution.txt), [Plan](/docs/ai-prompts/plan.txt), [Specify](/docs/ai-prompts/specify.txt)) guided agent to structured spec and tasks
 
 
 <h3 id="2-spec-kit-commands-validation-agent-handoffs">2. Spec Kit Commands, Validation, Agent Handoffs</h3>
