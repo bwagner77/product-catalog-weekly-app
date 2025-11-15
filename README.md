@@ -13,26 +13,26 @@ It outlines each step of the build process, including commands, validations, and
 
 ## 📌 Navigation
 
-- [Design Artifacts](#📦-design-artifacts)
-- [Specification (SDD)](#📊-specification-sdd)
+- [Design Artifacts](#design-artifacts)
+- [Specification (SDD)](#specification-sdd)
   - [Goals & Why](#goals--why)
-  - [Functional Requirements](#📊-functional-requirements)
-  - [Non-Functional Requirements](#📊-non-functional-requirements)
-- [User Journeys](#🧾-user-journeys)
-- [Constraints (Constitution)](#📊-constraints-constitution)
-- [Plan → Tasks → Implement](#🛠️-plan-→-tasks-→-implement)
+  - [Functional Requirements](#functional-requirements)
+  - [Non-Functional Requirements](#non-functional-requirements)
+- [User Journeys](#user-journeys)
+- [Constraints (Constitution)](#constraints-constitution)
+- [Plan → Tasks → Implement](#plan--tasks--implement)
   - [Plan](#plan)
   - [Tasks](#tasks)
   - [Implement](#implement)
-- [Build Log](#📝-build-log)
+- [Build Log](#build-log)
   - [Conversion of Design Artifacts to Spec](#1-conversion-of-design-artifacts-to-spec)
   - [Spec Kit Commands, Validation, Agent Handoffs](#2-spec-kit-commands-validation-agent-handoffs)
   - [Iteration Summary](#3-iteration-summary)
   - [Screenshots](#4-screenshots)
-- [Containerize & Deploy](#🚀-containerize--deploy)
+- [Containerize & Deploy](#containerize--deploy)
 
 
-## 📦 Design Artifacts
+<h2 id="design-artifacts">📦 Design Artifacts</h2>
 
 The Product Catalog System design artifacts were systematically transformed into actionable specifications using Spec Kit. Each artifact informs functional and non-functional requirements, API schema, frontend components, and automated tasks.
 
@@ -48,9 +48,9 @@ The Product Catalog System design artifacts were systematically transformed into
 
 
 
-## 📊 Specification (SDD)
+<h2 id="specification-sdd">📊 Specification (SDD)</h2>
 
-### Goals & Why
+<h3 id="goals--why">Goals & Why</h3>
 
 The primary goal is to provide an **intuitive, accessible, and responsive experience** for users browsing products. The system fully leverages GitHub Spec Kit for automated generation, ensuring consistency, reducing human error, and accelerating development.
 
@@ -71,7 +71,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 
 
 
-## 📊 Functional Requirements
+<h3 id="functional-requirements">Functional Requirements</h3>
 
 | ID     | Requirement                                                                                                         |
 | ------ | ------------------------------------------------------------------------------------------------------------------- |
@@ -91,7 +91,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 
 
 
-## 📊 Non-Functional Requirements
+<h3 id="non-functional-requirements">Non-Functional Requirements</h3>
 
 | ID      | Requirement                                                                                  |
 | ------- | -------------------------------------------------------------------------------------------- |
@@ -103,7 +103,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 
 
 
-## 🧾 User Journeys
+<h2 id="user-journeys">🧾 User Journeys</h2>
 
 ### Use Case 1 – View Product List
 
@@ -139,7 +139,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 
 
 
-## 📊 Constraints (Constitution)
+<h2 id="constraints-constitution">📊 Constraints (Constitution)</h2>
 
 1. **Fixed Stack**: Must use specified frameworks; deviations require Constitution amendment.
 2. **Code Quality & Testing**: ≥80% coverage; tests run automatically in CI; all tests must pass.
@@ -151,9 +151,9 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 
 
 
-## 🛠️ Plan → Tasks → Implement
+<h2 id="plan--tasks--implement">🛠️ Plan → Tasks → Implement</h2>
 
-### Plan
+<h3 id="plan">Plan</h3>
 
 - **API & Storage**: TypeScript + Express API `GET /api/products` with MongoDB.
 - **Data Contracts**: Product schema (`id`, `name`, `description`, `price`) with OpenAPI specification.
@@ -161,7 +161,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 - **Seeding**: ≥5 sample products, idempotent insertion.
 - **Performance & Constraints**: ≤100 products, no pagination; UI render ≤2s, API ≤1s.
 
-### Tasks
+<h3 id="tasks">Tasks</h3>
 
 | Task                           | Description                                  | User Story | Notes                                           |
 | ------------------------------ | -------------------------------------------- | ---------- | ----------------------------------------------- |
@@ -172,7 +172,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 | Unit & Integration Tests       | Backend & frontend, ≥80% coverage            | US1 + US2  | Jest + Supertest (backend), Vitest + RTL (frontend) |
 | Observability & Logging        | Track API calls, errors, seed verification   | All        | Debugging, performance monitoring               |
 
-### Implement
+<h3 id="implement">Implement</h3>
 
 - Spec Kit agent executes tasks automatically based on templates.
 - Implementation strictly follows Core Principles, Constraints, and NFRs.
@@ -183,9 +183,9 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 
 
 
-## 📝 Build Log
+<h2 id="build-log">📝 Build Log</h2>
 
-### 1. Conversion of Design Artifacts to Spec
+<h3 id="1-conversion-of-design-artifacts-to-spec">1. Conversion of Design Artifacts to Spec</h3>
 
 * Class Diagram → Backend schema + frontend TypeScript interfaces
 * Component Diagram → Frontend components + backend routes
@@ -194,7 +194,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 * Prompts ([Constitution](../docs/ai-prompts/constitution.txt), [Plan](../docs/ai-prompts/plan.txt), [Specify](../docs/ai-prompts/specify.txt)) guided agent to structured spec and tasks
 
 
-### 2. Spec Kit Commands, Validation, Agent Handoffs
+<h3 id="2-spec-kit-commands-validation-agent-handoffs">2. Spec Kit Commands, Validation, Agent Handoffs</h3>
 
 | Command                 | Description                                                                         | Validation                                                                                      | Agent Handoff                                           |
 | ----------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
@@ -207,7 +207,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 | `/speckit.implement`    | Implements code based on tasks and spec                                             | • Frontend/backend functionality verified<br>• State management correct<br>• MongoDB schema & seed artifacts generated<br>• All batch tasks implemented<br>• CI tests pass, coverage ≥80% | GPT-5 generates frontend/backend code and MongoDB artifacts |
 
 
-### 3. Iteration Summary
+<h3 id="3-iteration-summary">3. Iteration Summary</h3>
 
 * Plan adjustments: task sequencing/dependencies refined
 * Spec refinement: FR clarifications via `/clarify`
@@ -216,7 +216,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 * Traceability improvements: enhanced links between artifacts, FRs, tasks
 
 
-### 4. Screenshots
+<h3 id="4-screenshots">4. Screenshots</h3>
 
 * [**API Products Response 1**](/docs/screenshots/api-products-1.jpg) – Products API request with response headers.
 * [**API Products Response 2**](/docs/screenshots/api-products-2.jpg) – JSON payload response of products from the API.
@@ -232,7 +232,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 
 
 
-## 🚀 Containerize & Deploy
+<h2 id="containerize--deploy">🚀 Containerize & Deploy</h2>
 
 1. **Clone Repository**
 
