@@ -6,8 +6,8 @@ type FetchOptions = {
 };
 
 function buildApiUrl(baseUrl?: string): string {
-  const envBase = (import.meta as ImportMeta)?.env?.VITE_API_BASE_URL as string | undefined;
-  const base = (baseUrl ?? envBase ?? '').replace(/\/$/, '');
+  const envBase = (import.meta.env.VITE_API_BASE_URL as string) || '';
+  const base = (baseUrl ?? envBase).replace(/\/$/, '');
   return `${base}/api/products`;
 }
 

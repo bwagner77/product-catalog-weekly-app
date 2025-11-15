@@ -208,4 +208,31 @@ Context: Clarification decided “Up to 100 items, no pagination.” Plan also c
        - Remove unused vitest globals imports and variables in `frontend/src/__tests__/ProductList.test.tsx` and `frontend/vitest.config.ts`
        - Replace obvious `any` uses in backend source with safer `unknown` or specific types (error handlers, catches)
        - Acceptance: `npm run lint:ci` passes in both `backend/` and `frontend/` with 0 errors
-       
+
+
+---
+
+## Phase N+2: Frontend Docker & Env Improvements
+
+Context: Adjust Docker Compose and frontend code to correctly pass VITE_API_BASE_URL, simplify environment handling, and add missing dev dependency for tests.
+
+- [X] T057 [P] Frontend Dockerfile ARG & ENV
+  - Add `ARG VITE_API_BASE_URL` and `ENV VITE_API_BASE_URL=$VITE_API_BASE_URL` to `frontend/Dockerfile`
+  - Acceptance: `docker build` passes; `VITE_API_BASE_URL` is available at build time and runtime inside the container
+
+- [X] T058 [P] Pass API base URL via Docker build args
+  - Update `docker-compose.yml` frontend service to use `build.args.VITE_API_BASE_URL` instead of `environment`
+  - Remove `env_file` and `environment` sections for frontend
+  - Acceptance: Frontend fetch requests use the correct base URL inside Docker container; no 404 errors
+
+- [X] T059 [P] Standardize frontend port env var
+  - Change `docker-compose.yml` frontend service to use `${PORT_FRONTEND:-5173}:80` for consistency with `.env.example` variable `PORT_FRONTEND`
+  - Acceptance: `docker compose up` maps frontend container to host port defined in `.env.example` (`PORT_FRONTEND`)
+
+- [X] T060 [P] Fix Vite env usage in frontend code
+  - Update `frontend/src/api/products.ts` to use `const envBase = (import.meta.env.VITE_API_BASE_URL as string) || '';`
+  - Acceptance: Frontend fetch requests use the correct API URL both in local development and inside Docker containers
+
+- [X] T061 [P] Add missing dev dependency for testing
+  - Add `"@testing-library/dom": "^10.4.1"` to `frontend/package.json` devDependencies
+  - Acceptance: Unit tests for components relying on `@testing-library` run successfully without missing module errors
