@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Product } from '../types/product';
+import { useCart } from '../hooks/useCart';
 
 export function formatPrice(value: number): string {
   if (Number.isNaN(value)) return '$0.00';
@@ -27,6 +28,19 @@ const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
   const alt = failed ? `${product.name} – image unavailable` : product.name;
+  const cart = (() => {
+    try {
+      return useCart();
+    } catch {
+      return null; // allow standalone render if provider absent (tests)
+    }
+  })();
+
+  const handleAdd = () => {
+    if (!cart) return;
+    cart.add(product, 1);
+  };
+
   return (
     <article
       className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
@@ -60,6 +74,20 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </p>
       {product.stock === 0 && (
         <p className="mt-2 text-xs font-medium text-red-600" data-testid="out-of-stock">Out of stock</p>
+      )}
+      {cart && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={product.stock === 0}
+            className="px-3 py-1 rounded text-sm font-medium border border-indigo-600 text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-50"
+            aria-disabled={product.stock === 0}
+            data-testid="add-to-cart-btn"
+          >
+            {product.stock === 0 ? 'Out of stock' : 'Add to cart'}
+          </button>
+        </div>
       )}
     </article>
   );
