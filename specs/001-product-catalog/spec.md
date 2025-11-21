@@ -1,4 +1,4 @@
-# Feature Specification: Product Catalog
+# Feature Specification: Shoply Product Catalog
 
 **Feature Branch**: `001-product-catalog`  
 **Created**: 2025-11-10  
@@ -7,10 +7,14 @@
 
 ## Clarifications
 
-### Session 2025-11-20
+### Session 2025-11-20 (updated 2025-11-21 for Shoply branding, navigation, modal)
 
 - Q: What is the product search matching rule? → A: Case-insensitive partial substring match across both name and description fields; multiple words treated as a single phrase (no token AND logic).
 - Q: What pattern is used for seeded product images? → A: Deterministic placeholder filenames using the pattern "product<N>.jpg" starting at 1 (e.g., product1.jpg) matching seed insertion order; stable across runs.
+- Q: Were initial first 5 seeded products missing imageUrl/stock? → A: Earlier drafts omitted them; all seeded products now include non-empty imageUrl and non-negative stock (example first 5 may use stock 5) and remain stable across runs.
+- Q: How is Category Management accessed? → A: Via top navigation banner button "Categories" beside the Shoply brand/logo.
+- Q: How can the order confirmation modal be dismissed? → A: Either the top-right × control or an explicit "Close" button; both accessible and keyboard operable.
+- Q: What branding changes apply? → A: Navigation banner shows **Shoply** name plus logo (accessible alt "Shoply logo").
 
 ### Session 2025-11-14 (updated 2025-11-20)
 
@@ -46,7 +50,7 @@ As a shopper, I can view a list of products with name, description, and price so
 
 **Acceptance Scenarios**:
 
-1. Given seeded products exist, When I open the catalog, Then I see a list of products with name, description, and price.
+1. Given seeded products exist, When I open the catalog, Then I see a list of products with name, description, price, and images or fallbacks under the Shoply banner.
 2. Given a product price exists, When displayed, Then it shows a currency symbol and exactly two decimal places.
 
 ---
@@ -77,7 +81,7 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 
 **Acceptance Scenarios**:
 
-1. Given I use only a keyboard, When navigating the page, Then I can reach product items and controls in a logical order.
+1. Given I use only a keyboard, When navigating the page, Then I can reach navigation (Products, Categories), product items, and controls in a logical order.
 2. Given a small screen, When viewing the catalog, Then layout adapts without horizontal scrolling.
 
 ---
@@ -92,7 +96,7 @@ As a catalog maintainer (non-authenticated in this phase), I can view, create, e
 
 **Acceptance Scenarios**:
 
-1. Given categories exist, When I open the category management view, Then I see a list showing id and name.
+1. Given categories exist, When I activate the Categories navigation button, Then I see a management view list showing id and name.
 2. Given I enter a valid category name, When I submit the create form, Then the new category appears in the list.
 3. Given a category has no assigned products, When I delete it, Then it is removed from the list.
 4. Given a category has assigned products, When I attempt deletion (per assumption), Then the system prevents deletion and shows a clear message.
@@ -131,7 +135,7 @@ As a shopper, I can place an order containing my cart items and view a confirmat
 
 **Acceptance Scenarios**:
 
-1. Given my cart contains valid items, When I place the order, Then I see a confirmation with order id, items, quantities, and total.
+1. Given my cart contains valid items, When I place the order, Then I see a confirmation with order id, items, quantities, total, and two dismissal controls (× and Close button).
 2. Given I have just placed an order, When I revisit the order confirmation, Then data matches submission snapshot (quantity, total) even if product catalog changes afterwards.
 3. Given my cart is empty, When I attempt to place an order, Then the system prevents submission and shows guidance to add items.
 4. Given product stock is sufficient for all requested quantities, When I submit the order, Then product stock decrements exactly by ordered quantities and never below zero.
@@ -179,6 +183,8 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - Extremely long product name impacting alt text readability (wrap without truncation)
 - Image loading slower than text (text appears first; layout reserves space to prevent shift)
 - Mixed presence of images and fallbacks in the same view
+ - Both modal dismissal mechanisms operate independently (× and Close button)
+ - Navigation focus order includes brand logo without skipping interactive elements
 
 ## Requirements *(mandatory)*
 
@@ -232,6 +238,13 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - **FR-041**: Tests MUST validate image requirements (presence per FR-033, deterministic pattern FR-034, alt text FR-036, dimensions FR-037, fallback FR-039, broken image swap FR-042). (Clarified as test coverage aggregation; not a separate functional rule.)
 - **FR-042**: Broken image load events MUST trigger automatic fallback substitution within 1 second.
 - **FR-043**: Order submission MUST atomically decrement product stock for each line item (never producing negative stock); MUST reject the order with a 409 if any requested quantity exceeds current stock; MUST maintain snapshot immutability independent of post-submission stock changes. Implementation approach: use MongoDB transaction OR per-item conditional updates (`findOneAndUpdate` with `stock >= quantity` predicate) executed in a session; on any predicate failure abort all decrements (no partial fulfillment). Concurrency mitigation: second order after stock exhaustion returns 409.
+ - **FR-044**: Navigation banner MUST display Shoply brand name and logo image with accessible alt text ("Shoply logo").
+ - **FR-045**: Navigation MUST provide buttons/links for Products and CategoryManagement pages enabling view switching without full page reload.
+ - **FR-046**: Order confirmation modal MUST provide two accessible dismissal controls: top-right close (×) and a "Close" action button.
+ - **FR-047**: All seeded products MUST include non-empty imageUrl and non-negative stock fields (first 5 illustrative example stock 5) and remain idempotent on reseeding.
+ - **FR-048**: CategoryManagement page MUST be reachable via navigation and render its management heading after activation.
+ - **FR-049**: New/updated UI elements (brand/logo, navigation buttons, modal Close button) MUST meet accessibility standards (focus order, roles/ARIA, alt text, keyboard operability).
+ - **FR-050**: Acceptance tests MUST cover: dual modal dismissal (each independently closes and restores focus), navigation switching (Products ↔ Categories), presence of Shoply brand & logo, and backend product response including imageUrl & stock ≥ 0.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -293,6 +306,10 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - **SC-018**: 95% catalog page loads display all images/fallbacks in ≤ 2 seconds (typical environment) with cumulative layout shift (CLS) < 0.1 and no content overlap.
 - **SC-019**: Zero critical accessibility violations introduced by images (all have alt text meeting specified rules and fallback alt pattern correctness).
 - **SC-020**: 0% of image renderings cause horizontal scroll at standard breakpoints.
+ - **SC-021**: 100% sampled products (≥5) include non-empty imageUrl and stock ≥ 0.
+ - **SC-022**: 100% initial catalog views display Shoply brand name, logo, and navigation controls.
+ - **SC-023**: 100% navigation interactions allow switching between Products and Categories within ≤ 1 second.
+ - **SC-024**: 100% order confirmations present both dismissal controls (× and Close) and either control dismisses with correct focus behavior.
 
 ## Assumptions
 
@@ -315,3 +332,6 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - Fallback image is a single shared asset for all missing/broken cases.
 - Square target dimension (visual box) is consistent reference for layout; exact pixel size may adapt per responsive design (200x200 illustrative).
 - Fallback image asset path standardized as `public/images/fallback.jpg`.
+ - Navigation switching is client-side state only (no router dependency required this phase).
+ - Logo asset is a static SVG placed in public images directory.
+ - Dual modal dismissal requires no confirmation; future enhancement may add animations.
