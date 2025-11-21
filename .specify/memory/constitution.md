@@ -1,129 +1,133 @@
-# Product Catalog Weekly App Constitution
+# Shoply Project Constitution
 
 <!--
 Sync Impact Report
-- Version change: 0.0.0 → 1.0.0
-- Modified principles: N/A (initial ratification)
+- Version change: 1.0.0 → 1.1.0
+- Modified principles: III User Experience (branding + modals), I Code Quality (clarified single responsibility), II Testing (removed test doc bullet, aligned with current automation wording), V Deployment (explicit .env.example requirement retained), VI Technology Choices (added seed data rule)
 - Added sections:
-	- Core Principles I–V
-	- Technology Choices & Constraints
-	- Development Workflow, Review Process, and Tasks Guidance
-	- Governance
-- Removed sections: None
+	- VII Deferred & Non-Goals
+	- IX Suggested Updates to Tasks Template (relocated & expanded guidance)
+- Removed sections:
+	- "Development Workflow, Review Process, and Tasks Guidance" (content redistributed to IX and Governance)
 - Templates requiring updates:
-	- .specify/templates/plan-template.md ✅ aligned (Constitution Check present)
-	- .specify/templates/spec-template.md ✅ aligned (stories and tests; no E2E requirement)
-	- .specify/templates/tasks-template.md ✅ aligned ([P], user-story grouping, MVP flow)
-	- .specify/templates/commands/* ⚠ N/A (no command files present)
-	- README.md ✅ no conflicting guidance
-- Follow-up TODOs: None
+	- .specify/templates/plan-template.md ⚠ add explicit Shoply branding check
+	- .specify/templates/spec-template.md ⚠ reference brand name in UX/acceptance criteria
+	- .specify/templates/tasks-template.md ✅ already supports [P], may add branding mention
+	- README.md ⚠ replace old product name with Shoply branding & navbar/logo requirement
+	- docs/quickstart.md ⚠ ensure environment references brand Shoply
+	- Any UI copy guidelines (if present) ⚠ align with Shoply naming
+- Follow-up TODOs: None (all placeholders resolved)
 -->
 
 ## Core Principles
 
 ### I. Code Quality
 
-- Use meaningful and consistent naming for variables, functions, and components.
-- Break down large components into smaller, reusable ones (modularization).
-- Keep functions and components small and focused; each has a single responsibility.
-- Enforce consistent code formatting with Prettier (2 spaces indentation).
-- Avoid duplication (DRY principle).
-- Comments MUST explain why something is done, not what.
+The codebase MUST be clean, readable, maintainable, and emphasize simplicity.
+
+- Meaningful, consistent naming for variables, functions, components.
+- Decompose large components into small, reusable units (modularization).
+- Each function/component MUST have a single responsibility.
+- Enforce consistent formatting via Prettier (2 spaces indentation).
+- Eliminate duplication (DRY principle); refactor when duplication detected.
+- Comments MUST explain intent and rationale, not restate obvious code behavior.
 - Implement basic error handling for key functionality (e.g., API calls).
 
-Rationale: Simpler, modular code is easier to maintain, faster to review, and less prone to errors.
+Rationale: Modular, intention‑revealing code accelerates reviews and reduces defects.
 
 ### II. Testing Standards
 
-- Unit tests MUST focus on isolated logic.
-- Integration tests MUST validate interactions between components and APIs.
-- Target ≥ 80% code coverage with focus on critical paths.
-- Mock external API calls where appropriate.
-- Tests MUST run automatically in the build pipeline.
-- Document test purpose, steps, and how to run locally.
-- Avoid end-to-end (E2E) tests in this phase; they are explicitly out of scope.
+The system MUST be protected by unit and integration tests.
 
-Rationale: Automated tests prevent regressions and catch issues early.
+- Unit tests isolate logic and avoid external side effects.
+- Integration tests validate component + API boundaries.
+- Maintain ≥ 80% coverage emphasizing critical paths (logic, data integrity, error handling).
+- Mock external or volatile dependencies (network, time) where deterministic outcomes needed.
+- Automated test execution MUST occur in the build pipeline.
+- End-to-end (E2E) tests are deferred; do not add until a future phase.
+
+Rationale: Layered automated tests catch regressions early and sustain delivery velocity.
 
 ### III. User Experience Consistency
 
-- Mobile-first, responsive layout that adapts from phones to desktops.
-- Use TailwindCSS for all layout and styling; no custom color palettes or custom CSS.
-- Provide clear visual feedback for user actions (loading, validation, states).
-- Error messages MUST be clear and actionable (e.g., "Product out of stock").
-- Key pages should load in under 2 seconds.
-- Ensure accessibility per WCAG (ARIA, keyboard navigation, color contrast).
+The UI MUST be simple, intuitive, accessible, and consistently branded as **Shoply**.
 
-Rationale: Consistency and clarity minimize cognitive load and speed up task completion.
+- Mobile-first responsive layout scaling from phones to desktops.
+- TailwindCSS for all layout/styling; avoid ad-hoc color palettes or raw CSS overrides.
+- Clear visual feedback for all user actions (loading, validation, disabled states).
+- Actionable error messages (e.g., "Product out of stock").
+- Key pages load under 2 seconds on typical broadband.
+- Accessibility: WCAG alignment (ARIA roles, keyboard navigation, contrast compliance).
+- Brand identity: Use the name **Shoply** uniformly in navigation, titles, and user-facing text.
+- Navigation bar MUST present the brand name **Shoply** and a logo with accessible text alternative.
+- Application-wide modals MUST include an accessible dismissal: close icon + clearly labeled button.
+
+Rationale: Consistent, accessible branding reduces cognitive load and increases user trust.
 
 ### IV. Performance Requirements
 
-- Key pages must load in 2–3 seconds or less.
-- API responses must complete in under 1 second for typical requests.
-- No caching at this stage; fetch data dynamically per session.
-- Optimize image sizes; use advanced techniques (e.g., WebP) only when necessary.
-- Avoid lazy loading large assets by default.
+The application MUST feel fast for common interactions without premature optimization.
 
-Rationale: Clear performance targets maintain a responsive UX while keeping implementation simple.
+- Key pages render in ≤ 2–3 seconds.
+- Typical API responses complete in < 1 second.
+- No caching layer at this stage; fetch fresh per session.
+- Optimize image dimensions & compression; introduce advanced formats (e.g., WebP) only when justified.
+- Avoid unnecessary lazy loading of large assets; prefer selective loading tied to user intent.
+
+Rationale: Simple performance thresholds maintain responsiveness while avoiding over-engineering.
 
 ### V. Deployment Strategy
 
-- Containerize frontend, backend, and database as separate services.
-- Use docker-compose.yml to orchestrate services.
-- One command (Docker Compose) MUST bring up the full environment.
-- Store environment variables in .env (e.g., DB URL, ports).
-- Optional cloud deployment (e.g., Azure) uses the same containers.
-- Provide a concise deployment guide for local run and cloud deployment.
-- Provide .env.example and keep it in sync with .env usage.
+Use Docker for reproducible environments and a frictionless local → cloud path.
 
-Rationale: Containers provide consistent, reproducible environments for local and cloud.
+- Containerize frontend, backend, and database separately.
+- Orchestrate with docker-compose.yml; a single command brings environment up.
+- Store configuration in `.env`; supply synchronized `.env.example` (no secrets) updated with each new variable.
+- Optional cloud deployment (e.g., Azure) reuses identical images.
+- Provide concise deployment documentation (local & cloud hints).
 
-## Technology Choices & Constraints
+Rationale: Containerization stabilizes environments, simplifying onboarding and deployment.
 
-The system MUST use a consistent, modern stack for rapid MVP development. All technologies
-MUST be mature, widely adopted, and support modularity, testing, and containerization.
-Specific tools and frameworks are defined in the Implementation Plan for each feature.
+### VI. Technology Choices & Constraints
 
-Implications:
-- Prefer mainstream frameworks with robust ecosystem and testing support.
-- Ensure libraries integrate cleanly with Docker and CI runners.
-- Select tooling that enables unit/integration testing and Prettier formatting.
+Adopt a modern, mainstream stack enabling modularity, testing, containerization, and rapid iteration.
 
-## Development Workflow, Review Process, and Tasks Guidance
+- Select mature, widely adopted libraries with active maintenance.
+- Favor tooling that integrates seamlessly with Docker and CI.
+- Seed data MUST remain schema‑complete and updated whenever persistent schema fields evolve.
 
-Quality Gates and Workflow:
-- Constitution Check MUST pass in plans before Phase 0 research and be re-checked after
-	Phase 1 design.
-- Code review MUST verify compliance with Core Principles (Code Quality, Testing,
-	UX, Performance, Deployment).
-- Tests MUST run automatically in the build pipeline; coverage ≥ 80% on critical paths.
+Rationale: Stable, common tooling reduces integration risk and accelerates feature delivery.
 
-Tasks Template Updates:
-- Task Dependencies: Tasks MUST be organized by user story with clear dependencies.
-- MVP First: Deliver a working MVP early, validate, then expand.
-- Granular Tasks: Break tasks into 1–2 hour units.
-- Parallel Work: Tasks marked with [P] can be worked on in parallel with no dependency.
+### VII. Deferred & Non-Goals (Current Phase)
 
-Documentation:
-- Include test purpose, steps, and local run instructions in the repository docs.
-- Provide a concise deployment guide for Docker Compose and optional cloud usage.
+- Excluded: End-to-end (E2E) testing, cross-service caching, CDN, advanced image pipelines, full CI/CD automation.
+- No cross-service caching layer or CDN yet.
+- Skip advanced image transformations (e.g., WebP) unless future justification.
+- CI/CD pipeline setup deferred to later iteration.
 
-## Governance
+Rationale: Focus on core value delivery; defer complexity until validated need emerges.
 
-This document is the final authority on development processes.
+### VIII. Governance
 
-Amendments (via Pull Request):
-- PR MUST include proposed changes and rationale.
-- PR MUST include a version bump (MAJOR, MINOR, PATCH).
-- Include migration notes when applicable.
+This Constitution is the final authority for development standards and evolution.
 
-Versioning Policy:
-- MAJOR: Breaking changes or redefinitions.
-- MINOR: New sections or substantial changes.
-- PATCH: Minor clarifications or fixes.
+- Amend via Pull Request including: rationale, changes, version bump, migration notes if needed.
+- Versioning:
+  - MAJOR: Breaking principle redefinitions or removals.
+  - MINOR: New sections or substantial expansions.
+  - PATCH: Clarifications, wording, minor non-semantic edits.
+- All changes MUST be documented and reviewed for compliance.
 
-Compliance and Review:
-- All changes MUST be documented.
-- All PRs/reviews MUST verify compliance with this Constitution.
+Rationale: Transparent, versioned governance prevents uncontrolled drift.
 
-**Version**: 1.0.0 | **Ratified**: 2025-11-10 | **Last Amended**: 2025-11-10
+### IX. Suggested Updates to Tasks Template
+
+- Organize tasks by user story with explicit dependencies.
+- Deliver an MVP early; iterate after validation (MVP First).
+- Keep tasks granular (1–2 hours) to maintain flow and predictability.
+- Mark parallel-safe tasks with [P]; ensure no hidden dependencies before parallel execution.
+- Include branding impact checks (Shoply name & navbar presence) in story acceptance where relevant.
+
+Rationale: Structured, granular task management sustains momentum and enables safe parallel work.
+
+**Version**: 1.1.0 | **Ratified**: 2025-11-10 | **Last Amended**: 2025-11-21

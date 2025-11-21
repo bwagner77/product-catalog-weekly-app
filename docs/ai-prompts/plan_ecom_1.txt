@@ -57,7 +57,7 @@ Implementation Sections
 3. **Frontend Development**
    - **Site Layout / Navigation**:
      - Global NavBar at top of all pages:
-       - Site logo or name (e.g., "Ecomora") on left.
+       - Site logo or name (e.g., "Shoply") on left.
        - Cart icon with item count on right.
        - Optional link to Category management page (for admin).
        - Responsive: collapse nav links into hamburger menu on mobile.

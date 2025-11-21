@@ -1,0 +1,126 @@
+version_bump: "MINOR"
+rationale: |
+  Update the high-level constitution to reflect the new brand name Shoply and include key UX guidance discovered during implementation.
+
+changes:
+
+I. Code Quality
+
+The codebase MUST be clean, readable, maintainable, and follow best practices with an emphasis on simplicity and modularity. Each function/component MUST have a single responsibility.
+
+- Use meaningful and consistent naming for variables, functions, and components.
+- Break down large components into smaller, reusable ones (modularization).
+- Keep functions and components small and focused.
+- Enforce consistent code formatting with Prettier (2 spaces indentation).
+- Avoid duplication (DRY principle).
+- Comments MUST explain why something is done, not what.
+- Implement basic error handling for key functionality (e.g., API calls).
+
+Rationale: Simpler, modular code is easier to maintain, faster to review, and less prone to errors.
+
+---
+
+II. Testing Standards
+
+The system MUST be tested with unit and integration tests.
+
+- Unit tests MUST focus on isolated logic.
+- Integration tests MUST validate interactions between components and APIs.
+- Target ≥ 80% code coverage (focus on critical paths).
+- Mock external API calls where appropriate.
+- Tests MUST run automatically in the build pipeline.
+- Avoid End-to-end (E2E) tests in this phase; may be added in future iterations.
+
+Rationale: Automated tests prevent regressions and catch issues early.
+
+---
+
+III. User Experience Consistency
+
+The UI MUST be simple, intuitive, and responsive.
+
+- Mobile-first, responsive layout that adapts from phones to desktops.
+- Use TailwindCSS for all layout and styling; no custom color palettes or CSS.
+- Provide clear visual feedback for user actions (loading, validation, states).
+- Error messages MUST be clear and actionable (e.g., "Product out of stock").
+- Key pages should load in under 2 seconds.
+- Ensure accessibility by following WCAG guidelines (ARIA, keyboard navigation, color contrast).
+- The product’s brand identity is **Shoply** and MUST be used consistently across navigation, titles, and user-facing text.
+- The main navigation bar MUST display the brand name **Shoply** and a logo in a consistent, accessible layout.
+- Application-wide modals MUST include an accessible, easily discoverable dismissal mechanism (e.g., close icon + button).
+
+Rationale: Consistency, branding, and clarity minimize cognitive load and speed up task completion.
+
+---
+
+IV. Performance Requirements
+
+The application must be fast for common interactions without premature complexity.
+
+- Key pages must load in 2-3 seconds or less.
+- API responses must complete in under 1 second for typical requests.
+- No caching at this stage; fetch data dynamically per session.
+- Optimize image sizes; advanced techniques (e.g., WebP) only when necessary.
+- Avoid lazy loading large assets by default.
+
+Rationale: Clear performance targets maintain a responsive UX while keeping the implementation simple.
+
+---
+
+V. Deployment Strategy
+
+Use Docker to ensure consistent, reproducible environments with a simple local and cloud deployment path via Docker Compose.
+
+- Containerize frontend, backend, and database as separate services.
+- Use docker-compose.yml to orchestrate services.
+- One command (Docker Compose) should bring up the full environment.
+- Store environment variables in .env (e.g., DB URL, ports).
+- Optional cloud deployment (e.g., Azure) using the same containers.
+- Provide a concise deployment guide covering local run and cloud deployment.
+- A .env.example file MUST be provided and kept in sync with .env usage
+
+---
+
+VI. Technology Choices & Constraints
+
+The system MUST use a consistent, modern stack suitable for rapid MVP development. All technologies MUST be mature, widely adopted, and support modularity, testing, and containerization.
+
+- Seed data MUST remain schema-complete and updated whenever persistent schema fields evolve.
+
+---
+
+VII. Deferred & Non-Goals (Current Phase)
+
+- Out of scope: End-to-end (E2E) testing, cross-service caching, CDN, advanced image pipelines, full CI/CD automation.
+- No cross-service caching or CDN strategy yet.
+- No advanced image pipelines (e.g., WebP conversion) unless later justified.
+- CI/CD pipeline is not set up; may be added in a future iteration.
+
+---
+
+VIII. Governance
+
+This document is the final authority on development processes.
+
+- Amendments MUST be made via Pull Request (PR), including:
+  - Proposed changes and rationale.
+  - Version bump (MAJOR, MINOR, PATCH).
+  - Migration notes (if needed).
+- Versioning:
+  - MAJOR: Breaking changes or redefinitions.
+  - MINOR: New sections or substantial changes.
+  - PATCH: Minor clarifications or fixes.
+- All changes MUST be documented.
+
+Rationale: Clear governance ensures changes are controlled and transparent.
+
+---
+
+IX. Suggested Updates to Tasks Template
+
+- Task Dependencies: Tasks MUST be organized by user story with clear dependencies.
+- MVP First: Deliver a working MVP (Minimum Viable Product) early, validate, and then expand.
+- Granular Tasks: Break tasks into small, manageable units (1–2 hours).
+- Parallel Work: Tasks marked with [P] can be worked on in parallel, with no dependency.
+
+Rationale: This keeps task execution simple, focused, and efficient.
