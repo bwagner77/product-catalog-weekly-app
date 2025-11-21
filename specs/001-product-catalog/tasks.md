@@ -4,14 +4,14 @@ description: "Task list for Product Catalog MVP"
 
 ---
 
-# Tasks: Product Catalog
+# Tasks: Product Catalog (Extended E‑commerce & Images)
 
 **Input**: Design documents from `/specs/001-product-catalog/`
-**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+**Prerequisites**: plan.md, spec.md (US1–US8), research.md, data-model.md, openapi.yaml (v1.1.0)
 
-**Tests**: Tests are REQUIRED by the constitution (≥80% on critical paths). This plan includes explicit test tasks.
+**Tests**: Constitution requires ≥80% coverage; each user story has explicit test tasks before implementation tasks. New success criteria SC‑001..SC‑020 mapped.
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+**Organization**: Phases progress from existing MVP through extended backend models/routes, then new frontend components and behaviors (categories, search/filter, cart, orders, images). Parallelizable tasks marked [P].
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -234,5 +234,140 @@ Context: Adjust Docker Compose and frontend code to correctly pass VITE_API_BASE
   - Acceptance: Frontend fetch requests use the correct API URL both in local development and inside Docker containers
 
 - [X] T061 [P] Add missing dev dependency for testing
-  - Add `"@testing-library/dom": "^10.4.1"` to `frontend/package.json` devDependencies
-  - Acceptance: Unit tests for components relying on `@testing-library` run successfully without missing module errors
+       - Add `"@testing-library/dom": "^10.4.1"` to `frontend/package.json` devDependencies
+       - Acceptance: Unit tests for components relying on `@testing-library` run successfully without missing module errors
+
+---
+
+## Phase 6: Data & Model Extensions (Products + Categories + Images + Stock)
+
+Goal: Extend Product schema (categoryId, stock, imageUrl); create Category & Order schemas; update seed logic for ≥20 products & ≥5 categories; deterministic image filenames.
+
+- [ ] T062 [P] [US4][US8] Extend Product Mongoose schema: add `categoryId`, `stock`, `imageUrl` with validation (non-negative stock, non-empty imageUrl)
+- [ ] T063 [P] [US4] Create Category Mongoose schema (id UUID, name unique, timestamps)
+- [ ] T064 [P] [US7] Create Order Mongoose schema (snapshot items, total, status="submitted")
+- [ ] T065 [US4][US8] Update seed script: ≥20 products, deterministic `product<N>.jpg` imageUrl, realistic stock distribution (include some zero stock)
+- [ ] T066 [P] [US4] New seed for categories (≥5) with stable UUIDs / names
+- [ ] T067 [P] [US7] Seed sanity: ensure no orders created; add future placeholder comment
+- [ ] T068 [P] Backend tests: Product schema new fields validation (stock >=0, imageUrl non-empty) in `backend/tests/models/productModel.test.ts`
+- [ ] T069 Backend tests: Category schema validation + uniqueness in `backend/tests/models/categoryModel.test.ts`
+- [ ] T070 Backend tests: Order schema snapshot & total calculation unit test in `backend/tests/models/orderModel.test.ts`
+- [ ] T071 [P] Update openapi.yaml Product schema (categoryId, stock, imageUrl) confirmation (already spec'd) + ensure examples reflect new fields
+
+## Phase 7: User Story 4 - Manage Categories (Priority: P4)
+
+Goal: Category CRUD with blocked deletion when products assigned.
+
+- [ ] T072 [P] [US4] Implement `/api/categories` router (GET list, GET by id, POST, PUT, DELETE)
+- [ ] T073 [US4] Add delete guard: 409 if products reference category
+- [ ] T074 [P] [US4] Integration tests for category CRUD + blocked deletion in `backend/tests/api/categories.test.ts`
+- [ ] T075 [P] [US4] Frontend Category types in `frontend/src/types/category.ts`
+- [ ] T076 [P] [US4] Category management API utilities `frontend/src/api/categories.ts`
+- [ ] T077 [US4] CategoryManagement page basic layout + CRUD forms
+- [ ] T078 [P] [US4] Frontend tests: create/update/delete flows + blocked deletion messaging in `frontend/src/__tests__/category.test.tsx`
+- [ ] T079 [US4] Docs: quickstart & spec success criteria references for category operations performance (SC-007, SC-013)
+
+## Phase 8: User Story 5 - Search & Filter Products (Priority: P4)
+
+Goal: Case-insensitive substring search + category filter (combinable) with zero-results state.
+
+- [ ] T080 [US5] Extend products route: query params `search`, `categoryId` (phrase match on name+description)
+- [ ] T081 [P] [US5] Backend tests: search only, category only, combined, zero-results in `backend/tests/api/productsSearch.test.ts`
+- [ ] T082 [P] [US5] Frontend SearchBar component
+- [ ] T083 [P] [US5] Frontend CategoryFilter component (dropdown)
+- [ ] T084 [US5] Wire search/filter state to API; distinct zero-results message
+- [ ] T085 [P] [US5] Frontend tests: search, filter, combined, zero-results message distinct from empty catalog in `frontend/src/__tests__/searchFilter.test.tsx`
+- [ ] T086 [US5] Accessibility validation: focus order after search/filter interactions (extend a11y test)
+
+## Phase 9: User Story 8 - Product Images (Priority: P4)
+
+Goal: Display product images with fallback & alt text rules; no layout shift.
+
+- [ ] T087 [US8] Add placeholder image assets `frontend/public/images/product1.jpg ... product20.jpg`
+- [ ] T088 [P] [US8] Add single fallback image `frontend/public/images/fallback.jpg`
+- [ ] T089 [US8] Enhance ProductCard: image box (e.g., 200x200) with `object-cover`, fallback on error/missing, alt text rules
+- [ ] T090 [P] [US8] Frontend tests: image present, fallback path, broken image simulation (trigger onError) in `frontend/src/__tests__/images.test.tsx`
+- [ ] T091 [P] [US8] Backend test: all product API responses include non-empty `imageUrl`
+- [ ] T092 [US8] Performance doc update referencing SC-015..SC-018 image criteria
+- [ ] T093 [US8] Accessibility test alt text correctness (extend a11y test) verifying no empty alt
+
+## Phase 10: User Story 6 - Shopping Cart (Priority: P5)
+
+Goal: Add/update/remove items; persist across refresh; stock gating.
+
+- [ ] T094 [US6] Implement cart hook/module `frontend/src/hooks/useCart.ts` (state, add, update qty, remove, clear)
+- [ ] T095 [P] [US6] LocalStorage persistence & hydration logic with schema version
+- [ ] T096 [US6] Stock gating: disable add-to-cart for stock=0 product & message
+- [ ] T097 [P] [US6] CartSidebar component (responsive, collapsible)
+- [ ] T098 [P] [US6] Cart icon/count in NavBar component
+- [ ] T099 [US6] Frontend tests: add/update/remove/clear, persistence after refresh, stock gating in `frontend/src/__tests__/cart.test.tsx`
+- [ ] T100 [P] [US6] Edge case test: large quantity update + total rounding
+- [ ] T101 [US6] Accessibility: focus retention after quantity change (extend a11y test)
+- [ ] T102 [P] [US6] Docs: quickstart additions for cart behavior & limitations
+
+## Phase 11: User Story 7 - Order Submission (Priority: P6)
+
+Goal: Submit order with snapshot; confirmation view immutability.
+
+- [ ] T103 [US7] Implement `/api/orders` POST (validate non-empty cart items) & GET by id
+- [ ] T104 [P] [US7] Backend tests: successful submission snapshot, empty cart rejection, total rounding, immutability after product price change in `backend/tests/api/orders.test.ts`
+- [ ] T105 [US7] Frontend OrderConfirmation component/page/modal
+- [ ] T106 [P] [US7] Frontend tests: order submit flow, empty cart prevention, snapshot persistence after simulated product change in `frontend/src/__tests__/order.test.tsx`
+- [ ] T107 [US7] Clear cart post-submission; verify persistence resets (test)
+- [ ] T108 [P] [US7] Add Order types `frontend/src/types/order.ts`
+- [ ] T109 [US7] Docs: spec & quickstart order endpoint examples & performance expectations (SC‑010, SC‑014)
+
+## Phase 12: Cross-Cutting Validation & Performance / Success Criteria
+
+Goal: Ensure SC-001..SC-020 satisfied; finalize docs; perf & a11y audits.
+
+- [ ] T110 [P] Perf sampling script/update: measure GET /api/products (with search/filter) & order POST durations (log p95 locally)
+- [ ] T111 [P] Image load timing & fallback substitution test (<1s) instrumentation (optional util)
+- [ ] T112 [P] Accessibility sweep: images, cart controls, search/filter inputs, order confirmation (no new violations)
+- [ ] T113 [P] Update README.md with extended features summary & run instructions additions
+- [ ] T114 [P] Update `quickstart.md`: environment variables for categories, orders, cart notes, image assets mention
+- [ ] T115 [P] Update `research.md` with rationale for snapshot order model & fallback strategy final validation
+- [ ] T116 [P] Verify openapi.yaml examples: add request/response examples for category CRUD, order POST/GET
+- [ ] T117 [P] Coverage audit: ensure new tests raise coverage ≥80% after extensions (backend & frontend)
+- [ ] T118 Consolidated success criteria checklist file update `checklists/requirements.md` with SC-015..SC-020 tracking
+- [ ] T119 [P] Lint/Type cleanup: new files conform; run `npm run lint` in both packages and fix
+- [ ] T120 Final seed audit: confirm counts (≥20 products, ≥5 categories, deterministic image filenames, mixed stock) in test
+
+## Updated Dependencies
+
+Order of execution after existing T001–T061:
+1. Phase 6 (schemas & seed) → unlock phases 7–9.
+2. Phases 7, 8, 9 can run largely in parallel (categories, search/filter, images) after Product schema extended.
+3. Phase 10 (cart) depends on Product schema & images (for ProductCard enhancements) but not on orders.
+4. Phase 11 (orders) depends on cart implementation & Order schema.
+5. Phase 12 audits depend on completion of prior feature phases.
+
+Parallelization Guidelines:
+- Prefer running distinct backend & frontend test implementations concurrently ([P]).
+- Avoid parallel edits to same file (coordinate ProductCard changes vs image fallback).
+- Use isolated test files per feature to minimize merge friction.
+
+## Risk Addendum (Extensions)
+
+| Risk | Impact | Mitigation |
+|------|--------|-----------|
+| Increased seed volume slows startup | Moderate | Lazy seed only when count below threshold; lean inserts |
+| Search regex complexity increases CPU | Low | Use simple `RegExp` with escaped phrase; index later if needed |
+| Cart persistence schema changes | Data loss | Version key in stored JSON; migrate or reset gracefully |
+| Fallback image 404 | Visual regression | Include fallback asset in repo & Docker image; test presence |
+| Order total precision drift | Inaccurate totals | Centralize rounding helper; unit test edge cases |
+
+## Completion Criteria Extension
+
+Completion of extended scope requires all tasks T062–T120 marked done, coverage ≥80%, success criteria SC‑001..SC‑020 verified, and updated documentation & contracts committed.
+
+---
+
+## Future (Deferred / Not In Scope Tasks) – For Tracking Only (Do NOT implement now)
+- D001 Image optimization (responsive srcset / WebP)
+- D002 Pagination & server-side filtering beyond 200 products
+- D003 Auth & role-based category management
+- D004 Inventory stock decrement on order submission
+- D005 Discount codes & tax calculations
+- D006 Advanced search (tokenization, fuzzy)
+- D007 CDN integration for static assets
