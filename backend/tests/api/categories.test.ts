@@ -1,0 +1,112 @@
+import request from 'supertest';
+import app from '../../src/app';
+import { connectDB, disconnectDB } from '../../src/config/db';
+import Category from '../../src/models/category';
+import Product from '../../src/models/product';
+
+describe('Category CRUD API', () => {
+  beforeAll(async () => {
+    await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_test');
+  });
+
+  afterAll(async () => {
+    await Category.deleteMany({});
+    await Product.deleteMany({});
+    await disconnectDB();
+  });
+
+  it('creates a category (POST)', async () => {
+    const res = await request(app).post('/api/categories').send({ name: 'Garden' });
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.name).toBe('Garden');
+  });
+
+  it('rejects create with empty name', async () => {
+    const res = await request(app).post('/api/categories').send({ name: '   ' });
+    expect(res.status).toBe(400);
+    expect(/name required/i.test(res.body.message)).toBeTruthy();
+  });
+
+  it('rejects duplicate category name', async () => {
+    await request(app).post('/api/categories').send({ name: 'Books' });
+    const dup = await request(app).post('/api/categories').send({ name: 'Books' });
+    expect(dup.status).toBe(400);
+    expect(/duplicate/i.test(dup.body.message)).toBeTruthy();
+  });
+
+  it('lists categories (GET)', async () => {
+    const res = await request(app).get('/api/categories');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('gets category by id (GET /:id)', async () => {
+    const created = await request(app).post('/api/categories').send({ name: 'Outdoors' });
+    const id = created.body.id;
+    const fetched = await request(app).get(`/api/categories/${id}`);
+    expect(fetched.status).toBe(200);
+    expect(fetched.body.id).toBe(id);
+    expect(fetched.body.name).toBe('Outdoors');
+  });
+
+  it('updates category (PUT)', async () => {
+    const created = await request(app).post('/api/categories').send({ name: 'Office' });
+    const id = created.body.id;
+    const updated = await request(app).put(`/api/categories/${id}`).send({ name: 'Office Supplies' });
+    expect(updated.status).toBe(200);
+    expect(updated.body.name).toBe('Office Supplies');
+  });
+
+  it('rejects update with empty name', async () => {
+    const created = await request(app).post('/api/categories').send({ name: 'Stationery' });
+    const id = created.body.id;
+    const res = await request(app).put(`/api/categories/${id}`).send({ name: '  ' });
+    expect(res.status).toBe(400);
+    expect(/name required/i.test(res.body.message)).toBeTruthy();
+  });
+
+  it('rejects update causing duplicate name', async () => {
+    const c1 = await request(app).post('/api/categories').send({ name: 'Alpha' });
+    const c2 = await request(app).post('/api/categories').send({ name: 'Beta' });
+    const res = await request(app).put(`/api/categories/${c2.body.id}`).send({ name: 'Alpha' });
+    expect(res.status).toBe(400);
+    expect(/duplicate/i.test(res.body.message)).toBeTruthy();
+  });
+
+  it('blocks deletion when products reference category (DELETE 409)', async () => {
+    const created = await request(app).post('/api/categories').send({ name: 'Electronics' });
+    const categoryId = created.body.id;
+    // create a product referencing this category
+    await (Product as any).create({
+      name: 'Phone',
+      description: 'Smartphone',
+      price: 199.99,
+      stock: 5,
+      imageUrl: 'images/product-phone.jpg',
+      categoryId,
+    });
+    const del = await request(app).delete(`/api/categories/${categoryId}`);
+    expect(del.status).toBe(409);
+  });
+
+  it('deletes category with no product references (DELETE 204)', async () => {
+    const created = await request(app).post('/api/categories').send({ name: 'Toys' });
+    const id = created.body.id;
+    const del = await request(app).delete(`/api/categories/${id}`);
+    expect(del.status).toBe(204);
+    const check = await request(app).get(`/api/categories/${id}`);
+    expect(check.status).toBe(404);
+  });
+
+  it('GET non-existent category returns 404', async () => {
+    const res = await request(app).get('/api/categories/00000000-0000-4000-8000-000000000000');
+    expect(res.status).toBe(404);
+  });
+
+  it('DELETE non-existent category returns 404', async () => {
+    const res = await request(app).delete('/api/categories/00000000-0000-4000-8000-000000000000');
+    expect(res.status).toBe(404);
+  });
+});

@@ -43,6 +43,8 @@ describe('GET /api/products integration', () => {
         name: `Extra Product ${i}`,
         description: `Extra description ${i}`,
         price: i + 0.99,
+        imageUrl: `images/extra/product-${i}.jpg`,
+        stock: i % 10,
       });
     }
     await Product.insertMany(bulk);

@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { traceIdMiddleware, errorHandler, getErrorCount } from './utils/traceId';
 import productsRoute from './routes/products';
+import categoriesRoute from './routes/categories';
 
 const app = express();
 
@@ -22,8 +23,9 @@ app.use(traceIdMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Product catalog routes (US1)
+// Product catalog routes (US1) and categories (US4)
 app.use('/api', productsRoute);
+app.use('/api/categories', categoriesRoute);
 
 // Health endpoint (T036)
 app.get('/health', (_req: Request, res: Response) => {

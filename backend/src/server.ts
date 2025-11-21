@@ -2,6 +2,7 @@ import http from 'http';
 import app from './app';
 import { connectDB } from './config/db';
 import seedProducts from './seed/seedProducts';
+import seedCategories from './seed/seedCategories';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
@@ -10,19 +11,23 @@ const server = http.createServer(app);
 async function start() {
   try {
     await connectDB();
-    const result = await seedProducts();
+  const catResult = await seedCategories();
+  const result = await seedProducts();
     // One-time startup seed completion log
     // eslint-disable-next-line no-console
-    console.log(
-      JSON.stringify({
-        ts: new Date().toISOString(),
-        level: 'info',
-        event: 'startup_seed_complete',
-        inserted: result.inserted,
-        matched: result.matched,
-        total: result.afterCount,
-      })
-    );
+      console.log(
+        JSON.stringify({
+          ts: new Date().toISOString(),
+          level: 'info',
+          event: 'startup_seed_complete',
+          productsInserted: result.inserted,
+          productsMatched: result.matched,
+          productsTotal: result.afterCount,
+          categoriesInserted: catResult.inserted,
+          categoriesMatched: catResult.matched,
+          categoriesTotal: catResult.afterCount,
+        })
+      );
 
     server.listen(PORT, () => {
       // Health endpoint (T036) will make Docker healthcheck pass
