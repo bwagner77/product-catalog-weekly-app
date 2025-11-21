@@ -47,4 +47,34 @@ describe('traceId errorHandler logging branches', () => {
     logSpy.mockRestore();
     process.env.NODE_ENV = prev;
   });
+
+  it('non-Error value produces generic message and 500 status', () => {
+    const req = { originalUrl: '/api/other', method: 'POST' } as unknown as Request;
+    const jsonMock = jest.fn();
+    const statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+    const res = { locals: { traceId: 'xyz' }, statusCode: 200, status: statusMock } as unknown as Response;
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    errorHandler('plain failure', req, res, (() => {}) as any);
+    const logged = logSpy.mock.calls.map(c => String(c[0]));
+    const entry = logged.find(l => l.includes('plain failure'));
+    // Should not include plain failure in message (generic Internal Server Error), but errorName should be "Error"
+    expect(entry).toBeUndefined();
+    const errorEntry = logged.find(l => l.includes('"event":"error"'))!;
+    expect(errorEntry).toMatch(/"status":500/);
+    expect(errorEntry).toMatch(/Internal Server Error/);
+    logSpy.mockRestore();
+  });
+
+  it('Error with empty message falls back to Internal Server Error', () => {
+    const req = { originalUrl: '/api/empty', method: 'GET' } as unknown as Request;
+    const jsonMock = jest.fn();
+    const statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+    const res = { locals: { traceId: 'empty' }, statusCode: 200, status: statusMock } as unknown as Response;
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const err = new Error('');
+    errorHandler(err, req, res, (() => {}) as any);
+    const errorEntry = logSpy.mock.calls.map(c => String(c[0])).find(l => l.includes('"event":"error"'))!;
+    expect(errorEntry).toMatch(/Internal Server Error/);
+    logSpy.mockRestore();
+  });
 });

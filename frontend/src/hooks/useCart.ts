@@ -49,7 +49,7 @@ export interface UseCartApi {
   total: number;
 }
 
-const CartContext = React.createContext<UseCartApi | undefined>(undefined);
+export const CartContext = React.createContext<UseCartApi | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = React.useState<CartItem[]>(() => loadCart().items);

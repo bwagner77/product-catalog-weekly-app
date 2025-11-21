@@ -36,7 +36,8 @@ router.post('/orders', async (req: Request, res: Response) => {
       };
     });
     const bulkResult = await Product.bulkWrite(bulk);
-    const matchedCount = (bulkResult as { matchedCount?: number; result?: { nMatched?: number } }).matchedCount ?? (bulkResult as { matchedCount?: number; result?: { nMatched?: number } }).result?.nMatched ?? 0;
+    interface BulkWriteResultMinimal { matchedCount?: number }
+    const matchedCount = (bulkResult as unknown as BulkWriteResultMinimal).matchedCount ?? 0;
     if (matchedCount !== items.length) {
       return res.status(409).json({ error: 'stock changed concurrently; order aborted' });
     }

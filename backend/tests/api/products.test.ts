@@ -7,12 +7,13 @@ import { getErrorCount } from '../../src/utils/traceId';
 
 describe('GET /api/products integration', () => {
   beforeAll(async () => {
-    await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_test');
+    await connectDB('mongodb://localhost:27017/product_catalog_products_test');
     await seedProducts();
   });
 
   afterAll(async () => {
-    await Product.deleteMany({});
+    const db = Product.db;
+    if (db) await db.dropDatabase();
     await disconnectDB();
   });
 

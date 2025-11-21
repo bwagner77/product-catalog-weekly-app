@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import ProductList from '../pages/ProductList';
 
@@ -22,8 +22,9 @@ describe('[US2] ProductList states', () => {
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
 
     // resolve with empty list
-    resolveLater.resolve?.({ ok: true, json: async () => [] });
-    await flush();
+    await act(async () => {
+      resolveLater.resolve?.({ ok: true, json: async () => [] });
+    });
     await waitFor(() => expect(screen.queryByText(/loading/i)).not.toBeInTheDocument());
   });
 

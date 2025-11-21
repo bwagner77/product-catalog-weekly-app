@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Product } from '../types/product';
-import { useCart } from '../hooks/useCart';
+import { CartContext } from '../hooks/useCart';
 
 export function formatPrice(value: number): string {
   if (Number.isNaN(value)) return '$0.00';
@@ -28,7 +28,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
   const alt = failed ? `${product.name} – image unavailable` : product.name;
-  const cart = useCart();
+  // Soft usage: component can render without provider in tests/UI that do not need cart actions.
+  const cart = React.useContext(CartContext) || null;
 
   const handleAdd = () => {
     if (!cart) return;

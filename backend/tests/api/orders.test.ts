@@ -77,4 +77,37 @@ describe('[US7] Orders API', () => {
     const final = await Product.findOne({ id: prodId }).lean();
     expect(final!.stock).toBe(0);
   });
+
+  it('rejects missing items property', async () => {
+    const res = await request(app).post('/api/orders').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/items/);
+  });
+
+  it('rejects non-integer quantity', async () => {
+    const res = await request(app).post('/api/orders').send({ items: [{ productId: prod1Id, quantity: 1.5 }] });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects zero quantity', async () => {
+    const res = await request(app).post('/api/orders').send({ items: [{ productId: prod1Id, quantity: 0 }] });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects unknown product id', async () => {
+    const missingId = uuidv4();
+    const res = await request(app).post('/api/orders').send({ items: [{ productId: missingId, quantity: 1 }] });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/not found/);
+  });
+
+  it('aborts order on simulated concurrent stock change (matchedCount mismatch)', async () => {
+    // Create product with stock sufficient, but simulate bulkWrite mismatch
+    const raceProd = await (Product as any).create({ id: uuidv4(), name: 'Concurrent Prod', description: 'C', price: 2, stock: 3, imageUrl: 'images/c.jpg' });
+    const spy = jest.spyOn(Product, 'bulkWrite').mockResolvedValue({ matchedCount: 0 } as any); // force mismatch
+    const res = await request(app).post('/api/orders').send({ items: [{ productId: raceProd.id, quantity: 1 }] });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/concurrently/i);
+    spy.mockRestore();
+  });
 });

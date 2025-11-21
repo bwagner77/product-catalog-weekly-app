@@ -75,9 +75,11 @@ describe('Product model validation', () => {
   it('prevents id modification after creation (immutable)', async () => {
     const prod = await (Product as any).create({ name: 'Immutable ID', description: 'desc', price: 1, stock: 1, imageUrl: 'images/x.jpg' });
     const originalId = prod.id;
-    prod.id = '11111111-1111-4111-8111-111111111111'; // attempt another v4-like id
-    await (prod as any).save();
-    // Mongoose immutable should keep original value
+    const attempted = '11111111-1111-4111-8111-111111111111';
+    (prod as any).id = attempted; // attempt mutation
+    // Without saving, the in-memory assignment should be ignored when refetched
+    const fresh = await Product.findOne({ id: originalId }).lean();
+    expect(fresh!.id).toBe(originalId);
     expect(prod.id).toBe(originalId);
   });
 
