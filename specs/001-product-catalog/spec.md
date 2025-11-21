@@ -7,6 +7,11 @@
 
 ## Clarifications
 
+### Session 2025-11-20
+
+- Q: What is the product search matching rule? → A: Case-insensitive partial substring match across both name and description fields; multiple words treated as a single phrase (no token AND logic).
+- Q: What pattern is used for seeded product images? → A: Deterministic placeholder filenames using the pattern "product<N>.jpg" starting at 1 (e.g., product1.jpg) matching seed insertion order; stable across runs.
+
 ### Session 2025-11-14
 
 - Q: What is the expected product list size and pagination approach? → A: Up to 100 items, no pagination.
@@ -130,6 +135,18 @@ As a shopper, I can place an order containing my cart items and view a confirmat
 2. Given I have just placed an order, When I revisit the order confirmation, Then data matches submission snapshot (quantity, total) even if product catalog changes afterwards.
 3. Given my cart is empty, When I attempt to place an order, Then the system prevents submission and shows guidance to add items.
 
+### User Story 8 - View Product Images (Priority: P4)
+
+As a shopper, I can see a product image alongside its name, description, price, and stock status so that I can visually assess items quickly.
+
+**Independent Test**: Load catalog with seeded products; verify each product card shows image with correct alt text; simulate missing imageUrl to see fallback.
+
+**Acceptance Scenarios**:
+
+1. Given a product has an imageUrl, When the catalog loads, Then its image displays with consistent dimensions and alt text equal to the product name.
+2. Given a product image fails to load or imageUrl is missing, When the catalog loads, Then a fallback placeholder image of the same dimensions displays with alt text indicating the product name plus "image unavailable".
+3. Given viewport changes (mobile to desktop), When images resize, Then aspect ratio is preserved and layout remains stable (no overlap or distortion).
+
 ### Edge Cases
 
 <!--
@@ -151,6 +168,12 @@ As a shopper, I can place an order containing my cart items and view a confirmat
 - Order submission with stale product data (use cart snapshot values)
 - Large cart quantity updates (total recalculates without precision drift)
 - Rounding total when sum involves fractional cents (round to two decimals)
+- Missing imageUrl (fallback placeholder shown)
+- Invalid or broken image URL (fallback placeholder shown)
+- Duplicate image filenames referencing different products (acceptable for placeholders; uniqueness not required)
+- Extremely long product name impacting alt text readability (wrap without truncation)
+- Image loading slower than text (text appears first; layout reserves space to prevent shift)
+- Mixed presence of images and fallbacks in the same view
 
 ## Requirements *(mandatory)*
 
@@ -180,7 +203,7 @@ As a shopper, I can place an order containing my cart items and view a confirmat
 - **FR-017**: System MUST allow creation, viewing, listing, updating, and deletion of categories (subject to assumption blocking deletion when products assigned).
 - **FR-018**: Category list MUST display id and name and provide edit and delete actions.
 - **FR-019**: Category form MUST require a non-empty name and show validation feedback on submit failure.
-- **FR-020**: Product browsing MUST support text search across name and description and filtering by category independently and in combination.
+- **FR-020**: Product browsing MUST support case-insensitive partial substring text search across name and description and filtering by category independently and in combination; multiple words are matched as one contiguous phrase.
 - **FR-021**: System MUST show a distinct zero-results message when search/filter returns no matches (different from empty catalog initial state).
 - **FR-022**: Cart MUST support add, remove, quantity update, and clear behaviors via user interactions.
 - **FR-023**: Cart MUST persist across browser refresh (local persistence) and restore state automatically on load.
@@ -193,6 +216,16 @@ As a shopper, I can place an order containing my cart items and view a confirmat
 - **FR-030**: Tests MUST cover: product search/filter behaviors, category CRUD flows (including blocked deletion), cart state updates, cart persistence, and order creation snapshot integrity.
 - **FR-031**: System MUST handle up to 200 products without requiring pagination (performance expectation maintained).
 - **FR-032**: Deleting a category with assigned products MUST be blocked with a clear explanation (assumption) rather than silent failure.
+- **FR-033**: Product entity MUST include imageUrl (non-empty string) representing a relative or absolute path to an image asset.
+- **FR-034**: Seed process MUST assign deterministic placeholder image filenames following pattern product<N>.jpg starting at 1 and stable across runs.
+- **FR-035**: All product-related API responses MUST include imageUrl for each product.
+- **FR-036**: Product display MUST render an accessible image for each product using alt text equal to product name (fallback variant includes suffix "image unavailable" when original missing/broken).
+- **FR-037**: Product images MUST present consistent square display dimensions (e.g., target 200x200 visual box) while preserving aspect ratio via cover-style cropping; no distortion allowed.
+- **FR-038**: Layout MUST remain responsive: images scale down with max-width: 100% rules, avoiding overflow at all supported breakpoints.
+- **FR-039**: A fallback placeholder image MUST display whenever imageUrl is missing or fails to load without causing layout shift beyond reserved space.
+- **FR-040**: Image rendering MUST not regress existing accessibility (focus order, alt text presence, contrast unaffected).
+- **FR-041**: Tests MUST validate presence and validity of imageUrl in product API responses, correct seeding pattern, ProductCard image rendering, fallback behavior, and responsive dimension integrity.
+- **FR-042**: Broken image load events MUST trigger automatic fallback substitution within 1 second.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -205,6 +238,7 @@ As a shopper, I can place an order containing my cart items and view a confirmat
   - updatedAt: ISO date-time string
   - categoryId: string (references Category id; optional if uncategorized)
   - stock: non-negative integer/number (0 indicates out of stock)
+  - imageUrl: non-empty string (placeholder or actual asset path)
 
 - **Category**: Organizational label applied to products.
   - id: UUID or unique string
@@ -246,6 +280,12 @@ As a shopper, I can place an order containing my cart items and view a confirmat
 - **SC-012**: Zero critical accessibility violations introduced by new cart, search, and category UI components.
 - **SC-013**: 100% of blocked category deletions (with assigned products) provide explanatory feedback.
 - **SC-014**: 100% orders retain original item prices despite subsequent product price changes.
+- **SC-015**: 100% products returned from list endpoint include a non-empty imageUrl field.
+- **SC-016**: 100% product cards display an image or fallback without broken image icon artifacts.
+- **SC-017**: 100% missing or broken images show fallback within ≤ 1 second of detection.
+- **SC-018**: 95% catalog page loads display all images/fallbacks in ≤ 2 seconds (typical connection) without cumulative layout shift causing content overlap.
+- **SC-019**: Zero critical accessibility violations introduced by images (all have alt text meeting specified rules).
+- **SC-020**: 0% of image renderings cause horizontal scroll at standard breakpoints.
 
 ## Assumptions
 
@@ -263,3 +303,7 @@ As a shopper, I can place an order containing my cart items and view a confirmat
 - No pagination required up to 200 products, search expected to be instantaneous within success criteria.
 - Cart storage uses a client-side persistence mechanism (e.g., browser storage) without server synchronization (technology details omitted in spec).
 - Only single currency (USD) throughout extended features.
+- Placeholder image assets exist in a static/public location; spec does not define storage technology.
+- No image upload or management in this phase; images are read-only references.
+- Fallback image is a single shared asset for all missing/broken cases.
+- Square target dimension (visual box) is consistent reference for layout; exact pixel size may adapt per responsive design (200x200 illustrative).

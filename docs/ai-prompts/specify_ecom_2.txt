@@ -1,0 +1,43 @@
+Please update and extend the existing Product Catalog specification in specs/001-product-catalog/ 
+to support product images. 
+Do NOT create a new folder. Extend the current spec in place.
+
+Add the following new functional areas:
+
+## 1. Product Image Field
+- Add a new field to Product: `imageUrl` (string).
+- During seeding, assign placeholder values following a consistent pattern: "product1.jpg", "product2.jpg", etc.
+- Ensure all Product entities in the backend include this field.
+- Validation: `imageUrl` must be a non-empty string.
+
+## 2. Frontend Product Display
+- Update the ProductCard component to display the product image using `imageUrl`:
+  <img src={product.imageUrl} alt={product.name} />
+- Maintain existing display of name, description, price, and stock status.
+- All product images must have consistent width and height (e.g., 200x200px) and maintain aspect ratio using object-fit: cover.
+- Images must be responsive; use max-width: 100% in grid/list views.
+- Provide a fallback placeholder image of the same dimensions if `imageUrl` is missing.
+
+## 3. Backend & API
+- Ensure GET /api/products and all product-related endpoints return `imageUrl` in responses.
+- Update seed scripts to populate the `imageUrl` field with the placeholder filenames.
+- No actual image file generation is required; assume images exist in a public/static folder.
+
+## 4. Testing
+
+Backend tests:
+- Verify `imageUrl` is present and valid in all product documents returned by GET /api/products.
+- Verify seeding logic assigns correct `imageUrl` values.
+
+Frontend tests:
+- Verify ProductCard renders the image correctly for all products.
+- Verify fallback image is displayed if `imageUrl` is missing.
+- Verify responsiveness and consistent sizing of images.
+- Ensure existing tests for product name, price, and stock status still pass.
+
+## 5. Nonfunctional Requirements
+- Images must not break layout; maintain responsive UI.
+- No changes to authentication or other business logic.
+- Product volume remains ≤200; pagination optional.
+
+Please merge these requirements into the existing spec while preserving all previous content and produce an updated unified specification.
