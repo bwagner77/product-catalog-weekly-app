@@ -243,16 +243,16 @@ Context: Adjust Docker Compose and frontend code to correctly pass VITE_API_BASE
 
 Goal: Extend Product schema (categoryId, stock, imageUrl); create Category & Order schemas; update seed logic for ≥20 products & ≥5 categories; deterministic image filenames.
 
-- [ ] T062 [P] [US4][US8] Extend Product Mongoose schema: add `categoryId`, `stock`, `imageUrl` with validation (non-negative stock, non-empty imageUrl)
-- [ ] T063 [P] [US4] Create Category Mongoose schema (id UUID, name unique, timestamps)
-- [ ] T064 [P] [US7] Create Order Mongoose schema (snapshot items, total, status="submitted")
-- [ ] T065 [US4][US8] Update seed script: ≥20 products, deterministic `product<N>.jpg` imageUrl, realistic stock distribution (include some zero stock)
-- [ ] T066 [P] [US4] New seed for categories (≥5) with stable UUIDs / names
-- [ ] T067 [P] [US7] Seed sanity: ensure no orders created; add future placeholder comment
-- [ ] T068 [P] Backend tests: Product schema new fields validation (stock >=0, imageUrl non-empty) in `backend/tests/models/productModel.test.ts`
-- [ ] T069 Backend tests: Category schema validation + uniqueness in `backend/tests/models/categoryModel.test.ts`
-- [ ] T070 Backend tests: Order schema snapshot & total calculation unit test in `backend/tests/models/orderModel.test.ts`
-- [ ] T071 [P] Update openapi.yaml Product schema (categoryId, stock, imageUrl) confirmation (already spec'd) + ensure examples reflect new fields
+ - [X] T062 [P] [US4][US8] Extend Product Mongoose schema: add `categoryId`, `stock`, `imageUrl` with validation (non-negative stock, non-empty imageUrl)
+ - [X] T063 [P] [US4] Create Category Mongoose schema (id UUID, name unique, timestamps)
+ - [X] T064 [P] [US7] Create Order Mongoose schema (snapshot items, total, status="submitted")
+ - [X] T065 [US4][US8] Update seed script: ≥20 products, deterministic `product<N>.jpg` imageUrl, realistic stock distribution (include some zero stock)
+ - [X] T066 [P] [US4] New seed for categories (≥5) with stable UUIDs / names
+ - [X] T067 [P] [US7] Seed sanity: ensure no orders created; add future placeholder comment
+ - [X] T068 [P] Backend tests: Product schema new fields validation (stock >=0, imageUrl non-empty) in `backend/tests/models/productModel.test.ts`
+ - [X] T069 Backend tests: Category schema validation + uniqueness in `backend/tests/models/categoryModel.test.ts`
+ - [X] T070 Backend tests: Order schema snapshot & total calculation unit test in `backend/tests/models/orderModel.test.ts`
+ - [X] T071 [P] Update openapi.yaml Product schema (categoryId, stock, imageUrl) confirmation (already spec'd) + ensure examples reflect new fields
 
 ## Phase 7: User Story 4 - Manage Categories (Priority: P4)
 
