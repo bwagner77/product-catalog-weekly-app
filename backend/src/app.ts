@@ -3,6 +3,7 @@ import cors from 'cors';
 import { traceIdMiddleware, errorHandler, getErrorCount } from './utils/traceId';
 import productsRoute from './routes/products';
 import categoriesRoute from './routes/categories';
+import ordersRoute from './routes/orders';
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 // Product catalog routes (US1) and categories (US4)
 app.use('/api', productsRoute);
 app.use('/api/categories', categoriesRoute);
+app.use('/api', ordersRoute);
 
 // Health endpoint (T036)
 app.get('/health', (_req: Request, res: Response) => {

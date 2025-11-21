@@ -28,13 +28,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
   const alt = failed ? `${product.name} – image unavailable` : product.name;
-  const cart = (() => {
-    try {
-      return useCart();
-    } catch {
-      return null; // allow standalone render if provider absent (tests)
-    }
-  })();
+  const cart = useCart();
 
   const handleAdd = () => {
     if (!cart) return;
@@ -49,7 +43,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
       role="article"
     >
       <div className="mb-3 w-[200px] h-[200px] bg-gray-50 border border-gray-100 rounded flex items-center justify-center overflow-hidden">
-        {/* eslint-disable-next-line jsx-a11y/alt-text */}
         <img
           src={src}
           onError={onError}

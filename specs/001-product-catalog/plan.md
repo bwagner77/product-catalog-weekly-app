@@ -121,6 +121,7 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 - Validation layers: product (stock >=0, imageUrl non-empty), category (name non-empty), order (items array not empty, each quantity >=1).
 - Search: case-insensitive substring on name + description (phrase semantics).
 - Error handling: 400 (validation), 404 (not found), 409 (category deletion conflict).
+- Stock Decrement (UPDATED 2025-11-21): Order submission performs atomic stock decrement via Mongo `bulkWrite` with conditional filters per line item. Failure of any filter (insufficient stock or race) aborts the entire operation with 409; snapshot persisted only on success. Concurrency validated in test T121.
 
 ### Frontend specifics (Extended):
 - Vite + React 18 + TS + Tailwind; use `import.meta.env.VITE_API_BASE_URL`.
@@ -209,7 +210,7 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 | Cart persistence corruption | User confusion | Validate stored JSON shape; fall back to empty cart with notice |
 | Category deletion conflicts | Data integrity loss | Explicit 409 response + UI messaging |
 | Order total mismatch after price changes | User trust | Snapshot price & name at order time; never recompute |
-| Stock race conditions on concurrent orders | Inventory integrity | Atomic decrement via findOneAndUpdate with stock check; retry on transient failure |
+| Stock race conditions on concurrent orders | Inventory integrity | Conditional bulkWrite; all line filters must pass or request aborts (409). Test T121 ensures only one succeeds. |
 
 ## Updated Complexity Tracking
 

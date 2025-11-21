@@ -20,6 +20,7 @@ FRONTEND_URL=http://localhost:5173
 Optional overrides:
 - SEED_PRODUCT_COUNT=20 (default if unset)
 - SEED_CATEGORY_COUNT=5 (default if unset)
+- PERF=1 (enable performance probe tests `perf.test.ts` & `orderPerf.test.ts`)
 
 ## Run Locally
 
@@ -33,6 +34,7 @@ Endpoints:
 - Products: http://localhost:3000/api/products
 - Categories: http://localhost:3000/api/categories
 - Orders: http://localhost:3000/api/orders (POST)
+- Order by Id: http://localhost:3000/api/orders/{id}
 - Health: http://localhost:3000/health | http://localhost:5173/health
 
 ## Health checks
@@ -65,8 +67,12 @@ npm test -- --runInBand tests/api/perf.test.ts
 - Prices display with $ and 2 decimals.
 - Extended seed inserts ≥20 products and ≥5 categories (idempotent).
 - Images use deterministic placeholders (product<N>.jpg) plus a shared fallback image.
+- Fallback alt pattern: `<Product Name> – image unavailable` (accessibility + degraded state clarity).
 - Search: case-insensitive substring on name + description.
 - Category deletion blocked if products exist (409 Conflict).
+- Category management performance & feedback: Aim for SC-007 (≤2s p95 for allowed create/update/delete) and SC-013 (100% blocked deletions emit clear explanation).
 - Cart persists in localStorage; stock=0 disables add-to-cart.
-- Orders capture product snapshot (name, price, quantity, total) without adjusting stock.
+- Orders capture product snapshot (name, price, quantity, total) and atomically decrement stock using conditional `bulkWrite` filters (`stock: { $gte: qty }`). On conflict or insufficient stock the request returns 409 and no partial fulfillment occurs.
 - Accessibility: all images have descriptive alt text; fallback indicates unavailability.
+- Performance probes: set `PERF=1` to run latency sampling; p95 targets: API ≤1000ms, initial render ≤2000ms.
+- Concurrency: simultaneous orders competing for limited stock yield one success (201) and one 409 rejection.

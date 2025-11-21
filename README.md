@@ -1,3 +1,4 @@
+# Product Catalog (Extended E‑commerce + Images)
 # Product Catalog (SDD Weekly Project)
 
 ⚠️ This is a milestone submission for the SDD Weekly Project, not the Final Project version.  
@@ -224,7 +225,7 @@ The primary goal is to provide an **intuitive, accessible, and responsive experi
 * [**Docker Build**](/docs/screenshots/docker-build.jpg) – Successful build output of frontend, backend, and MongoDB containers.
 * [**Error State**](/docs/screenshots/error-state.jpg) – Frontend display when API fails.
 * [**Loading State**](/docs/screenshots/loading-state.jpg) – Frontend display while API request is in progress.
-* [**MongoDB Documents**](/docs/screenshots/mongo-documents.jpg) – Snapshot of seeded products stored in MongoDB.
+| FR-013 | Health endpoints for frontend and backend container healthchecks.                                                   |
 * [**Product List**](/docs/screenshots/product-list.jpg) – Default catalog view showing all seeded products.
 * [**Responsive Layout**](/docs/screenshots/responsive-layout.jpg) – Product list displayed on a smaller screen for responsiveness.
 * [**Backend Tests Passed**](/docs/screenshots/tests-backend-passed.jpg) – Successful backend unit and integration test results.
@@ -245,7 +246,7 @@ cd product-catalog
 
 ```bash
 cp .env.example .env
-```
+| NFR-005 | Maintainability: unit/integration tests, modular architecture, clear separation of concerns. |
 
 3. **Build & Start Containers**
 

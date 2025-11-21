@@ -68,7 +68,7 @@ describe('Category CRUD API', () => {
   });
 
   it('rejects update causing duplicate name', async () => {
-    const c1 = await request(app).post('/api/categories').send({ name: 'Alpha' });
+    await request(app).post('/api/categories').send({ name: 'Alpha' });
     const c2 = await request(app).post('/api/categories').send({ name: 'Beta' });
     const res = await request(app).put(`/api/categories/${c2.body.id}`).send({ name: 'Alpha' });
     expect(res.status).toBe(400);
@@ -108,5 +108,37 @@ describe('Category CRUD API', () => {
   it('DELETE non-existent category returns 404', async () => {
     const res = await request(app).delete('/api/categories/00000000-0000-4000-8000-000000000000');
     expect(res.status).toBe(404);
+  });
+
+  it('handles create path E11000 duplicate error catch branch', async () => {
+    const originalCreate = (Category as any).create;
+    (Category as any).create = () => { throw new Error('E11000 duplicate key error collection: categories index: name_1 dup key'); };
+    const res = await request(app).post('/api/categories').send({ name: 'SyntheticDupRace' });
+    // Should surface duplicate name via catch block mapping
+    expect(res.status).toBe(400);
+    expect(/duplicate/i.test(res.body.message)).toBeTruthy();
+    (Category as any).create = originalCreate;
+  });
+
+  it('handles update path E11000 duplicate error catch branch', async () => {
+    // Create two distinct categories
+    await request(app).post('/api/categories').send({ name: 'FirstUnique' });
+    const c2 = await request(app).post('/api/categories').send({ name: 'SecondUnique' });
+    const originalUpdate = (Category as any).findOneAndUpdate;
+    (Category as any).findOneAndUpdate = () => { throw new Error('E11000 duplicate key error collection: categories index: name_1 dup key'); };
+    const res = await request(app).put(`/api/categories/${c2.body.id}`).send({ name: 'FirstUnique' });
+    expect(res.status).toBe(400);
+    expect(/duplicate/i.test(res.body.message)).toBeTruthy();
+    (Category as any).findOneAndUpdate = originalUpdate;
+  });
+
+  it('delete route error handler invocation (internal error yields 500)', async () => {
+    const created = await request(app).post('/api/categories').send({ name: 'ErrCat' });
+    const id = created.body.id;
+    const originalCount = (Product as any).countDocuments;
+    (Product as any).countDocuments = () => { throw new Error('synthetic failure'); };
+    const res = await request(app).delete(`/api/categories/${id}`);
+    expect(res.status).toBe(500);
+    (Product as any).countDocuments = originalCount;
   });
 });

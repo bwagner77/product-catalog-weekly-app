@@ -25,7 +25,11 @@ const OrderConfirmation: React.FC<Props> = ({ order, onClose }) => {
         <p className="text-sm" data-testid="order-total">Total: ${order.total.toFixed(2)}</p>
         <ul className="divide-y" data-testid="order-items">
           {order.items.map(it => (
-            <li key={it.productId} className="py-1 text-xs flex justify-between">
+            <li
+              key={it.productId}
+              className="py-1 text-xs flex justify-between"
+              aria-label={it.name}
+            >
               <span className="truncate" title={it.name}>{it.name}</span>
               <span>{it.quantity} × ${it.price.toFixed(2)}</span>
             </li>

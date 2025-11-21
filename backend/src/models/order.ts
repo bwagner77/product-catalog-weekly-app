@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { v4 as uuidv4, validate as uuidValidate, version as uuidVersion } from 'uuid';
+import { roundCurrency } from '../utils/money';
 
 export type OrderItemSnapshot = {
   productId: string;
@@ -61,8 +62,7 @@ const OrderSchema = new Schema<OrderDocument>(
 OrderSchema.pre('validate', function computeTotal(this: mongoose.Document & OrderDocument) {
   if (!this.isModified('items')) return; // only recompute if items changed
   const sum = this.items.reduce((acc, it) => acc + it.price * it.quantity, 0);
-  // Standard half-up rounding
-  this.total = Number(sum.toFixed(2));
+  this.total = roundCurrency(sum);
 });
 
 export const Order = (mongoose.models.Order as mongoose.Model<OrderDocument>) || mongoose.model<OrderDocument>('Order', OrderSchema);

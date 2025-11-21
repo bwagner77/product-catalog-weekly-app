@@ -37,10 +37,10 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     if (existing) {
       return res.status(400).json({ message: 'duplicate name' });
     }
-    const created = await (Category as any).create({ name: name.trim() });
+    const created = await Category.create({ name: name.trim() });
     res.status(201).json(created.toJSON());
-  } catch (err: any) {
-    if (err && /E11000/.test(String(err.message))) {
+  } catch (err: unknown) {
+    if (err instanceof Error && /E11000/.test(err.message)) {
       return res.status(400).json({ message: 'duplicate name' });
     }
     next(err);
@@ -66,8 +66,8 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
     ).lean();
     if (!updated) return res.status(404).json({ message: 'Not found' });
     res.json(updated);
-  } catch (err: any) {
-    if (err && /E11000/.test(String(err.message))) {
+  } catch (err: unknown) {
+    if (err instanceof Error && /E11000/.test(err.message)) {
       return res.status(400).json({ message: 'duplicate name' });
     }
     next(err);

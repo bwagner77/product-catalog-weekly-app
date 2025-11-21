@@ -9,7 +9,7 @@ Updated: 2025-11-20 (E-commerce + Images Extensions)
 - Cloud deployment specifics: Deferred for MVP (local Docker only).
 - Performance validation tooling: Choose Playwright for manual local measures.
 - Image optimization strategy: Deferred (use static placeholders, no resizing pipeline yet).
-- Stock decrement behavior: For this phase, do NOT mutate stock on order submission (inventory accounting deferred).
+- Stock decrement behavior (UPDATED 2025-11-21): Orders now atomically decrement stock via Mongo `bulkWrite` with per-line conditional filters (`stock: { $gte: quantity }`). If any filter fails (insufficient stock or race), the operation aborts and the API returns 409 with no partial fulfillment. Advanced inventory (reservations, restock flows) remains deferred.
 - Category deletion with assigned products: Clarified as blocked to preserve integrity.
 
 ## Decisions
@@ -50,13 +50,24 @@ Updated: 2025-11-20 (E-commerce + Images Extensions)
 - Validation: Manual via Playwright scripts measuring render and API timings.
 
 ### Images & Layout
-- Decision: Square display box (approx 200x200) with object-fit cover; fallback placeholder for missing/broken images.
-- Rationale: Consistent visual grid, prevents layout shift; cover cropping widely adopted.
-- Alternatives considered: Contain (risk letterboxing), variable heights (causes masonry complexity), lazy loading (deferred until scale demands).
+ Decision: Square display box (200x200) with object-fit cover; deterministic placeholder images (`product<N>.jpg`) plus single shared `fallback.jpg` for missing/broken images; alt text pattern `<name> – image unavailable` on fallback.
+ Rationale: Consistent grid, prevents layout shift (supports SC-018 CLS target <0.1); deterministic naming simplifies tests (SC-015..SC-017); explicit fallback alt pattern ensures accessibility (SC-019) and informs users of degraded state.
+ Alternatives considered: Variable height (layout instability), per-product fallback variants (unnecessary complexity), lazy loading (deferred until scale), dynamic resizing service (out of scope phase).
 
-### Search Semantics
+ Validation: Manual via Playwright scripts measuring render and API timings; include visual completeness check that all images or fallbacks present ≤2s p95 (SC-018) and sample broken image simulation to ensure fallback substitution under 1s (SC-017).
 - Decision: Case-insensitive partial substring match across name + description; multi-word treated as single phrase.
 - Rationale: Simple mental model, efficient with basic indexes; avoids complexity of tokenization.
+### Image Success Criteria References (FR-041)
+
+ SC-015: Verify all `imageUrl` fields non-empty via backend test (`productsImages.test.ts`).
+ SC-016: Frontend renders either image or fallback (use JSDOM + error event test).
+ SC-017: Simulated error event triggers immediate source swap to `fallback.jpg` (assert synchronous handler behavior).
+ SC-018: 200x200 reserved box prevents layout shift; measure CLS (<0.1) manually with Performance panel if desired.
+ SC-019: Alt text pattern validated for fallback `<name> – image unavailable`.
+
+Sampling Guidance:
+ Run images test suite after seed to confirm deterministic asset references.
+ For manual perf pass: throttle CPU 4x and network to Fast 3G; confirm placeholder + fallback still within SC-018 budget (local variance acceptable; treat >2.5s as investigation trigger).
 - Alternatives considered: Token AND logic (increases complexity), fuzzy search (overkill), exact match (poor UX).
 
 ### Category Deletion Rule
@@ -64,15 +75,20 @@ Updated: 2025-11-20 (E-commerce + Images Extensions)
 - Rationale: Prevent orphaned product references; simple integrity without cascade.
 - Alternatives considered: Cascade removal (data loss risk), allow deletion (creates invalid state), soft-delete (unneeded complexity).
 
-### Stock Handling
-- Decision: Display stock and prevent cart additions when stock = 0 or requested quantity > stock; do NOT decrement stock on order submission in this phase.
-- Rationale: Separates availability signaling from inventory accounting; simplifies order logic.
-- Alternatives considered: Decrement stock immediately (needs concurrency/inventory logic), ignore stock (loss of UX clarity).
+### Stock Handling (UPDATED 2025-11-21)
+- Decision: Display stock, gate cart additions when stock = 0 or requested quantity > stock, and decrement stock atomically on successful order submission (bulkWrite conditional filters). No partial fulfillment.
+- Rationale: Keeps catalog availability accurate post-purchase while preserving simple, low-contention integrity without full transactions.
+- Alternatives considered: Deferred decrement (stale availability), non-atomic sequential updates (race window), multi-document transaction (unnecessary complexity at current scale).
+- Concurrency: Simultaneous orders for limited stock yield one 201 success; subsequent conflicting submissions receive 409 (validated in T121).
+
+## Coverage & Instrumentation Summary (Added 2025-11-21)
+Backend test coverage: >94% statements / >81% branches (≥80% target). Frontend coverage: >95% statements / >86% branches. Performance probes (`perf.test.ts`, `orderPerf.test.ts`) gated behind `PERF=1` environment variable to avoid CI noise; they log average and p95 latencies. Logging & metrics test (`loggingMetrics.test.ts`) validates structured request log format and error counter increments. Image timing and fallback tests assert synchronous substitution (<1000ms) and alt pattern correctness ensuring SC-015..SC-019. Accessibility suite covers focus management for order confirmation dialog.
 
 ### Order Snapshot
 - Decision: Capture name, price, quantity at submission; immutable total.
 - Rationale: Guards against product changes post-order; stable audit view.
 - Alternatives considered: Re-resolve product data on read (risk divergence), store only productIds (requires joins later).
+- Implementation Detail (2025-11-21): Snapshot taken BEFORE bulkWrite decrement; total rounded exactly once via `roundCurrency`; if any line fails its stock filter the entire operation aborts (409) and snapshot is discarded.
 
 ## Performance Validation Steps (Playwright) — MVP (T041)
 

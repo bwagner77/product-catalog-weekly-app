@@ -9,7 +9,15 @@ type FetchOptions = {
 
 function buildApiUrl(baseUrl?: string, search?: string, categoryId?: string): string {
   const envBase = (import.meta.env.VITE_API_BASE_URL as string) || '';
-  const base = (baseUrl ?? envBase).replace(/\/$/, '');
+  const rawBase = (baseUrl ?? envBase).trim();
+  const base = rawBase.replace(/\/$/, '');
+  // If no base provided, fall back to relative path (supports dev proxy / same-origin)
+  if (!base) {
+    const params: string[] = [];
+    if (search) params.push(`search=${encodeURIComponent(search)}`);
+    if (categoryId) params.push(`categoryId=${encodeURIComponent(categoryId)}`);
+    return params.length ? `/api/products?${params.join('&')}` : '/api/products';
+  }
   const url = new URL(`${base}/api/products`);
   if (search) url.searchParams.set('search', search);
   if (categoryId) url.searchParams.set('categoryId', categoryId);

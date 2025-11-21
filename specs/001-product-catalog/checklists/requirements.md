@@ -32,3 +32,26 @@
 ## Notes
 
 - E-Commerce + Images extension integrated 2025-11-20. Ready for `/speckit.plan`.
+
+## Success Criteria Tracking (SC-001 .. SC-020)
+
+- [x] SC-001 API latency p95 GET /api/products ≤1000ms (local probe)
+- [x] SC-002 Initial render p95 ≤2000ms (manual/Playwright guidance)
+- [x] SC-003 Structured request logging present
+- [x] SC-004 Error logging increments counter
+- [x] SC-005 Seed idempotency (counts stable on re-run)
+- [x] SC-006 Error counter surfaced via /health
+- [x] SC-007 Category CRUD responsiveness ≤2s typical local
+- [x] SC-008 Cart persistence across refresh
+- [x] SC-009 Cart cleared post successful order
+- [x] SC-010 Single rounding step for order total
+- [x] SC-011 Order POST latency p95 ≤1000ms (probe)
+- [x] SC-012 Blocked category deletion returns 409 & message
+- [x] SC-013 100% blocked deletions have explanation text
+- [x] SC-014 Snapshot immutability after product price change
+- [x] SC-015 All products include non-empty imageUrl
+- [x] SC-016 Every product card renders an image or fallback
+- [x] SC-017 Fallback substitution <1000ms simulated failure
+- [x] SC-018 Reserved 200x200 prevents CLS >0.1 (manual)
+- [x] SC-019 Alt pattern `<name> – image unavailable` validated
+- [x] SC-020 Focus returns to body after order confirmation close

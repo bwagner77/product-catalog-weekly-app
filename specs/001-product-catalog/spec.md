@@ -249,6 +249,7 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - **Category**: Organizational label applied to products.
   - id: UUID or unique string
   - name: string (unique within catalog; assumption)
+  - Performance & Feedback References: SC-007 (≤2s p95 for allowed create/update/delete) and SC-013 (explanatory messaging for 100% blocked deletions when products assigned)
 
 - **CartItem**: A shopper-selected intended purchase item.
   - productId: Product id

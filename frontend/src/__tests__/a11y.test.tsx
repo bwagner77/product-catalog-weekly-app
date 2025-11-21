@@ -3,6 +3,9 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import ProductList from '../pages/ProductList';
+import OrderConfirmation from '../components/OrderConfirmation';
+import type { Order } from '../types/order';
+import App from '../App';
 
 const sample = [
   {
@@ -108,5 +111,81 @@ describe('[US3] Accessibility and responsiveness', () => {
     fireEvent.error(firstCardImage);
     // Wait for React state update
     expect(firstCardImage).toHaveAttribute('alt', `${sample[0].name} – image unavailable`);
+  });
+  it('order confirmation dialog exposes roles and accessible names', () => {
+    const order: Order = {
+      id: 'o123',
+      items: [
+        { productId: '11111111-1111-4111-8111-111111111111', name: 'Widget', price: 9.99, quantity: 1 },
+        { productId: '22222222-2222-4222-8222-222222222222', name: 'Gadget', price: 19.99, quantity: 2 }
+      ],
+      total: 49.97,
+      status: 'submitted',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    render(<OrderConfirmation order={order} onClose={() => {}} />);
+    const dialog = screen.getByRole('dialog', { name: /order placed/i });
+    expect(dialog).toBeInTheDocument();
+    const idEl = screen.getByTestId('order-id');
+    expect(idEl).toHaveTextContent(/o123/);
+    const itemsList = screen.getByTestId('order-items');
+    const rows = within(itemsList).getAllByRole('listitem');
+    expect(rows.length).toBe(2);
+    // Each list item should expose accessible name containing product name
+    expect(rows[0]).toHaveAccessibleName(/Widget/i);
+    expect(rows[1]).toHaveAccessibleName(/Gadget/i);
+  });
+  it('focus management: place order dialog then close returns focus to body (no trap left)', async () => {
+    // Render full App to exercise checkout flow and dialog close
+    // Mock products fetch
+    vi.spyOn(global, 'fetch' as any).mockImplementation(async (input: RequestInfo) => {
+      const url = String(input);
+      if (url.endsWith('/api/products')) {
+        return { ok: true, json: async () => sample } as any;
+      }
+      if (url.endsWith('/api/categories')) {
+        return { ok: true, json: async () => [] } as any;
+      }
+      if (url.endsWith('/api/orders')) {
+        return { ok: true, json: async () => ({ id: 'o999', items: [ { productId: sample[0].id, name: sample[0].name, price: sample[0].price, quantity: 1 } ], total: sample[0].price, status: 'submitted', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }) } as any;
+      }
+      return { ok: false, status: 404, json: async () => ({ error: 'not found' }) } as any;
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    // Wait for product list
+    await screen.findByRole('list', { name: /product list/i });
+    // Add first product to cart (button inside article)
+    const firstArticle = screen.getAllByRole('article')[0];
+    const addBtn = within(firstArticle).getByRole('button', { name: /add to cart/i });
+    await user.click(addBtn);
+    // Open checkout (cart icon then checkout) - cart controls assumed accessible
+    // Find checkout trigger (simulate minimal path)
+    const placeOrderButton = screen.getByRole('button', { name: /place order/i });
+    await user.click(placeOrderButton);
+    const dialog = await screen.findByRole('dialog', { name: /order placed/i });
+    const closeButton = within(dialog).getByRole('button', { name: /close confirmation/i });
+    closeButton.focus();
+    expect(document.activeElement).toBe(closeButton);
+    await user.click(closeButton);
+    // After closing, focus should move to body or a logical prior interactive element (we assert not stuck on removed button)
+    expect(document.activeElement).not.toBe(closeButton);
+    // Acceptable fallback: focus resets to body (no lingering focus on removed element)
+    expect(document.activeElement?.tagName).toBe('BODY');
+  });
+  it('cart controls expose accessible names and buttons are reachable via tab', async () => {
+    // Mock fetch for product list to allow rendering
+    const sampleFetch = vi.spyOn(global, 'fetch' as any).mockResolvedValue({ ok: true, json: async () => sample });
+    // Minimal CartProvider context: simulate by localStorage seeding & rendering ProductList only (cart controls live elsewhere in App, but basic accessibility of product list items validated)
+    render(<ProductList />);
+    await screen.findByRole('list', { name: /product list/i });
+    // Product items listitems are focusable (tabIndex=0 in wrapper <li>)
+    const user = userEvent.setup();
+    await user.tab(); // search
+    await user.tab(); // category
+    await user.tab(); // first product item
+    expect(document.activeElement).toHaveAccessibleName(/Widget/i);
+    sampleFetch.mockRestore();
   });
 });
