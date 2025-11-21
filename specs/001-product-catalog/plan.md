@@ -1,25 +1,26 @@
-# Implementation Plan: Product Catalog
+# Implementation Plan: Product Catalog (Extended: E-commerce & Images)
 
-**Branch**: `001-product-catalog` | **Date**: 2025-11-14 | **Spec**: ./spec.md
+**Branch**: `001-product-catalog` | **Date**: 2025-11-14 (updated 2025-11-20) | **Spec**: ./spec.md
 **Input**: Feature specification from `/specs/001-product-catalog/spec.md`
 
 ## Summary
 
-MVP delivers a read‑only product catalog. A React 18 + TypeScript + Vite + TailwindCSS frontend renders a list of products (name, description, price) from a TypeScript Express API `GET /api/products` backed by MongoDB (Mongoose). At least 5 products are seeded idempotently on first run. UI is clean, responsive, and accessible; prices display a currency symbol with two decimals. Clarification: up to 100 items, no pagination.
+Initial MVP delivered read‑only product listing. This extension adds categories (CRUD), product search & filtering, stock display and cart gating, client‑side cart with persistence, order submission with snapshot semantics, deterministic product images plus fallback behavior, and responsive layout refinements (grid breakpoints, collapsible cart sidebar, nav bar). Seed volume increases (≥20 products, ≥5 categories) to better exercise filtering and search. Product images use deterministic placeholder filenames (`product<N>.jpg`); no upload or transformation pipeline. Performance, accessibility, and containerization principles remain unchanged.
 
 ## Technical Context
 
 **Language/Version**: TypeScript (ES2022), Node.js 20.x, React 18  
-**Primary Dependencies**: Express, Mongoose, uuid, cors, Vite, React, TailwindCSS, Jest, Supertest, Vitest, React Testing Library, ESLint, Prettier, ts-node-dev  
-**Storage**: MongoDB (Mongoose ODM)  
-**Testing**: Backend: Jest + Supertest; Frontend: Vitest + React Testing Library; Coverage ≥80% on critical paths  
+**Primary Dependencies**: Express, Mongoose, uuid, cors, Vite, React, TailwindCSS, Jest, Supertest, Vitest, React Testing Library, ESLint, Prettier, ts-node-dev (unchanged)  
+**Added Concerns**: Client-side cart (localStorage), order snapshot logic, category CRUD flows, image display + fallback  
+**Storage**: MongoDB (Mongoose ODM) — collections: products, categories, orders (orders store snapshots)  
+**Testing**: Backend: Jest + Supertest; Frontend: Vitest + RTL; ≥80% coverage (must include new flows: search/filter, cart persistence, category CRUD, order creation, image fallback)  
 **Target Platform**: Docker Compose (frontend 5173, backend 3000, MongoDB 27017)  
-**Project Type**: Web application (separate backend + frontend)  
-**Performance Goals**: Frontend initial render ≤2s p95 (typical ≤1s); API GET /api/products ≤1s p95 (typical ≤500ms local)  
-**Constraints**: Read‑only scope; no authentication; no caching/CDN; Tailwind‑only styling; prices formatted to two decimals; immutable UUID id; idempotent seed; lean Mongo queries; product volume ≤100 items, no pagination  
-**Scale/Scope**: ≤100 products visible; low concurrency (developer local)
+**Performance Goals**: Frontend initial render ≤2s p95 (typical ≤1s); API list/search ≤1s p95; cart ops & order submission ≤500ms typical; image loading/fallback ≤1s detection  
+**Constraints**: No authentication; no image upload; no caching/CDN; Tailwind-only; prices two decimals; UUID immutable; idempotent extended seed; lean queries; product volume ≤200 (search/filter) without pagination  
+**Scale/Scope**: ≤200 products; low concurrency; cart local-only (no multi-user sync)  
+**Out-of-Scope**: Stock decrement on order, advanced image optimization, pagination, discounting, tax, payments.
 
-## Constitution Check
+## Constitution Check (Pre-Extension Re-evaluated)
 
 Gate evaluation per Constitution (v1.0.0):
 
@@ -28,7 +29,7 @@ Gate evaluation per Constitution (v1.0.0):
 | Code Quality | Single responsibility, Prettier 2‑space enforced | PASS | ESLint + Prettier planned; modular components/services |
 | Testing Standards | Unit + integration, ≥80% coverage, no E2E | PASS | Jest/Vitest configured; thresholds enforced |
 | UX Consistency | Mobile‑first, Tailwind‑only, accessibility | PASS | Responsive layout and a11y checks included |
-| Performance | Page ≤2s, API ≤1s | PASS | Targets documented and validated manually |
+| Performance | Page ≤2s, API ≤1s, cart/order ops ≤500ms | PASS | New ops targets added; still feasible locally |
 | Deployment Strategy | Docker Compose multi‑service | PASS | One‑command up via compose, .env used |
 | Technology Choices | Mature, testable, container‑friendly | PASS | Express, React, Mongoose, Vite |
 | Governance | Versioning, plan/spec/tasks artifacts | PASS | Plan/spec/contracts/data‑model/quickstart present |
@@ -113,28 +114,102 @@ Phase 0 (Research): Completed — decisions for stack, observability, performanc
 
 Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.yaml`, and `quickstart.md` present. Clarification integrated: ≤100 items, no pagination.
 
-Backend specifics:
+### Backend specifics (Extended):
 - Express + TypeScript with ts-node-dev (`--respawn --transpile-only`).
-- CORS: enable with origin `${FRONTEND_URL:-http://localhost:5173}`; methods [GET] sufficient for MVP.
+- CORS: origin `${FRONTEND_URL:-http://localhost:5173}`; methods [GET, POST, PUT, DELETE] for category/order operations.
+- Routes added: `/api/categories` (CRUD), `/api/orders` (POST + GET by id), extended `/api/products` with `search`, `categoryId` query params.
+- Validation layers: product (stock >=0, imageUrl non-empty), category (name non-empty), order (items array not empty, each quantity >=1).
+- Search: case-insensitive substring on name + description (phrase semantics).
+- Error handling: 400 (validation), 404 (not found), 409 (category deletion conflict).
 
-Frontend specifics:
-- Vite + React 18 + TS + Tailwind; use `import.meta.env.VITE_API_BASE_URL` directly.
-- Components: ProductCard, Loading, ErrorMessage, EmptyState; page: ProductList.
-- Create `src/api/products.ts` for fetch utilities to isolate data layer.
-- Accessibility: semantic markup, keyboard navigation; minimal ARIA.
+### Frontend specifics (Extended):
+- Vite + React 18 + TS + Tailwind; use `import.meta.env.VITE_API_BASE_URL`.
+- New pages/components:
+  - **NavBar**:
+    - Fixed at top of page, full-width.
+    - Left: site logo / name ("Ecomora").
+    - Right: icons/links (Cart count, Categories dropdown).
+    - Responsive: collapses menu on mobile; sticky behavior.
+  - **SearchBar + CategoryFilter**:
+    - Positioned at top of ProductList page, horizontally aligned.
+    - Filters/search query backend dynamically.
+  - **ProductList**:
+    - Main content area, grid layout.
+    - Breakpoints: 1 column mobile, 2 columns tablet, 3–4 columns desktop.
+  - **ProductCard**:
+    - Displays `imageUrl` with consistent width/height (e.g., 200x200px), `object-fit: cover`.
+    - Fallback placeholder if image missing/broken (required).
+    - Stock = 0 disables add-to-cart and shows explicit “Out of stock” (required).
+    - Tooltip on hover for image/title (optional enhancement).
+  - **CartSidebar**:
+    - Right-hand side on desktop.
+    - Collapsible/hidden on mobile; toggled via icon in NavBar.
+    - Displays current items, quantities, and totals in real time (required).
+  - **OrderConfirmation**:
+    - Modal or page after order submission.
+    - Displays product images, names, quantities, and total price (required).
+  - **CategoryManagement**:
+    - Admin-style CRUD interface for categories (optional placeholder access for MVP).
+- Local cart hook/module manages state + persistence (add/remove/update, total computation, required).
+- Order flow: capture snapshot, then clear cart (stock unchanged per spec assumption, required).
+- Accessibility:
+  - Alt text for images (required), keyboard focus preserved after cart updates (required).
+- Layout responsiveness:
+  - Grid adapts per breakpoints, sidebar collapsible, top components sticky/responsive (required).
+- Interactions/UX:
+  - Add-to-cart triggers toast/notification (optional animation/enhancement).
+  - Zero-stock products clearly labeled; add-to-cart button disabled (required).
+  - Empty cart triggers `EmptyState` component (required).
+  - Failed order submission shows `ErrorMessage` with guidance (required).
 
-Testing:
-- Backend: Jest + Supertest; thresholds ≥80% (branches/functions/lines/statements).
-- Frontend: Vitest + RTL (+ jsdom, jest-dom); thresholds ≥80%.
-- State tests: loading/empty/error; a11y checks; model validation; seed idempotency.
+### Testing (Extended):
+- Backend: Add tests for category CRUD, product search/filter queries (including zero-results), order creation (snapshot integrity, validation failures), imageUrl presence.
+- Frontend: Add tests for cart persistence (localStorage), quantity updates, disabled add-to-cart for stock 0, search + filter interactions, image fallback rendering, responsive layout breakpoints, order confirmation view.
+- Performance probe remains opt-in; consider adding lightweight cart operation timing (skipped by default) using environment flag.
 
-Performance validation:
-- Manual local checks (Playwright): page render ≤2s p95; API latency ≤1s p95; steps recorded in `research.md`.
+### Performance validation (Extended):
+- Manual checks expanded: ensure cart add/remove and order submission typical latency ≤500ms; image loading does not push page render beyond 2s p95; fallback substitution <1s.
 
-Containerization:
-- Docker Compose with frontend, backend, mongo services; health checks via `/health` endpoints.
-- Environment mapping via `.env`; optional build arg for Vite `VITE_API_BASE_URL` in frontend image.
+### Containerization (Unchanged Mechanics):
+- Docker Compose unchanged but backend now exposes additional routes; verify health check unaffected.
+- Add placeholder images to `frontend/public/images/` (e.g., product1.jpg .. product20.jpg) or single fallback for missing references.
 
-## Complexity Tracking
+## Phase Plan
 
-No violations or exceptional complexity introduced. MVP scope constrained to a single read‑only list.
+| Phase | Focus | Outputs | Exit Criteria |
+|-------|-------|---------|---------------|
+| 0 | Research extensions | Updated `research.md` decisions | All new decisions documented (search, images, cart, categories) |
+| 1 | Data & Contracts | Updated `data-model.md`, extended `openapi.yaml` | Entities & endpoints reflect extensions |
+| 2 | Implementation scaffolding | Code mods: models, routes, frontend components structure, seed updates | All new artifacts compile & baseline tests pass |
+| 3 | Feature completion | Cart, search/filter, category CRUD, images, order flow fully implemented | Functional tests green, coverage ≥80% |
+| 4 | Performance & polish | Optional perf probes, accessibility audits, docs updates | Success criteria SC-001..SC-020 met |
+
+## Task Breakdown (High-Level)
+
+1. Extend Product model (categoryId, stock, imageUrl) & migration seed logic.
+2. Create Category model + CRUD route + validation tests.
+3. Augment products route with search & category filtering query params.
+4. Implement Order model & POST/GET routes (snapshot logic, total calc, validations).
+5. Update frontend types (Product includes new fields; Order, Category types).
+6. Implement NavBar, SearchBar, CategoryFilter, CartSidebar, OrderConfirmation components.
+7. Enhance ProductCard: image, stock gating, alt/fallback behavior.
+8. Cart state module/hook with localStorage persistence & quantity updates.
+9. Order submission flow & success confirmation page/modal.
+10. Accessibility review (focus order after cart updates, alt text correctness, zero-results messaging distinct from empty state).
+11. Tests: backend (search/filter, categories, orders), frontend (cart persistence, images, search + filter interactions, order confirmation).
+12. Performance sampling scripts update (optional) to include cart & order timings.
+13. Documentation updates (`quickstart.md`, README additions for new features).
+
+## Risk & Mitigation
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Search performance with 200 products | Moderate | Keep substring search simple; add indexes if slowdown observed |
+| Image load delays | Layout shift | Reserve space with fixed height classes; fallback image immediate |
+| Cart persistence corruption | User confusion | Validate stored JSON shape; fall back to empty cart with notice |
+| Category deletion conflicts | Data integrity loss | Explicit 409 response + UI messaging |
+| Order total mismatch after price changes | User trust | Snapshot price & name at order time; never recompute |
+
+## Updated Complexity Tracking
+
+Complexity increased moderately (additional entities, client persistence, filtering). Mitigated by: clear boundaries (no auth/uploads), deterministic seed, local-only cart. No constitution violations.

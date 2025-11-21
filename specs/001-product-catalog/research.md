@@ -2,11 +2,15 @@
 
 Date: 2025-11-10
 Branch: 001-product-catalog
+Updated: 2025-11-20 (E-commerce + Images Extensions)
 
 ## Unknowns and Questions
 
 - Cloud deployment specifics: Deferred for MVP (local Docker only).
 - Performance validation tooling: Choose Playwright for manual local measures.
+- Image optimization strategy: Deferred (use static placeholders, no resizing pipeline yet).
+- Stock decrement behavior: For this phase, do NOT mutate stock on order submission (inventory accounting deferred).
+- Category deletion with assigned products: Clarified as blocked to preserve integrity.
 
 ## Decisions
 
@@ -21,14 +25,14 @@ Branch: 001-product-catalog
 - Alternatives considered: Fastify (perf gain not needed), NestJS (extra complexity), Koa (less common).
 
 ### Data Model
-- Decision: Product { id (UUID immutable), name, description, price, createdAt, updatedAt }
-- Rationale: UUID prevents collisions across environments; timestamps via Mongoose `timestamps: true`.
-- Alternatives considered: Mongo ObjectId only (kept but expose UUID as primary id field in API), composite keys (unnecessary).
+- Decision: Product { id (UUID immutable), name, description, price, categoryId, stock, imageUrl, createdAt, updatedAt }
+- Rationale: Added categoryId for filtering organization; stock for availability display & cart rules; imageUrl for visual context; all fields align with extended spec.
+- Alternatives considered: Use ObjectId references only (simpler but less explicit in API surface); exclude stock (would remove availability UX); omit imageUrl (reduces visual UX). Kept explicit fields for clarity.
 
 ### Seeding Strategy
-- Decision: Idempotent seed using upsert on UUID or name+price tuple; if products exist (count >= 5) skip insert.
-- Rationale: Ensures first run visibility; no duplicates across restarts.
-- Alternatives considered: Blind insert (duplicates), Drop collection (destructive).
+- Decision: Idempotent seed using upsert; ensure ≥20 products with deterministic image filenames `product<N>.jpg` and ≥5 categories; skip inserts if counts satisfied.
+- Rationale: Larger seed increases search/filter realism; deterministic image names simplify tests.
+- Alternatives considered: Random image names (harder to assert), fewer products (less robust search/filter testing), seeding categories only when empty (kept idempotency logic).
 
 ### Observability
 - Decision: Basic request logging + error counter + startup seed verification log (per Clarification Q1).
@@ -44,6 +48,31 @@ Branch: 001-product-catalog
 - Decision: Frontend render ≤2s p95 (typical ≤1s); API latency ≤1s p95.
 - Rationale: Matches spec and constitution; feasible locally.
 - Validation: Manual via Playwright scripts measuring render and API timings.
+
+### Images & Layout
+- Decision: Square display box (approx 200x200) with object-fit cover; fallback placeholder for missing/broken images.
+- Rationale: Consistent visual grid, prevents layout shift; cover cropping widely adopted.
+- Alternatives considered: Contain (risk letterboxing), variable heights (causes masonry complexity), lazy loading (deferred until scale demands).
+
+### Search Semantics
+- Decision: Case-insensitive partial substring match across name + description; multi-word treated as single phrase.
+- Rationale: Simple mental model, efficient with basic indexes; avoids complexity of tokenization.
+- Alternatives considered: Token AND logic (increases complexity), fuzzy search (overkill), exact match (poor UX).
+
+### Category Deletion Rule
+- Decision: Block deletion if products reference category.
+- Rationale: Prevent orphaned product references; simple integrity without cascade.
+- Alternatives considered: Cascade removal (data loss risk), allow deletion (creates invalid state), soft-delete (unneeded complexity).
+
+### Stock Handling
+- Decision: Display stock and prevent cart additions when stock = 0 or requested quantity > stock; do NOT decrement stock on order submission in this phase.
+- Rationale: Separates availability signaling from inventory accounting; simplifies order logic.
+- Alternatives considered: Decrement stock immediately (needs concurrency/inventory logic), ignore stock (loss of UX clarity).
+
+### Order Snapshot
+- Decision: Capture name, price, quantity at submission; immutable total.
+- Rationale: Guards against product changes post-order; stable audit view.
+- Alternatives considered: Re-resolve product data on read (risk divergence), store only productIds (requires joins later).
 
 ## Performance Validation Steps (Playwright) — MVP (T041)
 
@@ -97,7 +126,7 @@ test('ProductList first render under 2000ms (local)', async ({ page }) => {
 
 ## Outcomes
 
-All NEEDS CLARIFICATION resolved or deferred explicitly with rationale. Proceed to Phase 1 design.
+All NEEDS CLARIFICATION resolved or deferred explicitly with rationale. Proceed to updated Phase 1 design for extended features.
 
 ## List Size and Pagination (Clarification A)
 
@@ -165,3 +194,4 @@ Recommendations:
 - Warm up once before timing.
 - Run at least 3 trials and consider the worst case.
 - Close heavy background apps.
+- Images: For performance sampling, treat placeholders as cacheable static assets; disregard optimization until future phase.
