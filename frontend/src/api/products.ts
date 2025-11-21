@@ -3,17 +3,22 @@ import type { Product } from '../types/product';
 type FetchOptions = {
   signal?: AbortSignal;
   baseUrl?: string;
+  search?: string;
+  categoryId?: string;
 };
 
-function buildApiUrl(baseUrl?: string): string {
+function buildApiUrl(baseUrl?: string, search?: string, categoryId?: string): string {
   const envBase = (import.meta.env.VITE_API_BASE_URL as string) || '';
   const base = (baseUrl ?? envBase).replace(/\/$/, '');
-  return `${base}/api/products`;
+  const url = new URL(`${base}/api/products`);
+  if (search) url.searchParams.set('search', search);
+  if (categoryId) url.searchParams.set('categoryId', categoryId);
+  return url.toString();
 }
 
 export async function fetchProducts(options: FetchOptions = {}): Promise<Product[]> {
-  const { signal, baseUrl } = options;
-  const url = buildApiUrl(baseUrl);
+  const { signal, baseUrl, search, categoryId } = options;
+  const url = buildApiUrl(baseUrl, search, categoryId);
   const res = await fetch(url, { signal } as RequestInit);
   if (!res.ok) {
     throw new Error(`Request failed: ${res.status}`);
