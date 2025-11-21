@@ -5,7 +5,7 @@
 
 ## Summary
 
-Initial MVP delivered read‑only product listing. This extension adds categories (CRUD), product search & filtering, stock display and cart gating, client‑side cart with persistence, order submission with snapshot semantics, deterministic product images plus fallback behavior, and responsive layout refinements (grid breakpoints, collapsible cart sidebar, nav bar). Seed volume increases (≥20 products, ≥5 categories) to better exercise filtering and search. Product images use deterministic placeholder filenames (`product<N>.jpg`); no upload or transformation pipeline. Performance, accessibility, and containerization principles remain unchanged.
+Initial MVP delivered read‑only product listing. This extension adds categories (CRUD), product search & filtering, stock display and cart gating, client‑side cart with persistence, order submission with snapshot semantics and inventory stock decrement, deterministic product images plus fallback behavior, and responsive layout refinements (grid breakpoints, collapsible cart sidebar, nav bar). Seed volume increases (≥20 products, ≥5 categories) to better exercise filtering and search. Product images use deterministic placeholder filenames (`product<N>.jpg`); no upload or transformation pipeline. Performance, accessibility, and containerization principles remain unchanged.
 
 ## Technical Context
 
@@ -18,7 +18,7 @@ Initial MVP delivered read‑only product listing. This extension adds categorie
 **Performance Goals**: Frontend initial render ≤2s p95 (typical ≤1s); API list/search ≤1s p95; cart ops & order submission ≤500ms typical; image loading/fallback ≤1s detection  
 **Constraints**: No authentication; no image upload; no caching/CDN; Tailwind-only; prices two decimals; UUID immutable; idempotent extended seed; lean queries; product volume ≤200 (search/filter) without pagination  
 **Scale/Scope**: ≤200 products; low concurrency; cart local-only (no multi-user sync)  
-**Out-of-Scope**: Stock decrement on order, advanced image optimization, pagination, discounting, tax, payments.
+**Out-of-Scope**: Advanced image optimization, pagination, discounting, tax, payments.
 
 ## Constitution Check (Pre-Extension Re-evaluated)
 
@@ -112,7 +112,7 @@ frontend/
 
 Phase 0 (Research): Completed — decisions for stack, observability, performance validation documented in `research.md`.
 
-Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.yaml`, and `quickstart.md` present. Clarification integrated: ≤100 items, no pagination.
+Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.yaml`, and `quickstart.md` present. Clarification updated: ≤200 items, no pagination (legacy ≤100 superseded; consolidated in spec FR-012).
 
 ### Backend specifics (Extended):
 - Express + TypeScript with ts-node-dev (`--respawn --transpile-only`).
@@ -151,7 +151,7 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
   - **CategoryManagement**:
     - Admin-style CRUD interface for categories (optional placeholder access for MVP).
 - Local cart hook/module manages state + persistence (add/remove/update, total computation, required).
-- Order flow: capture snapshot, then clear cart (stock unchanged per spec assumption, required).
+- Order flow: capture snapshot, then decrement product stock atomically per ordered quantity, then clear cart. If any requested quantity exceeds current stock, reject order (409) with explanatory message; no partial fulfillment.
 - Accessibility:
   - Alt text for images (required), keyboard focus preserved after cart updates (required).
 - Layout responsiveness:
@@ -163,12 +163,12 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
   - Failed order submission shows `ErrorMessage` with guidance (required).
 
 ### Testing (Extended):
-- Backend: Add tests for category CRUD, product search/filter queries (including zero-results), order creation (snapshot integrity, validation failures), imageUrl presence.
+- Backend: Add tests for category CRUD, product search/filter queries (including zero-results), order creation (snapshot integrity, validation failures), imageUrl presence, stock decrement success, insufficient stock rejection, post-order stock consistency.
 - Frontend: Add tests for cart persistence (localStorage), quantity updates, disabled add-to-cart for stock 0, search + filter interactions, image fallback rendering, responsive layout breakpoints, order confirmation view.
 - Performance probe remains opt-in; consider adding lightweight cart operation timing (skipped by default) using environment flag.
 
 ### Performance validation (Extended):
-- Manual checks expanded: ensure cart add/remove and order submission typical latency ≤500ms; image loading does not push page render beyond 2s p95; fallback substitution <1s.
+- Manual checks expanded: ensure cart add/remove and order submission typical latency ≤500ms (including stock decrement updates); image loading does not push page render beyond 2s p95; fallback substitution <1s.
 
 ### Containerization (Unchanged Mechanics):
 - Docker Compose unchanged but backend now exposes additional routes; verify health check unaffected.
@@ -194,7 +194,7 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 6. Implement NavBar, SearchBar, CategoryFilter, CartSidebar, OrderConfirmation components.
 7. Enhance ProductCard: image, stock gating, alt/fallback behavior.
 8. Cart state module/hook with localStorage persistence & quantity updates.
-9. Order submission flow & success confirmation page/modal.
+9. Order submission flow (snapshot + stock decrement) & success confirmation page/modal.
 10. Accessibility review (focus order after cart updates, alt text correctness, zero-results messaging distinct from empty state).
 11. Tests: backend (search/filter, categories, orders), frontend (cart persistence, images, search + filter interactions, order confirmation).
 12. Performance sampling scripts update (optional) to include cart & order timings.
@@ -209,7 +209,18 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 | Cart persistence corruption | User confusion | Validate stored JSON shape; fall back to empty cart with notice |
 | Category deletion conflicts | Data integrity loss | Explicit 409 response + UI messaging |
 | Order total mismatch after price changes | User trust | Snapshot price & name at order time; never recompute |
+| Stock race conditions on concurrent orders | Inventory integrity | Atomic decrement via findOneAndUpdate with stock check; retry on transient failure |
 
 ## Updated Complexity Tracking
 
-Complexity increased moderately (additional entities, client persistence, filtering). Mitigated by: clear boundaries (no auth/uploads), deterministic seed, local-only cart. No constitution violations.
+Complexity increased moderately (additional entities, client persistence, filtering, stock mutation). Mitigated by: clear boundaries (no auth/uploads), deterministic seed, atomic stock decrement, local-only cart. No constitution violations.
+
+## Completion Criteria (Extended)
+
+Release of extended e‑commerce scope requires:
+1. All tasks through Phase 11 including stock decrement implementation & tests (order creation rejects insufficient stock, decrements inventory accurately, no negative stock values).
+2. Post-order product list reflects updated stock on refresh (manual verification + automated test).
+3. Backend tests cover: snapshot integrity, insufficient stock (409), concurrent decrement path (simulated sequential requests), total accuracy after decrement.
+4. Frontend tests cover: disabled add-to-cart when stock hits zero after order, order confirmation unaffected by subsequent stock changes.
+5. Success criteria SC‑001..SC‑020 remain green; no new performance regressions introduced by stock writes.
+6. Documentation (quickstart, research) aligned with stock decrement behavior.

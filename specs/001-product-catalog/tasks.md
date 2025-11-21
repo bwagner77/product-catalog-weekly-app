@@ -260,7 +260,7 @@ Goal: Category CRUD with blocked deletion when products assigned.
 
 - [ ] T072 [P] [US4] Implement `/api/categories` router (GET list, GET by id, POST, PUT, DELETE)
 - [ ] T073 [US4] Add delete guard: 409 if products reference category
-- [ ] T074 [P] [US4] Integration tests for category CRUD + blocked deletion in `backend/tests/api/categories.test.ts`
+- [ ] T074 [P] [US4] Integration tests for category CRUD + blocked deletion (SC-007, SC-013, FR-017) in `backend/tests/api/categories.test.ts`
 - [ ] T075 [P] [US4] Frontend Category types in `frontend/src/types/category.ts`
 - [ ] T076 [P] [US4] Category management API utilities `frontend/src/api/categories.ts`
 - [ ] T077 [US4] CategoryManagement page basic layout + CRUD forms
@@ -283,13 +283,13 @@ Goal: Case-insensitive substring search + category filter (combinable) with zero
 
 Goal: Display product images with fallback & alt text rules; no layout shift.
 
-- [ ] T087 [US8] Add placeholder image assets `frontend/public/images/product1.jpg ... product20.jpg`
-- [ ] T088 [P] [US8] Add single fallback image `frontend/public/images/fallback.jpg`
-- [ ] T089 [US8] Enhance ProductCard: image box (e.g., 200x200) with `object-cover`, fallback on error/missing, alt text rules
-- [ ] T090 [P] [US8] Frontend tests: image present, fallback path, broken image simulation (trigger onError) in `frontend/src/__tests__/images.test.tsx`
-- [ ] T091 [P] [US8] Backend test: all product API responses include non-empty `imageUrl`
-- [ ] T092 [US8] Performance doc update referencing SC-015..SC-018 image criteria
-- [ ] T093 [US8] Accessibility test alt text correctness (extend a11y test) verifying no empty alt
+- [ ] T087 [US8] Add placeholder image assets `frontend/public/images/product1.jpg ... product20.jpg` (FR-034)
+- [ ] T088 [P] [US8] Add single fallback image `frontend/public/images/fallback.jpg` (FR-039)
+- [ ] T089 [US8] Enhance ProductCard: fixed 200x200 square container, `object-cover`, fallback on error/missing, alt text pattern `<name> – image unavailable` (FR-036, FR-037, FR-039, FR-042)
+- [ ] T090 [P] [US8] Frontend tests: image present, fallback path, broken image simulation (trigger onError), square dimension assertion, alt pattern validation (FR-036, FR-037, FR-039, FR-042, SC-016, SC-017, SC-018, SC-019)
+- [ ] T091 [P] [US8] Backend test: all product API responses include non-empty `imageUrl` (FR-033, FR-034, SC-015)
+- [ ] T092 [US8] Performance doc update referencing SC-015..SC-018 image criteria (FR-041)
+- [ ] T093 [US8] Accessibility test alt text correctness & fallback pattern (FR-036, SC-019)
 
 ## Phase 10: User Story 6 - Shopping Cart (Priority: P5)
 
@@ -300,22 +300,28 @@ Goal: Add/update/remove items; persist across refresh; stock gating.
 - [ ] T096 [US6] Stock gating: disable add-to-cart for stock=0 product & message
 - [ ] T097 [P] [US6] CartSidebar component (responsive, collapsible)
 - [ ] T098 [P] [US6] Cart icon/count in NavBar component
-- [ ] T099 [US6] Frontend tests: add/update/remove/clear, persistence after refresh, stock gating in `frontend/src/__tests__/cart.test.tsx`
-- [ ] T100 [P] [US6] Edge case test: large quantity update + total rounding
-- [ ] T101 [US6] Accessibility: focus retention after quantity change (extend a11y test)
-- [ ] T102 [P] [US6] Docs: quickstart additions for cart behavior & limitations
+- [ ] T099 [US6] Frontend tests (SC-008): add/update/remove/clear, persistence after refresh, stock gating (out-of-stock & exceeding-stock rejection) in `frontend/src/__tests__/cart.test.tsx`
 
-## Phase 11: User Story 7 - Order Submission (Priority: P6)
+## Phase 11: User Story 7 - Submit Order (Priority: P6)
 
-Goal: Submit order with snapshot; confirmation view immutability.
+Goal: Order submission snapshot + atomic stock decrement (FR-025, FR-028, FR-043) and tests.
 
-- [ ] T103 [US7] Implement `/api/orders` POST (validate non-empty cart items) & GET by id
-- [ ] T104 [P] [US7] Backend tests: successful submission snapshot, empty cart rejection, total rounding, immutability after product price change in `backend/tests/api/orders.test.ts`
-- [ ] T105 [US7] Frontend OrderConfirmation component/page/modal
-- [ ] T106 [P] [US7] Frontend tests: order submit flow, empty cart prevention, snapshot persistence after simulated product change in `frontend/src/__tests__/order.test.tsx`
-- [ ] T107 [US7] Clear cart post-submission; verify persistence resets (test)
-- [ ] T108 [P] [US7] Add Order types `frontend/src/types/order.ts`
-- [ ] T109 [US7] Docs: spec & quickstart order endpoint examples & performance expectations (SC‑010, SC‑014)
+- [ ] T103 [US7] Implement `/api/orders` POST (FR-025, FR-043): validate non-empty cart; snapshot items BEFORE stock decrement; verify sufficient stock; atomic decrement (transactional conditional updates); reject insufficient stock (409); implement GET by id.
+- [ ] T104 [P] [US7] Backend tests (SC-010, SC-014, FR-025, FR-028, FR-043): snapshot immutability, empty cart rejection, total rounding accuracy (single rounding step), price immutability post-change, stock decrement verification, insufficient stock (409), prevention of negative stock in `backend/tests/api/orders.test.ts`.
+- [ ] T105 [US7] Frontend OrderConfirmation component/page/modal: render snapshot (FR-025, SC-014) unaffected by later catalog changes.
+- [ ] T106 [P] [US7] Frontend tests (SC-010, SC-014, FR-025, FR-043): submit flow, empty cart prevention, snapshot persistence after product change, post-order product list refresh showing decremented stock (disable add-to-cart if now zero) in `frontend/src/__tests__/order.test.tsx`.
+- [ ] T107 [US7] Clear cart post-submission; verify persistence resets (SC-009).
+- [ ] T108 [P] [US7] Add Order types `frontend/src/types/order.ts`.
+- [ ] T109 [US7] Docs: quickstart & spec order endpoint examples & performance expectations (SC-010, SC-014) including atomic decrement behavior & concurrency mitigation.
+- [ ] T121 [P] [US7] Concurrency test (FR-043): simulate near-concurrent orders (rapid sequential requests) exhausting stock; assert second yields 409; document chosen atomic decrement strategy & future parallel test approach.
+- [ ] T122 [P] [US7] Utility: shared rounding + stock check helper (`backend/src/utils/orderHelpers.ts`) with unit tests (FR-028, FR-043) including precision edge cases.
+
+
+## Added Test & Instrumentation Tasks (Cross-Cutting)
+
+- [ ] T110 [P] Perf sampling script/update (SC-001, SC-002, SC-010, SC-011): measure GET /api/products (list & search/filter) & order POST durations; log p95 locally; document typical environment factors (latency <10ms loopback).
+- [ ] T111 [P] Image load timing & fallback substitution test (SC-015, SC-016, SC-017, SC-018, SC-019): instrument and assert fallback substitution <1000ms, reserved space prevents layout shift (CLS <0.1), alt pattern correctness.
+- [ ] T123 [P] Logging & metrics verification test (FR-011, SC-006): assert log format `[timestamp] [traceId] [method] [path] [status] [duration_ms]`, error counter increments on simulated failures in `backend/tests/api/loggingMetrics.test.ts`.
 
 ## Phase 12: Cross-Cutting Validation & Performance / Success Criteria
 
@@ -367,7 +373,6 @@ Completion of extended scope requires all tasks T062–T120 marked done, coverag
 - D001 Image optimization (responsive srcset / WebP)
 - D002 Pagination & server-side filtering beyond 200 products
 - D003 Auth & role-based category management
-- D004 Inventory stock decrement on order submission
 - D005 Discount codes & tax calculations
 - D006 Advanced search (tokenization, fuzzy)
 - D007 CDN integration for static assets

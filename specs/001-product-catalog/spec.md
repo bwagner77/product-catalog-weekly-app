@@ -12,9 +12,9 @@
 - Q: What is the product search matching rule? → A: Case-insensitive partial substring match across both name and description fields; multiple words treated as a single phrase (no token AND logic).
 - Q: What pattern is used for seeded product images? → A: Deterministic placeholder filenames using the pattern "product<N>.jpg" starting at 1 (e.g., product1.jpg) matching seed insertion order; stable across runs.
 
-### Session 2025-11-14
+### Session 2025-11-14 (updated 2025-11-20)
 
-- Q: What is the expected product list size and pagination approach? → A: Up to 100 items, no pagination.
+- Q: What is the expected product list size and pagination approach? → A: Up to 200 items, no pagination (server-enforced cap; pagination deferred).
 - Q: What exact fields does GET /api/products return? → A: id, name, description, price, createdAt, updatedAt.
 
 ### Session 2025-11-10
@@ -134,6 +134,9 @@ As a shopper, I can place an order containing my cart items and view a confirmat
 1. Given my cart contains valid items, When I place the order, Then I see a confirmation with order id, items, quantities, and total.
 2. Given I have just placed an order, When I revisit the order confirmation, Then data matches submission snapshot (quantity, total) even if product catalog changes afterwards.
 3. Given my cart is empty, When I attempt to place an order, Then the system prevents submission and shows guidance to add items.
+4. Given product stock is sufficient for all requested quantities, When I submit the order, Then product stock decrements exactly by ordered quantities and never below zero.
+5. Given at least one product has insufficient remaining stock for the requested quantity, When I submit the order, Then the order is rejected with a 409 response and a clear message (no partial fulfillment; no stock changes).
+6. Given two sequential order submissions exhausting a product’s stock in the first, When I submit the second order, Then it is rejected with insufficient stock messaging.
 
 ### User Story 8 - View Product Images (Priority: P4)
 
@@ -161,6 +164,7 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - Non-USD locale assumption (assume USD for this phase)
 - Product stock = 0 (display "Out of Stock", prevent cart addition)
 - Attempting to add quantity exceeding available stock (prevent and message)
+- Concurrent orders exhausting stock (second order rejected without partial fulfillment)
 - Removing category with assigned products (blocked per assumption)
 - Search term yields zero results (distinct message from empty catalog)
 - Combining search + category filter yields zero results
@@ -171,6 +175,7 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - Missing imageUrl (fallback placeholder shown)
 - Invalid or broken image URL (fallback placeholder shown)
 - Duplicate image filenames referencing different products (acceptable for placeholders; uniqueness not required)
+- Optional image tooltip on hover (non-functional enhancement; may be deferred)
 - Extremely long product name impacting alt text readability (wrap without truncation)
 - Image loading slower than text (text appears first; layout reserves space to prevent shift)
 - Mixed presence of images and fallbacks in the same view
@@ -191,16 +196,16 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - **FR-005**: System MUST meet basic accessibility standards (keyboard navigation, ARIA, color contrast).
 - **FR-006**: API MUST expose GET /api/products that returns a JSON array of products with fields: id (UUID string), name (string), description (string), price (number), createdAt (ISO date-time), updatedAt (ISO date-time).
 - **FR-007**: Database MUST persist products in a collection/table named "products".
-- **FR-008**: System MUST preload at least five sample products available on first run.
+- **FR-008**: System MUST preload at least twenty (≥20) sample products available on first run to support search/filter realism (was ≥5; aligned across artifacts).
 - **FR-009**: Frontend tests MUST reside in frontend/src/__tests__/ covering rendering, formatting, and accessibility.
 - **FR-010**: Backend tests MUST reside in backend/tests/ covering unit logic, integration for the endpoint, and seed validation.
-- **FR-011**: System MUST log each GET /api/products request with status code and duration, emit a one-time startup seed verification log entry, and increment an error counter metric on failed requests.
-- **FR-012**: MVP assumes up to 100 products returned by the list endpoint and no pagination; the UI presents a single-page list.
+- **FR-011**: System MUST log each GET /api/products request with status code and duration (format: `[timestamp] [traceId] [method] [path] [status] [duration_ms]`), emit a one-time startup seed verification log entry, and increment an error counter metric on failed requests; tests MUST validate log format and error counter increments.
+- **FR-012**: MVP assumes up to 200 products returned by the list endpoint and no pagination; the UI presents a single-page list. (Consolidates prior FR-031.)
 - **FR-013**: System MUST expose simple health endpoints for frontend and backend to support container healthchecks.
 - **FR-014**: Product entity MUST include categoryId (string) and stock (non-negative integer/number) fields; stock values < 0 MUST be rejected.
-- **FR-015**: System MUST display stock status as "In Stock" when stock > 0 and "Out of Stock" when stock = 0.
-- **FR-016**: System MUST prevent adding out-of-stock products or quantities greater than available stock to the cart.
-- **FR-017**: System MUST allow creation, viewing, listing, updating, and deletion of categories (subject to assumption blocking deletion when products assigned).
+- **FR-015**: System MUST display stock status labels only ("In Stock" when stock > 0, "Out of Stock" when stock = 0).
+- **FR-016**: System MUST prevent cart additions or quantity increases that would exceed available stock (reject with clear message) and block out-of-stock products entirely.
+- **FR-017**: System MUST allow creation, viewing, listing, updating, and deletion of categories (subject to assumption blocking deletion when products assigned) with explicit status codes: 200 (list/get/update), 201 (create), 400 (validation failure), 404 (not found), 409 (deletion blocked due to assigned products).
 - **FR-018**: Category list MUST display id and name and provide edit and delete actions.
 - **FR-019**: Category form MUST require a non-empty name and show validation feedback on submit failure.
 - **FR-020**: Product browsing MUST support case-insensitive partial substring text search across name and description and filtering by category independently and in combination; multiple words are matched as one contiguous phrase.
@@ -208,24 +213,25 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - **FR-022**: Cart MUST support add, remove, quantity update, and clear behaviors via user interactions.
 - **FR-023**: Cart MUST persist across browser refresh (local persistence) and restore state automatically on load.
 - **FR-024**: Cart icon/component MUST display current total item count (sum of quantities) and reflect updates within 1 second of change.
-- **FR-025**: Order submission MUST create an immutable order snapshot containing id, items (productId, name, price at time of submission, quantity), total, status = "submitted", and created timestamp.
+- **FR-025**: Order submission MUST create an immutable order snapshot containing id, items (productId, name, price at time of submission, quantity), total, status = "submitted", and created timestamp. Snapshot captured BEFORE any stock decrement and independent of post-submission mutations.
 - **FR-026**: Order confirmation view MUST present order id, item list, per-item subtotals, and total.
 - **FR-027**: System MUST prevent order submission with an empty cart.
-- **FR-028**: Backend logic MUST compute order total as sum(quantity * price) for all items and round to two decimals.
+- **FR-028**: Backend logic MUST compute order total as sum(quantity * price) for all items, then apply a single rounding step to two decimals (banker's rounding not required; use standard half-up). Centralize in a helper (see task T122) to avoid precision drift.
 - **FR-029**: Search and cart operations MUST maintain accessibility (focus states, ARIA labels) consistent with existing standards.
 - **FR-030**: Tests MUST cover: product search/filter behaviors, category CRUD flows (including blocked deletion), cart state updates, cart persistence, and order creation snapshot integrity.
-- **FR-031**: System MUST handle up to 200 products without requiring pagination (performance expectation maintained).
+- **FR-031**: (Reserved; consolidated into FR-012 to remove duplication.)
 - **FR-032**: Deleting a category with assigned products MUST be blocked with a clear explanation (assumption) rather than silent failure.
-- **FR-033**: Product entity MUST include imageUrl (non-empty string) representing a relative or absolute path to an image asset.
+- **FR-033**: Product entity MUST include imageUrl (non-empty string) representing a relative or absolute path to an image asset; all product-related API responses MUST include a non-empty imageUrl for each product. (Consolidates prior FR-035.)
 - **FR-034**: Seed process MUST assign deterministic placeholder image filenames following pattern product<N>.jpg starting at 1 and stable across runs.
-- **FR-035**: All product-related API responses MUST include imageUrl for each product.
-- **FR-036**: Product display MUST render an accessible image for each product using alt text equal to product name (fallback variant includes suffix "image unavailable" when original missing/broken).
-- **FR-037**: Product images MUST present consistent square display dimensions (e.g., target 200x200 visual box) while preserving aspect ratio via cover-style cropping; no distortion allowed.
+- **FR-035**: (Reserved; consolidated into FR-033 to avoid duplication.)
+- **FR-036**: Product display MUST render an accessible image for each product using alt text equal to the product name; fallback placeholder variant MUST use exact pattern: `<product name> – image unavailable` (en dash, single space on both sides) when original missing/broken.
+- **FR-037**: Product images MUST render inside a fixed 200x200px square container (e.g., Tailwind `w-[200px] h-[200px]` or utility abstraction) using object-cover to preserve aspect ratio without distortion; responsive scaling MAY reduce size below 200px on narrow viewports but MUST preserve square aspect (width = height). Tests MUST assert container square dimensions and absence of distortion.
 - **FR-038**: Layout MUST remain responsive: images scale down with max-width: 100% rules, avoiding overflow at all supported breakpoints.
-- **FR-039**: A fallback placeholder image MUST display whenever imageUrl is missing or fails to load without causing layout shift beyond reserved space.
+- **FR-039**: A fallback placeholder image (asset path `public/images/fallback.jpg`) MUST display whenever imageUrl is missing or fails to load without causing layout shift beyond reserved 200x200px space.
 - **FR-040**: Image rendering MUST not regress existing accessibility (focus order, alt text presence, contrast unaffected).
-- **FR-041**: Tests MUST validate presence and validity of imageUrl in product API responses, correct seeding pattern, ProductCard image rendering, fallback behavior, and responsive dimension integrity.
+- **FR-041**: Tests MUST validate image requirements (presence per FR-033, deterministic pattern FR-034, alt text FR-036, dimensions FR-037, fallback FR-039, broken image swap FR-042). (Clarified as test coverage aggregation; not a separate functional rule.)
 - **FR-042**: Broken image load events MUST trigger automatic fallback substitution within 1 second.
+- **FR-043**: Order submission MUST atomically decrement product stock for each line item (never producing negative stock); MUST reject the order with a 409 if any requested quantity exceeds current stock; MUST maintain snapshot immutability independent of post-submission stock changes. Implementation approach: use MongoDB transaction OR per-item conditional updates (`findOneAndUpdate` with `stock >= quantity` predicate) executed in a session; on any predicate failure abort all decrements (no partial fulfillment). Concurrency mitigation: second order after stock exhaustion returns 409.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -266,8 +272,8 @@ As a shopper, I can see a product image alongside its name, description, price, 
 
 ### Measurable Outcomes
 
-- **SC-001**: 95% of catalog page loads complete in ≤ 2 seconds on a typical connection.
-- **SC-002**: 99% of API responses for GET /api/products complete in ≤ 1 second under typical load (defined as local Docker Compose environment, seeded DB, no artificial network throttling).
+- **SC-001**: 95% of catalog page loads complete in ≤ 2 seconds in the "typical environment" (local Docker Compose, loopback latency <10ms, no artificial throttling).
+- **SC-002**: 99% of API responses for GET /api/products complete in ≤ 1 second in the typical environment (local Docker Compose, seeded DB, no throttling, ≤200 products).
 - **SC-003**: 100% of visible prices display a currency symbol and exactly two decimal places.
 - **SC-004**: 0 critical accessibility violations in automated checks; keyboard navigation covers primary flows.
 - **SC-005**: On first run, at least five products are visible without manual data entry.
@@ -275,16 +281,16 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - **SC-007**: 95% of category management operations (create, update, delete allowed) complete in ≤ 2 seconds in typical environment.
 - **SC-008**: 100% attempts to add out-of-stock items are blocked with clear messaging.
 - **SC-009**: 95% of valid cart modifications (add/update/remove) persist and restore after refresh in ≤ 1 second.
-- **SC-010**: 100% order totals reflect accurate sum of line items with correct rounding to two decimals.
+- **SC-010**: 100% order totals reflect accurate sum of line items with correct rounding to two decimals (no cumulative precision drift > $0.01 across 100 sequential orders).
 - **SC-011**: 95% of search/filter interactions return updated results view in ≤ 1 second given ≤ 200 products.
 - **SC-012**: Zero critical accessibility violations introduced by new cart, search, and category UI components.
 - **SC-013**: 100% of blocked category deletions (with assigned products) provide explanatory feedback.
-- **SC-014**: 100% orders retain original item prices despite subsequent product price changes.
+- **SC-014**: 100% orders retain original item prices despite subsequent product price changes (verified after mutating product price post-submission).
 - **SC-015**: 100% products returned from list endpoint include a non-empty imageUrl field.
 - **SC-016**: 100% product cards display an image or fallback without broken image icon artifacts.
 - **SC-017**: 100% missing or broken images show fallback within ≤ 1 second of detection.
-- **SC-018**: 95% catalog page loads display all images/fallbacks in ≤ 2 seconds (typical connection) without cumulative layout shift causing content overlap.
-- **SC-019**: Zero critical accessibility violations introduced by images (all have alt text meeting specified rules).
+- **SC-018**: 95% catalog page loads display all images/fallbacks in ≤ 2 seconds (typical environment) with cumulative layout shift (CLS) < 0.1 and no content overlap.
+- **SC-019**: Zero critical accessibility violations introduced by images (all have alt text meeting specified rules and fallback alt pattern correctness).
 - **SC-020**: 0% of image renderings cause horizontal scroll at standard breakpoints.
 
 ## Assumptions
@@ -292,14 +298,14 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - Currency symbol: USD ($) for this phase. Future localization may adjust.
 - Single catalog view only; no CRUD or authentication in this iteration.
 - Persistent storage available per project deployment environment.
-- Product volume ≤ 100 items; single-page list with no pagination.
+- Product volume ≤ 200 items; single-page list with no pagination.
 - Long product names/descriptions should wrap across lines (no truncation required in MVP).
 - “Typical load” for performance measurements refers to local development with Docker Compose, seeded database, and no network throttling.
 - Category deletion is blocked if any products reference the category (chosen for data integrity in absence of cascade rule).
 - Category names are unique within the catalog (simplifies user recognition).
 - No authentication or user accounts in this phase; all actions treated as open access within session.
 - No pricing adjustments (tax, discounts, promotions) applied; totals are simple sums.
-- Stock decrementation on order submission is out of scope (inventory not mutated).
+- Stock decrementation on order submission is in scope: orders reduce stock atomically; insufficient stock rejects order (no partial fulfillment).
 - No pagination required up to 200 products, search expected to be instantaneous within success criteria.
 - Cart storage uses a client-side persistence mechanism (e.g., browser storage) without server synchronization (technology details omitted in spec).
 - Only single currency (USD) throughout extended features.
@@ -307,3 +313,4 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - No image upload or management in this phase; images are read-only references.
 - Fallback image is a single shared asset for all missing/broken cases.
 - Square target dimension (visual box) is consistent reference for layout; exact pixel size may adapt per responsive design (200x200 illustrative).
+- Fallback image asset path standardized as `public/images/fallback.jpg`.
