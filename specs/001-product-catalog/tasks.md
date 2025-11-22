@@ -385,6 +385,57 @@ Completion of extended scope requires prior tasks T062–T120 plus branding/gati
  - [X] T141 [P] Fallback alt en dash assertion test verifying `<name> – image unavailable` pattern in `frontend/src/__tests__/imagesAltPattern.test.tsx` (FR-036, SC-019)
  - [X] T142 [P] Backend gating test: POST/PUT/DELETE /api/categories return 403 & no write when `ENABLE_CATEGORY_ADMIN=false` in `backend/tests/api/categoriesGating.test.ts` (FR-051, SC-025)
 
+---
+
+## Phase N+2: Admin Authentication (Foundation for US4/US9)
+
+Context: Introduce unified login endpoint and JWT protection for admin write operations.
+
+- [ ] T143 Add `jsonwebtoken` and `@types/jsonwebtoken` to `backend/package.json`
+- [ ] T144 Create `backend/src/routes/auth.ts` with `POST /api/auth/login` (env creds → issue HS256 JWT with `{ role: 'admin', iat, exp≥1h }`)
+- [ ] T145 Wire auth routes in `backend/src/app.ts` (mount `/api/auth`)
+- [ ] T146 Create `backend/src/middleware/authAdmin.ts` (validate Bearer JWT; require role=admin; attach `req.admin = true`; 401 on missing/invalid/expired)
+- [ ] T147 Add helper `backend/src/utils/errors.ts` to return `{ error: 'admin_auth_required', message: 'Admin authentication required' }`
+- [ ] T148 Apply `authAdmin` to category writes in `backend/src/routes/categories.ts` (POST/PUT/DELETE) and preserve `ENABLE_CATEGORY_ADMIN` 403 gating
+- [ ] T149 Apply `authAdmin` to product writes in `backend/src/routes/products.ts` (POST/PUT/DELETE) (add missing writes if not present)
+- [ ] T150 Update OpenAPI `specs/001-product-catalog/contracts/openapi.yaml`: add `bearerAuth`, secure writes, add `/api/auth/login`
+- [ ] T151 Docs: Update `specs/001-product-catalog/quickstart.md` with `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `JWT_SECRET`, login flow, storage choice
+- [ ] T152 Docs: Update `specs/001-product-catalog/research.md` with JWT decisions (HS256, ≥1h, no refresh) and alternatives
+- [ ] T153 Docs: Update `specs/001-product-catalog/data-model.md` with AdminUser pseudo-entity and JWT claims
+
+---
+
+## Phase N+3: Frontend Auth & Route Protection
+
+Purpose: Provide login UI and protect admin pages; keep public pages open.
+
+- [ ] T154 [P] Create `frontend/src/pages/Login.tsx` (form → POST `/api/auth/login`; store token in `localStorage` key `shoply_admin_token`)
+- [ ] T155 [P] Add `frontend/src/context/AuthContext.tsx` for token state and expiry checks
+- [ ] T156 Implement `frontend/src/components/PrivateRoute.tsx` guarding CategoryManagement & ProductManagement (redirect to /login on missing/expired token)
+- [ ] T157 Hide admin-only nav links when unauthenticated in `frontend/src/App.tsx`
+- [ ] T158 Handle 401 from API: interceptor or utility in `frontend/src/api/*` to clear token + redirect to /login
+
+---
+
+## Phase N+4: User Story 9 — Admin Product Management (Priority: P4/P5)
+
+Goal: Admin can CRUD products including stock and category selection; anonymous blocked.
+Independent Test: Valid admin CRUD succeeds; anonymous/invalid token blocked; dropdown lists all categories.
+
+- [ ] T159 [P] [US9] Implement product POST/PUT/DELETE handlers in `backend/src/routes/products.ts` (validation: name, price, imageUrl non-empty, stock ≥0)
+- [ ] T160 [US9] Create `frontend/src/pages/ProductManagement.tsx` (list + create/edit/delete; fields: name, description, price, imageUrl, stock, category dropdown)
+- [ ] T161 [US9] Product management API utilities in `frontend/src/api/products.ts` using Bearer token
+- [ ] T162 [US9] Secure writes via `authAdmin` + verify UI passes Authorization header
+
+---
+
+## Phase N+5: Tests for Auth & Admin Flows (Targeted)
+
+- [ ] T163 [P] Backend tests: `/api/auth/login` 200 + 401 invalid credentials in `backend/tests/api/auth.test.ts`
+- [ ] T164 [P] Backend tests: protected category/product writes 401 (no/invalid token) and 403 when `ENABLE_CATEGORY_ADMIN=false` in `backend/tests/api/{categoriesGating.test.ts,products.test.ts}`
+- [ ] T165 Frontend tests: route guard redirects unauthenticated access to `/login` and hides admin nav in `frontend/src/__tests__/authGuard.test.tsx`
+
+
 ### Order Model Snapshot & Rounding (Documentation Addendum)
 The order submission flow captures a snapshot of each line item (productId, name, price, quantity) at the moment of POST before any external mutations can occur. Stock decrement uses a Mongo bulkWrite with conditional filters `stock: { $gte: qty }` ensuring atomicity; if any filter fails due to concurrent changes the operation returns fewer matched docs and the route aborts with 409. Rounding applies exactly once using `roundCurrency` (half-up: Math.round(EPSILON-adjusted *100)/100) to the aggregate sum prior to persistence, satisfying SC-010 and preventing cumulative floating point drift. Concurrency test (T121) validates that only one of two simultaneous orders for a single-stock item succeeds (201 vs 409) enforcing FR-043. Future improvements (deferred) may consider Mongo transactions for multi-document atomicity when scaling beyond simple decrement logic.
 
