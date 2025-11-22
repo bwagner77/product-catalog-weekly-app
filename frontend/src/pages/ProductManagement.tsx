@@ -130,7 +130,7 @@ const ProductManagement: React.FC = () => {
 
   return (
     <section aria-labelledby="product-mgmt-heading" className="space-y-6">
-      <h2 id="product-mgmt-heading" className="text-lg font-semibold">Product Management</h2>
+      <h2 id="product-mgmt-heading" data-testid="product-management-heading" tabIndex={-1} className="text-lg font-semibold">Product Management</h2>
 
       <form onSubmit={handleCreate} aria-label="Create product" className="grid grid-cols-1 md:grid-cols-6 gap-3 items-start">
         <div>

@@ -99,3 +99,26 @@ Coverage references:
 - SC‑026 (Anonymous/non-admin blocked from ProductManagement): covered by T165, T169, T195, T202, T204, T205.
 - FR‑052 (Restrict product writes to admin + ProductManagement behavior): covered by T146, T149, T159–T162, T169, T194–T197, T204, T205.
 - FR‑059 (Branded AccessDenied + auth UX): covered by T156, T166, T168, T171, T195, T199, T202, T204.
+
+Mobile Hamburger Navigation Coverage (FR-061..FR-068, SC-043..SC-050) – Added 2025-11-22:
+- FR-061 (Mobile hamburger replaces inline nav <768px): covered by T214 (responsive logic), T206 (initial render test), T212 (viewport transition), T220 (perf measure).
+- FR-062 (Accessible semantics + attributes): covered by T214 (container), T206 (initial render semantics), T207 (expanded semantics), T213 (accessibility semantics test).
+- FR-063 (Ordered menu, gating non-admin): covered by T215 (item list ordering), T211 (gating test), T207 (ordering test).
+- FR-064 (Collapse hides items & returns focus): covered by T216 (collapse behavior), T208 (collapse focus test).
+- FR-065 (Activation collapses + heading focus ≤500ms): covered by T217 (activation focus logic), T209 (activation focus test).
+- FR-066 (Rapid toggling robustness): covered by T218 (robust state handling), T210 (rapid toggle test).
+- FR-067 (Viewport transition integrity, CLS ≤0.1): covered by T219 (state preservation), T212 (viewport transition test).
+- FR-068 (Race condition avoidance under rapid input): covered by T218 (robust state handling), T210 (rapid toggle test).
+- SC-043 (Initial mobile shows only hamburger button): covered by T206.
+- SC-044 (Expanded vertical ordered menu, single aria-current): covered by T207.
+- SC-045 (Toggle latency p95 ≤300ms): covered by T220 (perf sampling), T206/T210 timing assertions.
+- SC-046 (No transient admin-only items for non-admin): covered by T211.
+- SC-047 (Post-activation focus lands on heading): covered by T209.
+- SC-048 (Rapid toggle invariants): covered by T210.
+- SC-049 (Viewport transitions maintain state, CLS constraints): covered by T212.
+- SC-050 (Accessibility audit passes, semantics valid): covered by T213.
+
+Traceability tasks for documentation:
+- T222 (Checklist updates – this section). 
+- T223 (Research & quickstart updates – see research.md hamburger section and quickstart note).
+- T224 (Mapping augmentation linking FR/SC to tasks).

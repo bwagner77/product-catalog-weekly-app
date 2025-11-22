@@ -78,7 +78,7 @@ const ProductList = () => {
 
   return (
     <section aria-labelledby="product-list-heading">
-      <h2 id="product-list-heading" className="sr-only">
+      <h2 id="product-list-heading" data-testid="products-heading" tabIndex={-1} className="sr-only">
         Products
       </h2>
       <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Search and filter controls">

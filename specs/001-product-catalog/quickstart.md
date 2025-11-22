@@ -86,3 +86,15 @@ npm test -- --runInBand tests/api/perf.test.ts
 - Product and Category POST/PUT/DELETE require a valid admin JWT (Bearer token). Missing/invalid/expired tokens return 401 with `{ error:'admin_auth_required' }` or `{ error:'token_expired' }`; non-admin role returns 403 `{ error:'forbidden_admin_role' }`.
 - Frontend hides admin links for unauthenticated or non-admin users. Accessing `/admin/product-management` without admin shows an AccessDenied message; no privileged flicker.
 - On 401/403 from protected endpoints, the app clears the token and navigates to Login. After re-authentication, admin links reappear and protected forms become usable.
+
+## Mobile Hamburger Navigation (<768px)
+On mobile viewports (<768px) the inline navigation links are replaced by a single hamburger button:
+- Initial load shows only the hamburger (SC-043, FR-061).
+- Button has `aria-label="Menu"`, dynamic `aria-expanded`, and `aria-controls` referencing the vertical menu container (FR-062, SC-050).
+- Expanding reveals an ordered vertical list of nav items with a single `aria-current` on the active view (SC-044, FR-063).
+- Non-admin sessions never render admin-only items (SC-046, FR-063).
+- Selecting a menu item collapses the menu and shifts focus to the target page heading within ~500ms (FR-065, SC-047).
+- Rapid toggling (≥50 cycles) remains stable (no duplicate containers, single `aria-current`) and maintains p95 toggle latency ≤300ms locally (FR-066, SC-045, SC-048).
+- Resizing mobile↔desktop preserves active route and avoids layout shift (CLS <0.1) (FR-067, SC-049).
+
+Tip: To manually verify, open DevTools > responsive mode, set width <768px, interact with the hamburger button, then resize above and below the breakpoint to confirm state preservation.

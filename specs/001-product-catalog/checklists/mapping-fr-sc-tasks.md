@@ -1,6 +1,7 @@
 # FR / SC / Error Code ↔ Task Mapping
 
 Generated: 2025-11-21
+Augmented: 2025-11-22 (Added Mobile Hamburger Navigation FR-061..FR-068, SC-043..SC-050)
 Source Artifacts: spec.md, plan.md, tasks.md, constitution v1.1.0
 Purpose: Provide traceability matrix linking Functional Requirements (FR), Success Criteria (SC), and structured Error Codes to implementing & validating tasks.
 
@@ -75,6 +76,14 @@ Purpose: Provide traceability matrix linking Functional Requirements (FR), Succe
 | FR-058 | Session persistence until expiry | T154,T155,T165,T167 | Impl/Test |  |
 | FR-059 | AccessDenied messaging | T156,T166,T168,T171,T177,T195,T199,T202,T204,T165 | Impl/Test/A11y |  |
 | FR-060 | Structured error + zero mutation | T147,T164,T178,T183,T187 | Impl/Test |  |
+| FR-061 | Mobile hamburger (<768px) replaces inline nav | T214,T206 | Impl/Test |  |
+| FR-062 | Accessible hamburger semantics (`aria-*`) | T214,T216,T206,T213 | Impl/Test/A11y |  |
+| FR-063 | Ordered vertical menu + gating | T215,T211,T207 | Impl/Test |  |
+| FR-064 | Collapse hides items & returns focus | T216,T208 | Impl/Test |  |
+| FR-065 | Activation collapses & focuses heading | T217,T209 | Impl/Test |  |
+| FR-066 | Rapid toggle robustness | T218,T210 | Impl/Test/Perf |  |
+| FR-067 | Viewport transition state preservation | T219,T212 | Impl/Test |  |
+| FR-068 | Race condition avoidance (nav) | T218,T210 | Impl/Test |  |
 
 ## Success Criteria
 | SC | Summary | Tasks | Gap |
@@ -113,6 +122,14 @@ Purpose: Provide traceability matrix linking Functional Requirements (FR), Succe
 | SC-032 | Order confirmation latency ≤1s | T182 |  |
 | SC-033 | Structured error code schema | T183,T184,T147 |  |
 | SC-034 | Expired token hides controls | T185,T168 |  |
+| SC-043 | Initial mobile only hamburger button | T206 |  |
+| SC-044 | Expanded ordered menu single aria-current | T207 |  |
+| SC-045 | Toggle latency p95 ≤300ms | T210,T220 |  |
+| SC-046 | No transient admin items (gating) | T211 |  |
+| SC-047 | Activation focuses heading | T209 |  |
+| SC-048 | Rapid toggle invariants preserved | T210 |  |
+| SC-049 | Viewport transition CLS <0.1 state preserved | T212 |  |
+| SC-050 | A11y semantics pass & zero violations | T213 |  |
 
 ## Structured Error Codes
 | Code | Tasks Emitting / Testing |
@@ -140,6 +157,11 @@ Pending checklist update (T192) and mapping artifact creation (T193) completed.
 	- FR‑052 now references T159–T162 (ProductManagement impl + API utils), T169 (auth tests), and T194–T197, T204–T205 (frontend acceptance and UX tests).
 	- FR‑059 now references T166, T168 (AccessDenied UX), T171 (API error mapping), T195, T199, T202, T204 (frontend UX/accessibility), in addition to prior tasks.
 	- SC‑026 (anonymous/non-admin blocked) now references T165, T169, T195, T202, T204, T205.
+
+	Mobile Hamburger Navigation additions:
+	 - FR-061..FR-068 mapped to implementation (T214–T221), tests (T206–T213), and docs (T222–T224 pending completion).
+	 - SC-043..SC-050 covered by tests T206–T213 and perf micro-measure T220.
+	 - Documentation tasks T222–T224 ensure checklist, research rationale, quickstart usage, and mapping inclusion.
 
 ## Ambiguities / Conflicts
 1. Unauthorized messaging inconsistency: Early spec clarification shows `{ "error": "Admin access required" }` while error code table mandates machine codes (`admin_auth_required`, `forbidden_admin_role`). Resolved by tests using structured codes (tasks T147,T164,T183). Recommend updating spec clarification block to reflect canonical codes.

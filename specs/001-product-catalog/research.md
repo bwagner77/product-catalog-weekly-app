@@ -3,6 +3,7 @@
 Date: 2025-11-10
 Branch: 001-product-catalog
 Updated: 2025-11-21 (E-commerce + Images + Navigation SLO + Gating + Dual Modal Dismissal)
+Updated: 2025-11-22 (Mobile hamburger navigation FR-061..FR-068 + SC-043..SC-050)
 
 ## Unknowns and Questions
 
@@ -292,3 +293,46 @@ Recommendations:
 - Run at least 3 trials and consider the worst case.
 - Close heavy background apps.
 - Images: For performance sampling, treat placeholders as cacheable static assets; disregard optimization until future phase.
+
+### Mobile Hamburger Navigation (Added 2025-11-22)
+Context: Provide accessible mobile (<768px) navigation replacing inline desktop links with a single hamburger button (FR-061). Expansion reveals ordered vertical menu items with gating (admin-only items omitted for non-admin sessions) and preserves single `aria-current` (FR-062, FR-063, SC-044, SC-046). Interactions must meet performance and accessibility success criteria SC-043..SC-050.
+
+Functional Requirements:
+- FR-061: Collapse desktop navigation into a single hamburger button on mobile (<768px) hiding individual nav items initially.
+- FR-062: Accessible semantics: `aria-label="Menu"`, `aria-controls` referencing menu container id, dynamic `aria-expanded`.
+- FR-063: Expanded menu lists items in canonical order and omits admin-only items for non-admin users without flash.
+- FR-064: Collapsing hides items and returns focus to hamburger button.
+- FR-065: Activating a menu item collapses menu and shifts focus to target view heading within ≤500ms.
+- FR-066: Rapid toggling (≥50 cycles) remains stable (no duplicate containers or multiple `aria-current`).
+- FR-067: Viewport transitions mobile→desktop→mobile preserve active route and avoid CLS >0.1.
+- FR-068: Implementation avoids race conditions under rapid input.
+
+Success Criteria (SC-043..SC-050):
+- SC-043: Initial mobile render shows only hamburger button; no hidden focusable nav items.
+- SC-044: Expanded menu shows vertical ordered items with single `aria-current`.
+- SC-045: Toggle median latency ≤300ms (p95 ≤300ms) locally.
+- SC-046: Non-admin users never see transient admin-only items.
+- SC-047: Post-activation focus lands on target view heading reliably.
+- SC-048: Rapid toggling preserves invariants (single container, single `aria-current`).
+- SC-049: Viewport transitions do not cause CLS >0.1; state preserved.
+- SC-050: Accessibility audit: zero critical violations; semantics valid.
+
+Implementation Notes:
+- Breakpoint detection via `useIsMobile` hook.
+- Focus management: multi-delay attempts (0/10/25ms) mitigate test async rendering.
+- Menu container `role="menu"`; items `role="menuitem"`.
+- Rapid toggle stability validated by state-driven single render (T210).
+- Viewport transition test (T212) ensures preserved active view.
+- Optional performance micro-measure (T220) logs toggle duration anomalies (dev only).
+
+Testing Mapping:
+- T206–T213: Initial render, expand semantics/order, collapse focus, activation focus, rapid toggle, gating, viewport transitions, accessibility semantics.
+- T214–T221: Implementation tasks (responsive logic, menu container, semantics, focus transfer, robustness, state preservation, perf measure, constants alignment).
+- T222: Checklist update (pending).
+- T223: This doc + quickstart updates.
+- T224: Mapping file augmentation.
+
+Future Considerations:
+- Add prefers-reduced-motion transition.
+- Evaluate analytics for interaction refinement.
+- Potential NavBar component extraction for theming/i18n.

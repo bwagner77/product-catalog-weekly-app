@@ -108,7 +108,7 @@ const CategoryManagement: React.FC = () => {
 
   return (
     <section aria-labelledby="category-mgmt-heading" className="space-y-6">
-      <h2 id="category-mgmt-heading" className="text-lg font-semibold">Category Management</h2>
+      <h2 id="category-mgmt-heading" data-testid="categories-heading" tabIndex={-1} className="text-lg font-semibold">Category Management</h2>
       <form onSubmit={handleCreate} aria-label="Create category" className="flex gap-3 items-start">
         <div className="flex-1">
           <label className="block text-sm font-medium mb-1" htmlFor="new-category-name">Name</label>

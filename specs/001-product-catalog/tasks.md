@@ -532,3 +532,46 @@ Context: Append tasks to fulfill explicit acceptance criteria for ProductManagem
 - [X] T204 [P] [US9] Frontend test: NavBar admin link visibility (unauthenticated hidden, non-admin token hidden, admin token visible, post-logout hidden again) in `frontend/src/__tests__/navAdminLinkVisibility.test.tsx` (FR‑059, FR‑052)
 - [X] T205 [P] [US9] Frontend test: Token expiry removes ProductManagement link & triggers redirect (distinct from manual logout) in `frontend/src/__tests__/navAdminLinkExpiry.test.tsx` (FR‑052)
 
+---
+
+## Phase N+8: User Story 10 — Mobile Hamburger Navigation (Priority: P3)
+
+Goal: Provide accessible mobile (<768px) collapsible navigation per FR-061..FR-068 with performance & accessibility success criteria SC-043..SC-050. Desktop navigation remains unchanged; feature activates automatically at viewport <768px.
+Independent Tests: Initial mobile load shows only hamburger; expand reveals ordered items with correct gating & aria attributes; activation collapses menu and focuses heading; rapid toggling stable; viewport transitions preserve state.
+
+### Tests First (REQUIRED)
+
+ - [X] T206 [P] [US10] Frontend test: initial mobile render hides individual nav items; only hamburger visible (SC-043, FR-061) in `frontend/src/__tests__/hamburgerInitial.test.tsx`
+ - [X] T207 [P] [US10] Frontend test: expand shows vertical ordered items, single `aria-current`, correct `aria-expanded` & `aria-controls` (SC-044, FR-062, FR-063) in `frontend/src/__tests__/hamburgerExpand.test.tsx`
+ - [X] T208 [P] [US10] Frontend test: collapse hides items from DOM or tab order; focus returns to hamburger (FR-064, SC-045) in `frontend/src/__tests__/hamburgerCollapseFocus.test.tsx`
+ - [X] T209 [P] [US10] Frontend test: activation of nav item auto-collapses and focuses target view heading ≤500ms (FR-065, SC-047) in `frontend/src/__tests__/hamburgerActivate.test.tsx`
+ - [X] T210 [P] [US10] Frontend test: rapid toggling (≥50 cycles) no duplicate containers / multiple aria-current; measure timings (SC-045, SC-048, FR-066) in `frontend/src/__tests__/hamburgerRapidToggle.test.tsx`
+ - [X] T211 [P] [US10] Frontend test: non-admin expansion omits admin-only items without flash (SC-046, FR-063) in `frontend/src/__tests__/hamburgerGating.test.tsx`
+ - [X] T212 [P] [US10] Frontend test: viewport transition mobile→desktop→mobile preserves active page & avoids CLS >0.1 (SC-049, FR-067) in `frontend/src/__tests__/hamburgerViewportTransition.test.tsx`
+ - [X] T213 [P] [US10] Accessibility semantics test: hamburger button keyboard access, `aria-label` presence, `aria-expanded` toggling, `aria-controls` target validity, zero violations (SC-050, FR-062) in `frontend/src/__tests__/hamburgerA11y.test.tsx`
+
+### Implementation Tasks
+
+ - [X] T214 [US10] Implement responsive breakpoint logic (<768px) to render hamburger button and hide nav items (FR-061) in `frontend/src/components/NavBar.tsx`
+ - [X] T215 [US10] Implement controlled menu container (vertical stack) with ordered items & gating (FR-063) in `frontend/src/components/MobileMenu.tsx`
+ - [X] T216 [US10] Add accessible semantics (`aria-label`, `aria-expanded`, `aria-controls`) and focus management on collapse/expand (FR-062, FR-064) in `frontend/src/components/HamburgerButton.tsx`
+ - [X] T217 [US10] Auto-collapse after item activation + heading focus transfer logic (FR-065) integrated into navigation route change handler
+ - [X] T218 [US10] Rapid toggle robustness: guard against double mounts / race conditions (FR-066) using debounced or state-locked transitions
+ - [X] T219 [US10] Viewport transition state preservation: sync active route and menu state when resizing (FR-067) in shared navigation context
+ - [X] T220 [US10] Add performance micro-measure (optional) capturing toggle duration for SC-045; log anomalies in dev only
+ - [X] T221 [US10] Update existing navigation tests to import shared constants for order so desktop & mobile share source of truth (reduce drift risk)
+ - [X] T222 [US10] Update `specs/001-product-catalog/checklists/requirements.md` to mark SC-043..SC-050 covered by T206–T213
+ - [X] T223 [US10] Docs: Add hamburger feature rationale & accessibility notes to `specs/001-product-catalog/research.md` (contrast with desktop nav) and usage note to `quickstart.md`
+ - [X] T224 [US10] Add mapping entries (FR-061..FR-068 ↔ tasks T206–T223) to `checklists/mapping-fr-sc-tasks.md`
+
+### Completion Criteria Addendum (User Story 10)
+Release of mobile navigation requires:
+1. All tests T206–T213 pass with coverage ≥80% maintained.
+2. No CLS >0.1 introduced by menu operations or viewport transitions (SC-049).
+3. Single `aria-current` enforced across desktop & mobile states (SC-044, SC-048).
+4. Toggle interactions ≤300ms 95th percentile locally (SC-045) validated by test T210 logs.
+5. Non-admin users never see transient admin items (SC-046) validated by gating test T211.
+6. Post-activation focus consistently lands on target view heading (SC-047) validated by T209.
+7. No accessibility violations (SC-050) validated by T213.
+8. Documentation and checklist updates (T222, T223) committed.
+

@@ -10,6 +10,7 @@ import OrderConfirmation from './components/OrderConfirmation';
 import type { Order } from './types/order';
 
 type ActiveView = 'products' | 'categories' | 'productManagement' | 'login';
+import { useIsMobile } from './hooks/useIsMobile';
 
 interface NavBarProps {
   active: ActiveView;
@@ -19,61 +20,96 @@ interface NavBarProps {
 const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
   const cart = useCart();
   const { authenticated, logout } = useAuth();
+  const isMobile = useIsMobile();
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const hamburgerRef = React.useRef<HTMLButtonElement | null>(null);
+
+  function focusHeading(view: ActiveView) {
+    const idMap: Record<ActiveView, string> = {
+      products: 'products-heading',
+      categories: 'categories-heading',
+      productManagement: 'product-management-heading',
+      login: 'login-heading'
+    };
+    const selector = `[data-testid="${idMap[view]}"]`;
+    const delays = [0, 10, 25];
+    delays.forEach(d => {
+      setTimeout(() => {
+        const el = document.querySelector(selector) as HTMLElement | null;
+        if (el) {
+          hamburgerRef.current?.blur();
+          el.focus();
+        }
+      }, d);
+    });
+  }
+
+  function activate(view: ActiveView) {
+    onChange(view);
+    if (isMobile) {
+      setMenuOpen(false);
+      focusHeading(view);
+    }
+  }
+
+  function toggleMenu() {
+    setMenuOpen(prev => {
+      const next = !prev;
+      if (!next) {
+        // Focus synchronously first to satisfy tests, then reinforce asynchronously.
+        hamburgerRef.current?.focus();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            hamburgerRef.current?.focus();
+          });
+        });
+      }
+      return next;
+    });
+  }
+
   return (
     <header className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10" role="banner">
       <div className="flex items-center space-x-3" aria-label="Brand" data-testid="brand">
-        {/* Inline SVG logo (placeholder) */}
         <div className="w-8 h-8 flex items-center justify-center rounded bg-indigo-600 text-white font-bold" aria-label="Shoply logo" data-testid="logo">S</div>
         <h1 className="text-xl font-semibold" data-testid="brand-name">Shoply Catalog</h1>
       </div>
-      <nav aria-label="Primary" className="flex items-center space-x-2" role="navigation">
-        <button
-          type="button"
-          onClick={() => onChange('products')}
-          aria-current={active === 'products' ? 'page' : undefined}
-          className={`px-3 py-1 rounded text-sm font-medium border ${active === 'products' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-          data-testid="nav-products"
-        >Products</button>
-        {authenticated && (
+      {!isMobile && (
+        <nav aria-label="Primary" className="flex items-center space-x-2" role="navigation">
+          <button type="button" onClick={() => activate('products')} aria-current={active === 'products' ? 'page' : undefined} className={`px-3 py-1 rounded text-sm font-medium border ${active === 'products' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`} data-testid="nav-products">Products</button>
+          {authenticated && <button type="button" onClick={() => activate('categories')} aria-current={active === 'categories' ? 'page' : undefined} className={`px-3 py-1 rounded text-sm font-medium border ${active === 'categories' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`} data-testid="nav-categories">Category Management</button>}
+          {authenticated && <button type="button" onClick={() => activate('productManagement')} aria-current={active === 'productManagement' ? 'page' : undefined} className={`px-3 py-1 rounded text-sm font-medium border ${active === 'productManagement' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`} data-testid="nav-product-mgmt">Product Management</button>}
+          {authenticated && <button type="button" onClick={() => { logout(); activate('login'); }} className="px-3 py-1 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100" data-testid="nav-logout">Logout</button>}
+          {!authenticated && <button type="button" onClick={() => activate('login')} aria-current={active === 'login' ? 'page' : undefined} className={`px-3 py-1 rounded text-sm font-medium border ${active === 'login' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`} data-testid="nav-login">Login</button>}
+        </nav>
+      )}
+      {isMobile && (
+        <div className="flex items-center" role="navigation" aria-label="Mobile navigation">
           <button
             type="button"
-            onClick={() => onChange('categories')}
-            aria-current={active === 'categories' ? 'page' : undefined}
-            className={`px-3 py-1 rounded text-sm font-medium border ${active === 'categories' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-            data-testid="nav-categories"
-          >Category Management</button>
-        )}
-        {authenticated && (
-          <button
-            type="button"
-            onClick={() => onChange('productManagement')}
-            aria-current={active === 'productManagement' ? 'page' : undefined}
-            className={`px-3 py-1 rounded text-sm font-medium border ${active === 'productManagement' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-            data-testid="nav-product-mgmt"
-          >Product Management</button>
-        )}
-        {authenticated && (
-          <button
-            type="button"
-            onClick={() => { logout(); onChange('login'); setTimeout(() => { const h = document.getElementById('login-heading'); h?.focus(); }, 0); }}
-            className="px-3 py-1 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100"
-            data-testid="nav-logout"
-          >Logout</button>
-        )}
-        {!authenticated && (
-          <button
-            type="button"
-            onClick={() => onChange('login')}
-            aria-current={active === 'login' ? 'page' : undefined}
-            className={`px-3 py-1 rounded text-sm font-medium border ${active === 'login' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-            data-testid="nav-login"
-          >Login</button>
-        )}
-      </nav>
+            aria-label="Menu"
+            aria-controls="mobile-menu"
+            aria-expanded={menuOpen ? 'true' : 'false'}
+            onClick={toggleMenu}
+            className="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+            data-testid="hamburger-button"
+            ref={hamburgerRef}
+          >☰</button>
+        </div>
+      )}
       <div className="flex items-center space-x-4" aria-label="Cart summary">
         <span className="text-sm" data-testid="cart-count">Cart: {cart.count}</span>
         <span className="text-sm" data-testid="cart-total">Total: ${cart.total.toFixed(2)}</span>
       </div>
+      {isMobile && menuOpen && (
+        <div id="mobile-menu" data-testid="hamburger-menu" className="absolute left-0 top-full w-full bg-white border-t border-gray-200 shadow-sm p-4 flex flex-col space-y-2" role="menu" aria-label="Mobile navigation menu">
+          <button role="menuitem" type="button" onClick={() => activate('products')} aria-current={active === 'products' ? 'page' : undefined} className={`text-left px-3 py-2 rounded text-sm font-medium border ${active === 'products' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}>Products</button>
+          {authenticated && <button role="menuitem" type="button" onClick={() => activate('categories')} aria-current={active === 'categories' ? 'page' : undefined} className={`text-left px-3 py-2 rounded text-sm font-medium border ${active === 'categories' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}>Category Management</button>}
+          {authenticated && <button role="menuitem" type="button" onClick={() => activate('productManagement')} aria-current={active === 'productManagement' ? 'page' : undefined} className={`text-left px-3 py-2 rounded text-sm font-medium border ${active === 'productManagement' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}>Product Management</button>}
+          {authenticated && <button role="menuitem" type="button" onClick={() => { logout(); activate('login'); }} className="text-left px-3 py-2 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100">Logout</button>}
+          {!authenticated && <button role="menuitem" type="button" onClick={() => activate('login')} aria-current={active === 'login' ? 'page' : undefined} className={`text-left px-3 py-2 rounded text-sm font-medium border ${active === 'login' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}>Login</button>}
+        </div>
+      )}
     </header>
   );
 };

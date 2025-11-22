@@ -31,7 +31,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, focusOnMount = false }) => {
 
   return (
     <div className="max-w-sm mx-auto mt-8 bg-white p-4 rounded shadow" aria-labelledby="login-heading">
-      <h2 id="login-heading" tabIndex={-1} className="text-lg font-semibold mb-4">Admin Login</h2>
+      <h2 id="login-heading" data-testid="login-heading" tabIndex={-1} className="text-lg font-semibold mb-4">Admin Login</h2>
       <form onSubmit={handleSubmit} className="space-y-3" aria-label="Admin login form">
         <div>
           <label htmlFor="login-username" className="block text-sm font-medium mb-1">Username</label>
