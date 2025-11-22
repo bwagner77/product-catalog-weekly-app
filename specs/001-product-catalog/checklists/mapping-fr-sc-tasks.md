@@ -66,14 +66,14 @@ Purpose: Provide traceability matrix linking Functional Requirements (FR), Succe
 | FR-049 | A11y of new UI elements | T127,T105,T136,T139,T112 | A11y/Test |  |
 | FR-050 | Acceptance tests for new UI | T126,T129,T136,T170 | Test |  |
 | FR-051 | Restrict category writes (admin) | T146,T148,T142,T134,T164 | Impl/Test |  |
-| FR-052 | Restrict product writes (admin) | T146,T149,T170,T169,T164 | Impl/Test |  |
+| FR-052 | Restrict product writes (admin) | T146,T149,T159,T160,T161,T162,T169,T170,T194,T195,T196,T197,T204,T205,T164 | Impl/Test |  |
 | FR-053 | Non-negative stock update | T159,T170 | Impl/Test |  |
 | FR-054 | Product CRUD performance ≤2s | T190 | Perf |  |
 | FR-055 | Case-insensitive category uniqueness | T069,T191 | Impl/Test |  |
 | FR-056 | Reject PII on orders | T103,T188 | Impl/Test |  |
 | FR-057 | Admin login endpoint | T144,T145,T163 | Impl/Test |  |
 | FR-058 | Session persistence until expiry | T154,T155,T165,T167 | Impl/Test |  |
-| FR-059 | AccessDenied messaging | T156,T166,T168,T177,T165 | Impl/Test/A11y |  |
+| FR-059 | AccessDenied messaging | T156,T166,T168,T171,T177,T195,T199,T202,T204,T165 | Impl/Test/A11y |  |
 | FR-060 | Structured error + zero mutation | T147,T164,T178,T183,T187 | Impl/Test |  |
 
 ## Success Criteria
@@ -104,7 +104,7 @@ Purpose: Provide traceability matrix linking Functional Requirements (FR), Succe
 | SC-023 | Navigation latency targets | T129 |  |
 | SC-024 | Dual modal dismissal focus | T136,T139,T128 |  |
 | SC-025 | Category writes blocked anonymous | T142,T134,T164 |  |
-| SC-026 | ProductManagement blocked anonymous | T169,T165 |  |
+| SC-026 | ProductManagement blocked anonymous | T165,T169,T195,T202,T204,T205 |  |
 | SC-027 | Stock updates non-negative | T170 |  |
 | SC-028 | Product CRUD ops ≤2s | T190 |  |
 | SC-029 | Unauthorized writes zero mutation | T164,T178,T183,T187 |  |
@@ -133,6 +133,13 @@ Initial gaps remediated:
 - SC-007: Category operation latency measurement → T189 (implemented).
 - FR-055: Case-insensitive uniqueness negative test → T191 (implemented, route updated to 409).
 Pending checklist update (T192) and mapping artifact creation (T193) completed.
+
+## Traceability Updates (2025-11-22)
+
+- Mapping augmented per T201 to include recent admin ProductManagement and RBAC tasks:
+	- FR‑052 now references T159–T162 (ProductManagement impl + API utils), T169 (auth tests), and T194–T197, T204–T205 (frontend acceptance and UX tests).
+	- FR‑059 now references T166, T168 (AccessDenied UX), T171 (API error mapping), T195, T199, T202, T204 (frontend UX/accessibility), in addition to prior tasks.
+	- SC‑026 (anonymous/non-admin blocked) now references T165, T169, T195, T202, T204, T205.
 
 ## Ambiguities / Conflicts
 1. Unauthorized messaging inconsistency: Early spec clarification shows `{ "error": "Admin access required" }` while error code table mandates machine codes (`admin_auth_required`, `forbidden_admin_role`). Resolved by tests using structured codes (tasks T147,T164,T183). Recommend updating spec clarification block to reflect canonical codes.

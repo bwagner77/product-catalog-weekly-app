@@ -1,7 +1,6 @@
 import request from 'supertest';
 import app from '../../src/app';
 import { connectDB, disconnectDB } from '../../src/config/db';
-import Product from '../../src/models/product';
 
 /**
  * T179: Auth failure logging emits structured log with reason code, path, traceId.

@@ -86,3 +86,16 @@ Spec alignment adjustments:
 - Decision tree clarified (401 vs 403) and `insufficient_stock` marked deprecated alias.
 
 No remaining uncovered FR or SC after integration of T189–T191 (pending completion of cart/order latency tests already scheduled: T181, T182).
+
+## Traceability Updates (2025-11-22)
+
+- T192: Requirements checklist updated to explicitly reference coverage for SC-007, SC-028, and FR-055 via tasks T189–T191.
+- T200: Requirements checklist updated to explicitly reference coverage for SC‑026, FR‑052, and FR‑059 via tasks T159–T170 and T194–T199.
+
+Coverage references:
+- SC-007 (Category CRUD latency): covered by T189.
+- SC-028 (Product CRUD latency): covered by T190.
+- FR-055 (Category name uniqueness, case-insensitive, 409): covered by T191.
+- SC‑026 (Anonymous/non-admin blocked from ProductManagement): covered by T165, T169, T195, T202, T204, T205.
+- FR‑052 (Restrict product writes to admin + ProductManagement behavior): covered by T146, T149, T159–T162, T169, T194–T197, T204, T205.
+- FR‑059 (Branded AccessDenied + auth UX): covered by T156, T166, T168, T171, T195, T199, T202, T204.

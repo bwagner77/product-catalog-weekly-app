@@ -23,7 +23,6 @@ describe('OrderConfirmation dual dismissal (T136)', () => {
     const { rerender } = render(<OrderConfirmation order={sampleOrder()} onClose={handleClose} />);
     const dialog = screen.getByRole('dialog', { name: /order placed/i });
     const iconBtn = within(dialog).getByRole('button', { name: /close confirmation/i });
-    const secondaryBtn = within(dialog).getByRole('button', { name: /close order confirmation/i });
     iconBtn.focus();
     expect(document.activeElement).toBe(iconBtn);
     await user.click(iconBtn);

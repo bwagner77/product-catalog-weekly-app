@@ -423,9 +423,9 @@ Goal: Admin can CRUD products including stock and category selection; anonymous 
 Independent Test: Valid admin CRUD succeeds; anonymous/invalid token blocked; dropdown lists all categories.
 
 - [X] T159 [P] [US9] Implement product POST/PUT/DELETE handlers in `backend/src/routes/products.ts` (validation: fields + categoryId optional)
-- [ ] T160 [US9] Create `frontend/src/pages/ProductManagement.tsx` (list + create/edit/delete; dropdown categories)
-- [ ] T161 [US9] Product management API utilities in `frontend/src/api/productsAdmin.ts` using Bearer token
-- [ ] T162 [US9] Secure writes via `authAdmin`; UI sends Authorization header
+- [X] T160 [US9] Create `frontend/src/pages/ProductManagement.tsx` (list + create/edit/delete; dropdown categories)
+- [X] T161 [US9] Product management API utilities in `frontend/src/api/productsAdmin.ts` using Bearer token
+- [X] T162 [US9] Secure writes via `authAdmin`; UI sends Authorization header
 - [ ] T169 [P] [US9] Frontend tests: product create/update/delete blocked when anonymous; success when admin
 - [ ] T170 [US9] Backend tests: product CRUD with auth + 401/403 matrix in `backend/tests/api/productsAuth.test.ts`
 
@@ -497,9 +497,9 @@ The following tasks are newly added to close uncovered requirement & success cri
  - [X] T191 [P] Case-insensitive Category name uniqueness negative test (FR-055)
        - Extend or add `backend/tests/api/categoriesUnique.test.ts` creating a category then attempting same name with different casing; expect 409 and error code `category_name_conflict`; assert zero mutation.
        - Confirms explicit coverage separate from general CRUD tests.
-- [ ] T192 [P] Requirements checklist update referencing new perf & uniqueness tests
+- [X] T192 [P] Requirements checklist update referencing new perf & uniqueness tests
        - Update `specs/001-product-catalog/checklists/requirements.md` to mark SC-007, SC-028, FR-055 covered by T189–T191.
-- [ ] T193 [P] Add mapping artifact file `checklists/mapping-fr-sc-tasks.md` summarizing FR/SC ↔ task linkage for audit traceability.
+- [X] T193 [P] Add mapping artifact file `checklists/mapping-fr-sc-tasks.md` summarizing FR/SC ↔ task linkage for audit traceability.
 
 ---
 
@@ -507,16 +507,16 @@ The following tasks are newly added to close uncovered requirement & success cri
 
 Context: Append tasks to fulfill explicit acceptance criteria for ProductManagement page (SC‑026, FR‑052, FR‑059) and strengthen admin role access control validation. Sequentially continues after T193.
 
-- [ ] T194 [P] [US9] Frontend test: ProductManagement category dropdown lists all categories (≥5) and reflects create/delete changes in `frontend/src/__tests__/productMgmtCategories.test.tsx` (FR‑052)
-- [ ] T195 [P] [US9] Frontend test: Unauthorized (anonymous & non-admin token) navigation to `/admin/product-management` shows branded AccessDenied and blocks form submission (SC‑026, FR‑059) in `frontend/src/__tests__/productMgmtUnauthorized.test.tsx`
-- [ ] T196 [P] [US9] Frontend test: Auth persistence across reload (admin remains until token expiry) in `frontend/src/__tests__/authPersistence.test.tsx` (FR‑052)
-- [ ] T197 [P] [US9] Frontend test: Negative stock input prevented (client validation) — submission blocked, API not called in `frontend/src/__tests__/productStockValidation.test.tsx` (FR‑052)
-- [ ] T198 [P] Backend test: Standardized unauthorized error body `{ error:'admin_auth_required', message:'Admin authentication required' }` for protected product/category writes (missing/invalid/expired token) in `backend/tests/api/unauthorizedErrorFormat.test.ts` (FR‑059, SC‑026)
-- [ ] T199 [P] [US9] Enhance `frontend/src/pages/ProductManagement.tsx` to render branded inline AccessDenied message when blocked (reuse `AccessDenied.tsx`) (FR‑059)
-- [ ] T200 [P] Requirements checklist update: mark SC‑026, FR‑052, FR‑059 covered (append rows) in `specs/001-product-catalog/checklists/requirements.md`
-- [ ] T201 [P] Mapping artifact augmentation: extend `specs/001-product-catalog/checklists/mapping-fr-sc-tasks.md` linking SC‑026, FR‑052, FR‑059 to tasks T159–T170, T194–T199
-- [ ] T202 [P] [US9] Accessibility test: Focus lands on login heading after unauthorized redirect (non-admin token) distinct from expired token path in `frontend/src/__tests__/unauthorizedFocus.test.tsx` (SC‑026, FR‑059)
-- [ ] T203 [P] Docs: Add RBAC rationale (legacy flag removed, JWT role only) to `specs/001-product-catalog/research.md` and `quickstart.md` (FR‑059)
-- [ ] T204 [P] [US9] Frontend test: NavBar admin link visibility (unauthenticated hidden, non-admin token hidden, admin token visible, post-logout hidden again) in `frontend/src/__tests__/navAdminLinkVisibility.test.tsx` (FR‑059, FR‑052)
-- [ ] T205 [P] [US9] Frontend test: Token expiry removes ProductManagement link & triggers redirect (distinct from manual logout) in `frontend/src/__tests__/navAdminLinkExpiry.test.tsx` (FR‑052)
+- [X] T194 [P] [US9] Frontend test: ProductManagement category dropdown lists all categories (≥5) and reflects create/delete changes in `frontend/src/__tests__/productMgmtCategories.test.tsx` (FR‑052)
+- [X] T195 [P] [US9] Frontend test: Unauthorized (anonymous & non-admin token) navigation to `/admin/product-management` shows branded AccessDenied and blocks form submission (SC‑026, FR‑059) in `frontend/src/__tests__/productMgmtUnauthorized.test.tsx`
+- [X] T196 [P] [US9] Frontend test: Auth persistence across reload (admin remains until token expiry) in `frontend/src/__tests__/authPersistence.test.tsx` (FR‑052)
+- [X] T197 [P] [US9] Frontend test: Negative stock input prevented (client validation) — submission blocked, API not called in `frontend/src/__tests__/productStockValidation.test.tsx` (FR‑052)
+- [X] T198 [P] Backend test: Standardized unauthorized error body `{ error:'admin_auth_required', message:'Admin authentication required' }` for protected product/category writes (missing/invalid/expired token) in `backend/tests/api/unauthorizedErrorFormat.test.ts` (FR‑059, SC‑026)
+- [X] T199 [P] [US9] Enhance `frontend/src/pages/ProductManagement.tsx` to render branded inline AccessDenied message when blocked (reuse `AccessDenied.tsx`) (FR‑059)
+- [X] T200 [P] Requirements checklist update: mark SC‑026, FR‑052, FR‑059 covered (append rows) in `specs/001-product-catalog/checklists/requirements.md`
+- [X] T201 [P] Mapping artifact augmentation: extend `specs/001-product-catalog/checklists/mapping-fr-sc-tasks.md` linking SC‑026, FR‑052, FR‑059 to tasks T159–T170, T194–T199
+- [X] T202 [P] [US9] Accessibility test: Focus lands on login heading after unauthorized redirect (non-admin token) distinct from expired token path in `frontend/src/__tests__/unauthorizedFocus.test.tsx` (SC‑026, FR‑059)
+- [X] T203 [P] Docs: Add RBAC rationale (legacy flag removed, JWT role only) to `specs/001-product-catalog/research.md` and `quickstart.md` (FR‑059)
+- [X] T204 [P] [US9] Frontend test: NavBar admin link visibility (unauthenticated hidden, non-admin token hidden, admin token visible, post-logout hidden again) in `frontend/src/__tests__/navAdminLinkVisibility.test.tsx` (FR‑059, FR‑052)
+- [X] T205 [P] [US9] Frontend test: Token expiry removes ProductManagement link & triggers redirect (distinct from manual logout) in `frontend/src/__tests__/navAdminLinkExpiry.test.tsx` (FR‑052)
 

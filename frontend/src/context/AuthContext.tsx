@@ -26,6 +26,12 @@ function decodePayload(token: string): { role?: string; exp?: number } | null {
 
 const STORAGE_KEY = 'shoply_admin_token';
 
+// Allow same-window modules (e.g., api/http) to force a refresh
+let externalRefresh: (() => void) | null = null;
+export function triggerAuthRefresh(): void {
+  try { externalRefresh?.(); } catch { /* no-op */ }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
@@ -43,6 +49,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => { refreshFromStorage(); }, [refreshFromStorage]);
+
+  // Register external refresh hook
+  useEffect(() => {
+    externalRefresh = refreshFromStorage;
+    return () => { externalRefresh = null; };
+  }, [refreshFromStorage]);
+
+  // Respond to cross-module auth changes (e.g., api/http clearing token on 401/403)
+  useEffect(() => {
+    const handler = () => refreshFromStorage();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:changed', handler as EventListener);
+      window.addEventListener('storage', handler as EventListener);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('auth:changed', handler as EventListener);
+        window.removeEventListener('storage', handler as EventListener);
+      }
+    };
+  }, [refreshFromStorage]);
 
   // Auto-clear expired token to enforce redirect behavior (T167)
   useEffect(() => {

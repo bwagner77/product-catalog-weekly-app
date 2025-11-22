@@ -46,19 +46,19 @@ const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
         {authenticated && (
           <button
             type="button"
+            onClick={() => { logout(); onChange('login'); setTimeout(() => { const h = document.getElementById('login-heading'); h?.focus(); }, 0); }}
+            className="px-3 py-1 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100"
+            data-testid="nav-logout"
+          >Logout</button>
+        )}
+        {authenticated && (
+          <button
+            type="button"
             onClick={() => onChange('productManagement')}
             aria-current={active === 'productManagement' ? 'page' : undefined}
             className={`px-3 py-1 rounded text-sm font-medium border ${active === 'productManagement' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
             data-testid="nav-product-mgmt"
           >Product Management</button>
-        )}
-        {authenticated && (
-          <button
-            type="button"
-            onClick={() => { logout(); onChange('login'); setTimeout(() => { const h = document.getElementById('login-heading'); h?.focus(); }, 0); }}
-            className="px-3 py-1 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100"
-            data-testid="nav-logout"
-          >Logout</button>
         )}
         {!authenticated && (
           <button

@@ -56,15 +56,16 @@ async function handle<T>(res: Response): Promise<T> {
     return (res.status === 204 ? undefined : await res.json()) as T;
   }
   let raw: string | undefined;
-  let parsed: any = null;
+  let parsed: unknown = null;
   try {
     raw = await res.text();
     parsed = raw ? JSON.parse(raw) : null;
-  } catch {
+  } catch (_e) {
     // ignore JSON parse error
   }
-  const code = parsed?.error;
-  const message = parsed?.message || parsed?.error || raw || `Request failed with ${res.status}`;
+  const p = (parsed && typeof parsed === 'object') ? (parsed as { error?: string; message?: string }) : null;
+  const code = p?.error;
+  const message = p?.message || p?.error || raw || `Request failed with ${res.status}`;
   let display = message;
   if (code === 'token_expired') display = 'Session expired – please log in again';
   else if (code === 'admin_auth_required') display = 'Admin authentication required';

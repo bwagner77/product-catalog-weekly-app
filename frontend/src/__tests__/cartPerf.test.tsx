@@ -2,13 +2,22 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import React from 'react';
 import { CartProvider, useCart } from '../hooks/useCart';
 import type { Product } from '../types/product';
+import { render } from '@testing-library/react';
 
 // T181: Cart latency perf test (SC-031)
 // Measures add/update/remove operation durations using performance.now().
 // Threshold: median & p95 < 500ms (expected to be far lower in test env).
 
 const sampleProduct: Product = {
-  id: 'perf-1', name: 'PerfProd', description: 'D', price: 10, stock: 50, imageUrl: 'images/p.jpg', categoryId: 'c-1'
+  id: 'perf-1',
+  name: 'PerfProd',
+  description: 'D',
+  price: 10,
+  stock: 50,
+  imageUrl: 'images/p.jpg',
+  categoryId: 'c-1',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
 };
 
 function PerfHarness() {
@@ -30,7 +39,7 @@ describe('Cart performance (SC-031)', () => {
   });
 
   it('add/update/remove operations meet latency thresholds', () => {
-    const { unmount } = (global as any).renderWithProviders ? (global as any).renderWithProviders(<CartProvider><PerfHarness /></CartProvider>) : require('@testing-library/react').render(<CartProvider><PerfHarness /></CartProvider>);
+    const { unmount } = render(<CartProvider><PerfHarness /></CartProvider>);
     const cartApi = (window as any).__cart as ReturnType<typeof useCart>;
     const addDur: number[] = []; const updDur: number[] = []; const remDur: number[] = [];
     for (let i = 0; i < 40; i++) {

@@ -90,6 +90,14 @@ Sampling Guidance:
 - No Refresh Tokens: User re-authenticates after expiry; reduces attack surface (no token pair lifecycle).
 - Future: Introduce multi-role matrix, refresh flow, and revocation list.
 
+### RBAC Rationale (2025-11-22)
+- Background: A legacy environment flag previously gated write routes. This created ambiguity and brittle environments. We replaced it with explicit JWT role enforcement.
+- Decision: Admin-only writes (categories/products) enforced by middleware verifying a Bearer JWT and role claim `role:'admin'`.
+- Semantics: 401 `admin_auth_required` for missing/invalid signatures; 401 `token_expired` for expired tokens; 403 `forbidden_admin_role` for valid non-admin tokens. All return standardized `{ error, message }` and guarantee zero mutation.
+- Client UX: Frontend clears tokens and routes to Login on 401/403; AccessDenied renders for blocked admin pages with no privileged flicker; admin nav links are hidden when unauthenticated/non-admin.
+- Why this approach: Stateless, simple, and testable; aligns with constitution’s explicit RBAC and clear error semantics; avoids partial writes and minimizes stateful server requirements.
+- Future: Expand to multiple roles (e.g., manager, auditor) via RBAC matrix and extend tests accordingly; consider moving storage to httpOnly cookies and adding refresh tokens when necessary.
+
 ### Dual Modal Dismissal Accessibility
 - Decision: Provide both × icon and "Close" button for order confirmation modal.
 - Rationale: Satisfies constitution requirement for accessible dismissal; supports users preferring explicit action labels.

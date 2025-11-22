@@ -1,10 +1,13 @@
 import * as React from 'react';
 import type { Product } from '../types/product';
 import type { Category } from '../types/category';
-import { fetchProducts, createProduct, updateProduct, deleteProduct, ProductInput } from '../api/products';
+import { fetchProducts } from '../api/products';
+import { createProduct, updateProduct, deleteProduct, ProductInput } from '../api/productsAdmin';
 import { listCategories } from '../api/categories';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
+import { useAuth } from '../context/AuthContext';
+import AccessDenied from '../components/AccessDenied';
 
 interface EditableProduct extends Product {
   _editing?: boolean;
@@ -21,6 +24,7 @@ const emptyInput: ProductInput = {
 };
 
 const ProductManagement: React.FC = () => {
+  const { authenticated } = useAuth();
   const [products, setProducts] = React.useState<EditableProduct[]>([]);
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -120,6 +124,10 @@ const ProductManagement: React.FC = () => {
     }
   }
 
+  if (!authenticated) {
+    return <AccessDenied />;
+  }
+
   return (
     <section aria-labelledby="product-mgmt-heading" className="space-y-6">
       <h2 id="product-mgmt-heading" className="text-lg font-semibold">Product Management</h2>
@@ -200,14 +208,14 @@ const ProductManagement: React.FC = () => {
                   </td>
                   <td className="py-2 pr-2 w-24">
                     {p._editing ? (
-                      <input type="number" min={0} step={0.01} value={draftPrice} onChange={e => setDrafts(prev => ({ ...prev, [p.id]: { ...prev[p.id], price: Number(e.target.value) } }))} disabled={p._pending} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+                      <input aria-label={`Edit price ${p.name}`} type="number" min={0} step={0.01} value={draftPrice} onChange={e => setDrafts(prev => ({ ...prev, [p.id]: { ...prev[p.id], price: Number(e.target.value) } }))} disabled={p._pending} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
                     ) : (
                       `$${p.price.toFixed(2)}`
                     )}
                   </td>
                   <td className="py-2 pr-2 w-24">
                     {p._editing ? (
-                      <input type="number" min={0} step={1} value={draftStock} onChange={e => setDrafts(prev => ({ ...prev, [p.id]: { ...prev[p.id], stock: Number(e.target.value) } }))} disabled={p._pending} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+                      <input aria-label={`Edit stock ${p.name}`} type="number" min={0} step={1} value={draftStock} onChange={e => setDrafts(prev => ({ ...prev, [p.id]: { ...prev[p.id], stock: Number(e.target.value) } }))} disabled={p._pending} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" />
                     ) : (
                       p.stock
                     )}

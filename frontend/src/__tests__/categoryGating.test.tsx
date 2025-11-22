@@ -10,7 +10,7 @@ describe('CategoryManagement gating (frontend)', () => {
   });
 
   it('shows permission message and does not add category when backend returns 403', async () => {
-    let calls: any[] = [];
+    const calls: any[] = [];
     global.fetch = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
       calls.push({ input, init });
       if (typeof input === 'string' && input.endsWith('/api/categories') && init?.method === 'POST') {

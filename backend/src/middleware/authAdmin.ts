@@ -30,7 +30,7 @@ export function authAdmin(req: Request, res: Response, next: NextFunction) {
       log({ level: 'warn', event: 'auth_failure', reason: body.error, path: req.originalUrl || req.url, traceId: res.locals.traceId });
       return res.status(403).json(body);
     }
-    (req as any).admin = true;
+    (req as Request & { admin?: boolean }).admin = true;
     return next();
   } catch (_err) {
     const body = adminAuthRequired();

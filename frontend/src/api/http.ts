@@ -1,4 +1,4 @@
-import { getAuthToken } from '../context/AuthContext';
+import { getAuthToken, triggerAuthRefresh } from '../context/AuthContext';
 
 export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const token = getAuthToken();
@@ -9,20 +9,15 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
   const res = await fetch(input, { ...init, headers });
   if (res.status === 401 || res.status === 403) {
     try {
-      const txt = await res.clone().text();
-      let body: any = null;
-      try { body = txt ? JSON.parse(txt) : null; } catch {}
-      const code = body?.error;
-      if (code === 'admin_auth_required' || code === 'token_expired' || code === 'forbidden_admin_role') {
-        localStorage.removeItem('shoply_admin_token');
-        // Attempt soft redirect to login view
-        if (typeof window !== 'undefined') {
-          // simplistic: rely on App internal state via location hash
-          window.location.hash = '#login';
-        }
+      localStorage.removeItem('shoply_admin_token');
+      // ensure same-window state refresh without relying on events timing
+      triggerAuthRefresh();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('auth:changed'));
+        window.location.hash = '#login';
       }
-    } catch {
-      // ignore
+    } catch (_err) {
+      void 0;
     }
   }
   return res;

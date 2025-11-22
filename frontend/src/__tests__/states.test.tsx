@@ -3,7 +3,6 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import ProductList from '../pages/ProductList';
 
-const flush = () => new Promise((r) => setTimeout(r, 0));
 
 describe('[US2] ProductList states', () => {
   beforeEach(() => {

@@ -71,6 +71,7 @@ describe('[US3] Accessibility and responsiveness', () => {
     const navProducts = screen.getByTestId('nav-products');
     const navCategories = screen.getByTestId('nav-categories');
     const navLogout = screen.queryByTestId('nav-logout');
+    const navProductMgmt = screen.queryByTestId('nav-product-mgmt');
     const searchInput = screen.getByPlaceholderText('Search…');
     const categorySelect = screen.getByRole('combobox', { name: 'Filter by category' });
     const firstProductItem = screen.getAllByRole('listitem')[0];
@@ -84,6 +85,10 @@ describe('[US3] Accessibility and responsiveness', () => {
     if (navLogout) {
       await user.tab();
       expect(document.activeElement).toBe(navLogout);
+    }
+    if (navProductMgmt) {
+      await user.tab();
+      expect(document.activeElement).toBe(navProductMgmt);
     }
     await user.tab();
     expect(document.activeElement).toBe(searchInput);

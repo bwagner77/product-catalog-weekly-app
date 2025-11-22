@@ -10,15 +10,16 @@ async function handle<T>(res: Response): Promise<T> {
   }
   // Attempt JSON parsing for standardized error bodies
   let raw: string | undefined;
-  let parsed: any = null;
+  let parsed: unknown = null;
   try {
     raw = await res.text();
     parsed = raw ? JSON.parse(raw) : null;
   } catch {
     // fallback to raw
   }
-  const code = parsed?.error;
-  const message = parsed?.message || parsed?.error || raw || `Request failed with ${res.status}`;
+  const p = (parsed && typeof parsed === 'object') ? (parsed as { error?: string; message?: string }) : null;
+  const code = p?.error;
+  const message = p?.message || p?.error || raw || `Request failed with ${res.status}`;
   // Map known auth error codes to branded UX messages
   let display = message;
   if (code === 'token_expired') {

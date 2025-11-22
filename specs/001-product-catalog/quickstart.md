@@ -81,3 +81,8 @@ npm test -- --runInBand tests/api/perf.test.ts
 - Performance probes: set `PERF=1` to run latency sampling; p95 targets: API ≤1000ms, initial render ≤2000ms.
 - Concurrency: simultaneous orders competing for limited stock yield one success (201) and one 409 rejection.
 - Admin Authentication: Use `POST /api/auth/login` with `ADMIN_USERNAME`/`ADMIN_PASSWORD`; successful response returns JWT (HS256) exp=1h stored in `localStorage` key `shoply_admin_token`. Logout clears key; expired token triggers automatic removal and redirect to login.
+
+## RBAC Behavior (Admin-only Writes)
+- Product and Category POST/PUT/DELETE require a valid admin JWT (Bearer token). Missing/invalid/expired tokens return 401 with `{ error:'admin_auth_required' }` or `{ error:'token_expired' }`; non-admin role returns 403 `{ error:'forbidden_admin_role' }`.
+- Frontend hides admin links for unauthenticated or non-admin users. Accessing `/admin/product-management` without admin shows an AccessDenied message; no privileged flicker.
+- On 401/403 from protected endpoints, the app clears the token and navigates to Login. After re-authentication, admin links reappear and protected forms become usable.

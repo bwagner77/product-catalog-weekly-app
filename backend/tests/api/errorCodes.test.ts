@@ -25,7 +25,6 @@ describe('Structured Error Codes Catalog', () => {
   const seen = new Set<string>();
   const secret = process.env.JWT_SECRET || 'dev_secret';
   let adminToken: string;
-  let createdCategoryId: string;
   let lowStockProductId: string;
 
   beforeAll(async () => {
@@ -100,7 +99,6 @@ describe('Structured Error Codes Catalog', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'DupCat' });
     expect(first.status).toBe(201);
-    createdCategoryId = first.body.id;
     // Duplicate attempt
     const dup = await request(app)
       .post('/api/categories')
