@@ -4,12 +4,12 @@ description: "Task list for Product Catalog MVP"
 
 ---
 
-# Tasks: Product Catalog (Extended E‑commerce & Images)
+# Tasks: Shoply Product Catalog (Extended E‑commerce, Images, Navigation, Gating)
 
 **Input**: Design documents from `/specs/001-product-catalog/`
-**Prerequisites**: plan.md, spec.md (US1–US8), research.md, data-model.md, openapi.yaml (v1.1.0)
+**Prerequisites**: plan.md, spec.md (US1–US8), research.md, data-model.md, openapi.yaml (v1.1.0), constitution v1.1.0 (branding, dual modal dismissal, category gating)
 
-**Tests**: Constitution requires ≥80% coverage; each user story has explicit test tasks before implementation tasks. New success criteria SC‑001..SC‑020 mapped.
+**Tests**: Constitution requires ≥80% coverage; each user story has explicit test tasks before implementation tasks. Success criteria SC‑001..SC‑025 mapped (added SC‑021..SC‑025 for images, branding, navigation, gating, dual dismissal).
 
 **Organization**: Phases progress from existing MVP through extended backend models/routes, then new frontend components and behaviors (categories, search/filter, cart, orders, images). Parallelizable tasks marked [P].
 
@@ -22,6 +22,7 @@ description: "Task list for Product Catalog MVP"
 - [X] T003 Initialize frontend/package.json with Vite + React + TypeScript, Vitest, RTL, Tailwind in `frontend/`
 - [X] T004 [P] Add ESLint + Prettier configs (2-space) in `backend/.eslintrc.cjs` `frontend/.eslintrc.cjs` `.prettierrc`
 - [X] T005 Add root `.env.example` and `.env` with vars in repo root
+ - [ ] T124 [P] Add `ENABLE_CATEGORY_ADMIN` (default false for production) to `.env.example` and document gating in `specs/001-product-catalog/quickstart.md`
 - [X] T006 Create Dockerfiles for backend and frontend in `backend/Dockerfile` `frontend/Dockerfile`
 - [X] T007 Create Docker Compose stack with health checks in `docker-compose.yml` (curl-based frontend check)
 
@@ -33,6 +34,7 @@ description: "Task list for Product Catalog MVP"
 - [X] T011 Configure Mongo connection util with error handling in `backend/src/config/db.ts`
 - [X] T012 Define Product model with UUID id and timestamps in `backend/src/models/product.ts`
 - [X] T013 Implement idempotent seed script for ≥5 products using Mongoose query methods (findOne/upsert) in `backend/src/seed/seedProducts.ts`
+ - [ ] T125 Ensure ALL seeded products (≥20) include non-empty `imageUrl` pattern `product<N>.jpg` and non-negative `stock` (some may be 0, example stock 5 for initial subset) per FR-047; extend `backend/tests/seed/seedProducts.test.ts` to assert full set
 - [X] T014 Wire seed on startup (one-time log) in `backend/src/server.ts`
 - [X] T015 Add backend Jest config and scripts in `backend/jest.config.ts`
 - [X] T016 Add frontend Vite config with /api proxy in `frontend/vite.config.ts`
@@ -47,6 +49,7 @@ description: "Task list for Product Catalog MVP"
 ### Tests for User Story 1 (REQUIRED)
 
 - [X] T019 [P] [US1] Backend integration test for GET /api/products in `backend/tests/api/products.test.ts` (placeholder until route implemented)
+ - [ ] T126 [P] [US1] Extend GET /api/products test to assert `imageUrl` & `stock >= 0` for sampled ≥5 products and aggregate all non-empty (FR-047, SC-021) in `backend/tests/api/products.test.ts`
 - [X] T020 [P] [US1] Frontend render test for ProductList in `frontend/src/__tests__/ProductList.test.tsx` (todo placeholders)
 - [X] T021 [P] [US1] Frontend unit test for price formatter in `frontend/src/__tests__/ProductCard.test.tsx` (todo placeholders)
 
@@ -57,6 +60,7 @@ description: "Task list for Product Catalog MVP"
 - [X] T024 [P] [US1] Create Product type in `frontend/src/types/product.ts`
 - [X] T025 [P] [US1] Implement ProductCard component in `frontend/src/components/ProductCard.tsx`
 - [X] T026 [US1] Implement ProductList page fetching from `${import.meta.env.VITE_API_BASE_URL}/api/products` in `frontend/src/pages/ProductList.tsx`
+ - [ ] T127 [US1] Add branding (Shoply logo + name) and navigation controls (Products, Categories) to `frontend/src/App.tsx` (FR-044, FR-045, SC-022, SC-023)
 
 ## Phase 4: User Story 2 - Loading, Empty, Error States (Priority: P2)
 
@@ -83,6 +87,7 @@ description: "Task list for Product Catalog MVP"
 ### Tests for User Story 3 (REQUIRED)
 
 - [X] T033 [P] [US3] Accessibility test utilities and checks in `frontend/src/__tests__/a11y.test.tsx`
+ - [ ] T128 [P] [US3] Add focus order test including logo → navigation → product grid → modal dismissal controls (SC-024) in `frontend/src/__tests__/a11y.test.tsx`
 
 ### Implementation for User Story 3
 
@@ -92,17 +97,20 @@ description: "Task list for Product Catalog MVP"
 ## Phase N: Polish & Cross-Cutting
 
  - [X] T036 [P] Add /health endpoint in backend `backend/src/app.ts`
+ - [ ] T129 [P] Navigation latency perf probe: measure ≥50 Products↔Categories switches; assert median ≤200ms, p95 ≤400ms (SC-023) in `frontend/src/__tests__/navPerf.test.tsx`
  - [X] T037 [P] Add /health route or static health handler in frontend `frontend/src/App.tsx`
 - [X] T038 [P] Implement Docker healthchecks for services in `docker-compose.yml`
  - [X] T039 [P] Add npm scripts: dev, test, prebuild coverage in `backend/package.json` `frontend/package.json`
  - [X] T040 [P] Add ESLint CI npm script and lint fixes in `backend/` `frontend/`
  - [X] T041 Document performance validation steps (Playwright) in `specs/001-product-catalog/research.md`
+ - [ ] T130 [P] Update `research.md` with gating rationale (`ENABLE_CATEGORY_ADMIN`), navigation SLO thresholds, dual dismissal accessibility rationale (FR-046, FR-051, SC-024, SC-025), CLS measurement plan (SC-018)
 
 ### Coverage, Model, and Seed Verification (Critical)
 
  - [X] T042 [P] Configure Jest coverage thresholds (branches/functions/lines/statements ≥80%) in `backend/jest.config.ts`
  - [X] T043 [P] Configure Vitest coverage thresholds (branches/functions/lines/statements ≥80%) in `frontend/vitest.config.ts`
  - [X] T044 [P] [US1] Backend model validation tests for Product schema (UUID immutability, required fields) in `backend/tests/models/productModel.test.ts`
+ - [ ] T131 [P] [US1] Extend Product model tests for `imageUrl` non-empty & `stock >= 0` (FR-033, FR-014, SC-021) and alt fallback en dash pattern string constant reference in `backend/tests/models/productModel.test.ts`
  - [X] T045 [P] Seed verification tests (idempotency, ≥5 products on first run, seed verification log present) in `backend/tests/seed/seedProducts.test.ts`
  - [X] T046 [P] Remove duplicate Mongoose index warning by eliminating redundant index declaration in `backend/src/models/product.ts` and keep a single unique constraint on id
 
@@ -253,18 +261,21 @@ Goal: Extend Product schema (categoryId, stock, imageUrl); create Category & Ord
  - [X] T069 Backend tests: Category schema validation + uniqueness in `backend/tests/models/categoryModel.test.ts`
  - [X] T070 Backend tests: Order schema snapshot & total calculation unit test in `backend/tests/models/orderModel.test.ts`
  - [X] T071 [P] Update openapi.yaml Product schema (categoryId, stock, imageUrl) confirmation (already spec'd) + ensure examples reflect new fields
+ - [ ] T132 [P] Add FR-051 & SC-025 gating notes (403 on POST/PUT/DELETE when disabled) to category endpoints in `specs/001-product-catalog/contracts/openapi.yaml` (exclude non-API branding notes)
 
 ## Phase 7: User Story 4 - Manage Categories (Priority: P4)
 
 Goal: Category CRUD with blocked deletion when products assigned.
 
 - [X] T072 [P] [US4] Implement `/api/categories` router (GET list, GET by id, POST, PUT, DELETE)
+ - [ ] T133 [P] [US4] Implement environment gating middleware blocking POST/PUT/DELETE when `ENABLE_CATEGORY_ADMIN=false` returning 403 JSON `{ "error": "Category administration disabled" }` (FR-051, SC-025) in `backend/src/routes/categories.ts`
 - [X] T073 [US4] Add delete guard: 409 if products reference category
 - [X] T074 [P] [US4] Integration tests for category CRUD + blocked deletion (SC-007, SC-013, FR-017) in `backend/tests/api/categories.test.ts`
 - [X] T075 [P] [US4] Frontend Category types in `frontend/src/types/category.ts`
 - [X] T076 [P] [US4] Category management API utilities `frontend/src/api/categories.ts`
  - [X] T077 [US4] CategoryManagement page basic layout + CRUD forms
  - [X] T078 [P] [US4] Frontend tests: create/update/delete flows + blocked deletion messaging in `frontend/src/__tests__/category.test.tsx`
+ - [ ] T134 [P] [US4] Frontend test: gating disabled state (attempt create shows permission message) verifying no mutation (FR-051, SC-025) in `frontend/src/__tests__/categoryGating.test.tsx`
  - [X] T078 [P] [US4] Frontend tests: create/update/delete flows + blocked deletion messaging in `frontend/src/__tests__/category.test.tsx`
  - [X] T079 [US4] Docs: quickstart & spec success criteria references for category operations performance (SC-007, SC-013)
 
@@ -287,6 +298,7 @@ Goal: Display product images with fallback & alt text rules; no layout shift.
  - [X] T087 [US8] Add placeholder image assets `frontend/public/images/product1.jpg ... product20.jpg` (FR-034)
  - [X] T088 [P] [US8] Add single fallback image `frontend/public/images/fallback.jpg` (FR-039)
  - [X] T089 [US8] Enhance ProductCard: fixed 200x200 square container, `object-cover`, fallback on error/missing, alt text pattern `<name> – image unavailable` (FR-036, FR-037, FR-039, FR-042)
+ - [ ] T135 [P] [US8] Add explicit square dimension & no distortion test in `frontend/src/__tests__/imageDimensions.test.tsx` (FR-037, SC-018) including CLS observation (reserve box prevents shift)
  - [X] T090 [P] [US8] Frontend tests: image present, fallback path, broken image simulation (trigger onError), square dimension assertion, alt pattern validation (FR-036, FR-037, FR-039, FR-042, SC-016, SC-017, SC-018, SC-019)
  - [X] T091 [P] [US8] Backend test: all product API responses include non-empty `imageUrl` (FR-033, FR-034, SC-015)
  - [X] T092 [US8] Performance doc update referencing SC-015..SC-018 image criteria (FR-041)
@@ -310,17 +322,20 @@ Goal: Order submission snapshot + atomic stock decrement (FR-025, FR-028, FR-043
 - [X] T103 [US7] Implement `/api/orders` POST (FR-025, FR-043): validate non-empty cart; snapshot items BEFORE stock decrement; verify sufficient stock; atomic decrement via conditional bulkWrite; reject insufficient stock (409); implement GET by id.
 - [X] T104 [P] [US7] Backend tests (SC-010, SC-014, FR-025, FR-028, FR-043): snapshot immutability, empty cart rejection, total rounding accuracy (single rounding step), price immutability post-change, stock decrement verification, insufficient stock (409), prevention of negative stock in `backend/tests/api/orders.test.ts`.
 - [X] T105 [US7] Frontend OrderConfirmation component/modal: render snapshot (FR-025, SC-014) unaffected by later catalog changes.
+ - [ ] T136 [P] [US7] Dual dismissal tests (× & Close) restoring focus to initiating element; verify accessible names in `frontend/src/__tests__/orderModalDismiss.test.tsx` (FR-046, SC-024)
 - [X] T106 [P] [US7] Frontend tests (SC-010, SC-014, FR-025, FR-043): submit flow, empty cart prevention, snapshot persistence after product change, cart clear in `frontend/src/__tests__/order.test.tsx`.
 - [X] T107 [US7] Clear cart post-submission; verify persistence resets (SC-009).
 - [X] T108 [P] [US7] Add Order types `frontend/src/types/order.ts`.
 - [X] T109 [US7] Docs: quickstart & spec order endpoint examples & performance expectations (SC-010, SC-014) including atomic decrement behavior & concurrency mitigation.
 - [X] T121 [P] [US7] Concurrency test (FR-043): simulate near-concurrent orders exhausting stock; assert second yields 409; documented bulkWrite conditional decrement approach.
 - [X] T122 [P] [US7] Utility: shared rounding helper (`backend/src/utils/money.ts`) applying single half-up rounding step (FR-028); integrated into Order total computation.
+ - [ ] T137 [P] [US7] Micro-benchmark rounding helper: run 10k operations across varied price sets; assert cumulative drift < $0.01 (SC-010) in `backend/tests/utils/moneyPerf.test.ts`
 
 
 ## Added Test & Instrumentation Tasks (Cross-Cutting)
 
 - [X] T110 [P] Perf sampling script/update (SC-001, SC-002, SC-010, SC-011): measure GET /api/products (list & search/filter) & order POST durations; log p95 locally; document typical environment factors (latency <10ms loopback). (Implemented: `backend/tests/api/perf.test.ts`, `orderPerf.test.ts`; p95s recorded.)
+<!-- Removed T138 duplicate navigation performance task (merged into T129) -->
 - [X] T111 [P] Image load timing & fallback substitution test (SC-015, SC-016, SC-017, SC-018, SC-019): instrument and assert fallback substitution <1000ms, reserved space prevents layout shift (CLS <0.1), alt pattern correctness. (Implemented: `frontend/src/__tests__/imageTiming.test.tsx` & `images.test.tsx`.)
 - [X] T123 [P] Logging & metrics verification test (FR-011, SC-006): assert log format `[timestamp] [traceId] [method] [path] [status] [duration_ms]`, error counter increments on simulated failures in `backend/tests/api/loggingMetrics.test.ts`.
 
@@ -329,6 +344,7 @@ Goal: Order submission snapshot + atomic stock decrement (FR-025, FR-028, FR-043
 Goal: Ensure SC-001..SC-020 satisfied; finalize docs; perf & a11y audits.
 
 - [X] T112 [P] Accessibility sweep: images, cart controls, search/filter inputs, order confirmation (no new violations) (Extended tests in `a11y.test.tsx` including focus management.)
+ - [ ] T139 [P] Verify dual dismissal accessibility: ensure both controls have accessible names & tab order (focus sequence preserved) in `frontend/src/__tests__/a11y.test.tsx` (FR-046, SC-024)
  - [X] T113 [P] Update README.md with extended features summary & run instructions additions (Completed: README now documents categories, search/filter, cart, orders, images, performance, accessibility, coverage.)
 - [X] T114 [P] Update `quickstart.md`: environment variables for categories, orders, cart notes, image assets mention (Completed: PERF env, order id endpoint, concurrency & probes added.)
 - [X] T115 [P] Update `research.md` with rationale for snapshot order model, rounding strategy, and concurrency mitigation (bulkWrite conditional updates) (Completed: coverage & instrumentation summary appended.)
@@ -364,7 +380,11 @@ Parallelization Guidelines:
 
 ## Completion Criteria Extension
 
-Completion of extended scope requires all tasks T062–T120 marked done, coverage ≥80%, success criteria SC‑001..SC‑020 verified, and updated documentation & contracts committed.
+Completion of extended scope requires prior tasks T062–T120 plus branding/gating tasks T124–T139 done, coverage ≥80%, success criteria SC‑001..SC‑025 verified, and updated documentation & contracts committed.
+### Additional Remediation Tasks
+ - [ ] T140 [P] CLS measurement test capturing layout shifts <0.1 during image load & fallback in `frontend/src/__tests__/cls.test.tsx` (SC-018)
+ - [ ] T141 [P] Fallback alt en dash assertion test verifying `<name> – image unavailable` pattern in `frontend/src/__tests__/imagesAltPattern.test.tsx` (FR-036, SC-019)
+ - [ ] T142 [P] Backend gating test: POST/PUT/DELETE /api/categories return 403 & no write when `ENABLE_CATEGORY_ADMIN=false` in `backend/tests/api/categoriesGating.test.ts` (FR-051, SC-025)
 
 ### Order Model Snapshot & Rounding (Documentation Addendum)
 The order submission flow captures a snapshot of each line item (productId, name, price, quantity) at the moment of POST before any external mutations can occur. Stock decrement uses a Mongo bulkWrite with conditional filters `stock: { $gte: qty }` ensuring atomicity; if any filter fails due to concurrent changes the operation returns fewer matched docs and the route aborts with 409. Rounding applies exactly once using `roundCurrency` (half-up: Math.round(EPSILON-adjusted *100)/100) to the aggregate sum prior to persistence, satisfying SC-010 and preventing cumulative floating point drift. Concurrency test (T121) validates that only one of two simultaneous orders for a single-stock item succeeds (201 vs 409) enforcing FR-043. Future improvements (deferred) may consider Mongo transactions for multi-document atomicity when scaling beyond simple decrement logic.

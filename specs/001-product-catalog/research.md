@@ -2,7 +2,7 @@
 
 Date: 2025-11-10
 Branch: 001-product-catalog
-Updated: 2025-11-20 (E-commerce + Images Extensions)
+Updated: 2025-11-21 (E-commerce + Images + Navigation SLO + Gating + Dual Modal Dismissal)
 
 ## Unknowns and Questions
 
@@ -44,10 +44,10 @@ Updated: 2025-11-20 (E-commerce + Images Extensions)
 - Rationale: Aligns with constitution and request; wide community support.
 - Alternatives considered: Mocha/Chai (less integrated), Cypress E2E (out of scope).
 
-### Performance Targets
-- Decision: Frontend render ≤2s p95 (typical ≤1s); API latency ≤1s p95.
-- Rationale: Matches spec and constitution; feasible locally.
-- Validation: Manual via Playwright scripts measuring render and API timings.
+### Performance & Navigation Targets
+- Decision: Frontend render ≤2s p95 (typical ≤1s); API latency ≤1s p95; Navigation view switch (Products ↔ Categories) median ≤200ms p95 ≤400ms over ≥50 consecutive toggles; image fallback substitution <1s; CLS <0.1.
+- Rationale: Ensures snappy SPA feel (navigation) while aligning with constitution responsiveness; explicit percentiles remove ambiguity.
+- Validation: Perf probe test (T129) captures timestamps for switches; images timing tests assert fallback substitution and reserved box prevents layout shift (CLS observer or synthetic calculation). CLS test (T140) measures cumulative layout shift score; values ≥0.1 flagged.
 
 ### Images & Layout
  Decision: Square display box (200x200) with object-fit cover; deterministic placeholder images (`product<N>.jpg`) plus single shared `fallback.jpg` for missing/broken images; alt text pattern `<name> – image unavailable` on fallback.
@@ -76,6 +76,25 @@ Sampling Guidance:
 - Alternatives considered: Cascade removal (data loss risk), allow deletion (creates invalid state), soft-delete (unneeded complexity).
 
 ### Stock Handling (UPDATED 2025-11-21)
+### Category Administration Gating
+- Decision: Environment flag `ENABLE_CATEGORY_ADMIN` controls write operations (POST/PUT/DELETE) for categories; default false in production.
+- Rationale: Prevents accidental public modification in unauthenticated phase; enables safe local iteration.
+- Alternatives considered: Role-based auth (deferred), unconditional write access (risk of misuse), separate admin service (overkill).
+- Validation: Backend gating tests (T142) assert 403 and no data mutation when disabled; enabling flag allows normal CRUD flows (covered by existing tests T072–T078).
+
+### Dual Modal Dismissal Accessibility
+- Decision: Provide both × icon and "Close" button for order confirmation modal.
+- Rationale: Satisfies constitution requirement for accessible dismissal; supports users preferring explicit action labels.
+- Validation: Tests T136 & T139 assert focus returns to triggering element and both controls operable via keyboard.
+
+### Rounding Micro-Benchmark
+- Decision: Benchmark `roundCurrency` with 10k mixed price inputs (small cents, large values, repeating decimals); acceptable cumulative drift < $0.01.
+- Rationale: Ensures helper stability under load and varied values.
+- Validation: Benchmark test T137 logs mean, stddev, final aggregate difference; fail if drift ≥ $0.01.
+
+### CLS Measurement Plan
+- Decision: Use JSDOM + synthetic layout constants or Playwright visual diff to approximate layout shift; assert no unexpected reflow beyond reserved image container; treat cumulative layout shift score ≥0.1 as failure.
+- Validation: T140 collects layout change events (mutation observer approximations) and computes shift; consider optional Lighthouse run (manual) for confirmation.
 - Decision: Display stock, gate cart additions when stock = 0 or requested quantity > stock, and decrement stock atomically on successful order submission (bulkWrite conditional filters). No partial fulfillment.
 - Rationale: Keeps catalog availability accurate post-purchase while preserving simple, low-contention integrity without full transactions.
 - Alternatives considered: Deferred decrement (stale availability), non-atomic sequential updates (race window), multi-document transaction (unnecessary complexity at current scale).

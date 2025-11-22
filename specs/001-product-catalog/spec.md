@@ -237,14 +237,15 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - **FR-040**: Image rendering MUST not regress existing accessibility (focus order, alt text presence, contrast unaffected).
 - **FR-041**: Tests MUST validate image requirements (presence per FR-033, deterministic pattern FR-034, alt text FR-036, dimensions FR-037, fallback FR-039, broken image swap FR-042). (Clarified as test coverage aggregation; not a separate functional rule.)
 - **FR-042**: Broken image load events MUST trigger automatic fallback substitution within 1 second.
-- **FR-043**: Order submission MUST atomically decrement product stock for each line item (never producing negative stock); MUST reject the order with a 409 if any requested quantity exceeds current stock; MUST maintain snapshot immutability independent of post-submission stock changes. Implementation approach: use MongoDB transaction OR per-item conditional updates (`findOneAndUpdate` with `stock >= quantity` predicate) executed in a session; on any predicate failure abort all decrements (no partial fulfillment). Concurrency mitigation: second order after stock exhaustion returns 409.
+**FR-043**: Order submission MUST atomically decrement product stock for each line item (never producing negative stock); MUST reject the order with a 409 if any requested quantity exceeds current stock; MUST maintain snapshot immutability independent of post-submission stock changes. Chosen implementation: single MongoDB `bulkWrite` with per-line conditional filters `{ stock: { $gte: quantity } }`; if any filter fails all updates abort (no partial fulfillment). Concurrency mitigation: second order after stock exhaustion returns 409.
  - **FR-044**: Navigation banner MUST display Shoply brand name and logo image with accessible alt text ("Shoply logo").
  - **FR-045**: Navigation MUST provide buttons/links for Products and CategoryManagement pages enabling view switching without full page reload.
  - **FR-046**: Order confirmation modal MUST provide two accessible dismissal controls: top-right close (×) and a "Close" action button.
- - **FR-047**: All seeded products MUST include non-empty imageUrl and non-negative stock fields (first 5 illustrative example stock 5) and remain idempotent on reseeding.
+ - **FR-047**: All seeded products MUST include non-empty imageUrl and non-negative stock fields (example: some initial products may use stock 5) and remain idempotent on reseeding (applies to full ≥20 product seed set, not only first 5).
  - **FR-048**: CategoryManagement page MUST be reachable via navigation and render its management heading after activation.
  - **FR-049**: New/updated UI elements (brand/logo, navigation buttons, modal Close button) MUST meet accessibility standards (focus order, roles/ARIA, alt text, keyboard operability).
  - **FR-050**: Acceptance tests MUST cover: dual modal dismissal (each independently closes and restores focus), navigation switching (Products ↔ Categories), presence of Shoply brand & logo, and backend product response including imageUrl & stock ≥ 0.
+ - **FR-051**: Category write operations (POST, PUT, DELETE) MUST be disabled when environment flag `ENABLE_CATEGORY_ADMIN=false` (default production). Disabled operations return 403 with JSON `{ "error": "Category administration disabled" }`. Reads/list always enabled.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -308,8 +309,9 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - **SC-020**: 0% of image renderings cause horizontal scroll at standard breakpoints.
  - **SC-021**: 100% sampled products (≥5) include non-empty imageUrl and stock ≥ 0.
  - **SC-022**: 100% initial catalog views display Shoply brand name, logo, and navigation controls.
- - **SC-023**: 100% navigation interactions allow switching between Products and Categories within ≤ 1 second.
+ - **SC-023**: Navigation view switches (Products ↔ Categories) median latency ≤ 200ms and p95 latency ≤ 400ms over ≥50 consecutive switches in typical environment.
  - **SC-024**: 100% order confirmations present both dismissal controls (× and Close) and either control dismisses with correct focus behavior.
+ - **SC-025**: 100% category write attempts when `ENABLE_CATEGORY_ADMIN=false` return 403 and perform no data mutation.
 
 ## Assumptions
 
@@ -332,6 +334,8 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - Fallback image is a single shared asset for all missing/broken cases.
 - Square target dimension (visual box) is consistent reference for layout; exact pixel size may adapt per responsive design (200x200 illustrative).
 - Fallback image asset path standardized as `public/images/fallback.jpg`.
- - Navigation switching is client-side state only (no router dependency required this phase).
+ - Navigation switching is client-side state only (no router dependency required this phase) and performance target defined (SC-023 median ≤200ms, p95 ≤400ms).
  - Logo asset is a static SVG placed in public images directory.
  - Dual modal dismissal requires no confirmation; future enhancement may add animations.
+ - Category administration gating: `ENABLE_CATEGORY_ADMIN=false` in production disables write endpoints (POST, PUT, DELETE) responding with 403; development/test may enable by setting true.
+ - Fallback alt text MUST use en dash (–) in pattern `<product name> – image unavailable`.

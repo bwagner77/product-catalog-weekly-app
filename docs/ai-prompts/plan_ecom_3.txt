@@ -1,0 +1,45 @@
+Please update and extend the existing Product Catalog plan in
+`plans/001-product-catalog/plan.md` to align with the current state of the code
+and the new Shoply requirements. Do NOT create a new plan; update in place.
+
+Apply the following changes/tasks:
+
+## 1. Frontend Cleanup
+
+- In `frontend/src/App.tsx`, there are two `import React from 'react';` statements.
+  Remove the duplicate so only one remains.
+
+## 2. Seed Data Updates
+
+- The first 5 seeded products were missing the `imageUrl` and `stock` fields.
+  Add these fields:
+  - `imageUrl`: placeholder value following the pattern `"product<N>.jpg"` consistent with existing seeds.
+  - `stock`: non-negative integer; use `5` for each of these first 5 products.
+- Verify that all other seeded products already have valid `imageUrl` and `stock`.
+
+## 3. Order Confirmation Modal
+
+- Current order confirmation modal/dialog has only the top-right X button.
+- Add an explicit "Close" button within the modal that also dismisses it.
+- Update tasks/tests to reflect that the modal can be closed via either mechanism.
+
+## 4. Category Management Navigation
+
+- There is a `frontend/src/pages/CategoryManagement.tsx` page with full category CRUD.
+- Add routing/navigation so users can access this page via the navbar.
+- Ensure plan tasks include testing navigation reachability.
+
+## 5. Navigation Banner Branding
+
+- Update top banner branding:
+  - Change app name from "Product Catalog" → "Shoply".
+  - Add an image/logo to the left of the brand name (e.g., `public/images/logo.svg`).
+- Update tasks to verify accessibility of brand/logo and navigation.
+
+## 6. Plan & Task Integration
+
+- Merge these new tasks into the existing plan while preserving previous entries, priorities, and formatting.
+- Ensure that all tasks are actionable and include references to files, components, or tests where relevant.
+- Maintain task numbering or add new ones following the existing convention.
+
+**Goal:** Produce an updated plan that reflects frontend cleanup, seeded product consistency, order modal improvements, CategoryManagement navigation, and Shoply branding/logo updates, while preserving prior plan context and tasks.

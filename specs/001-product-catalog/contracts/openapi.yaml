@@ -83,6 +83,7 @@ paths:
                       updatedAt: "2025-11-21T00:00:00.000Z"
     post:
       summary: Create category
+      description: Creates a category when administration enabled. Returns 403 if `ENABLE_CATEGORY_ADMIN=false`.
       operationId: createCategory
       requestBody:
         required: true
@@ -112,6 +113,8 @@ paths:
                     updatedAt: "2025-11-21T00:00:00.000Z"
         '400':
           description: Validation error
+        '403':
+          description: Category administration disabled (gating flag false)
   /api/categories/{id}:
     get:
       summary: Get category by id
@@ -141,6 +144,7 @@ paths:
           description: Not found
     put:
       summary: Update category
+      description: Updates a category name when administration enabled. Returns 403 if `ENABLE_CATEGORY_ADMIN=false`.
       operationId: updateCategory
       parameters:
         - in: path
@@ -173,8 +177,11 @@ paths:
           description: Validation error
         '404':
           description: Not found
+        '403':
+          description: Category administration disabled (gating flag false)
     delete:
       summary: Delete category (blocked if products exist)
+      description: Deletes a category when administration enabled and no products reference it. Returns 409 if products reference category, 403 if `ENABLE_CATEGORY_ADMIN=false`.
       operationId: deleteCategory
       parameters:
         - in: path
@@ -196,6 +203,8 @@ paths:
                     error: "Category has products and cannot be deleted"
         '404':
           description: Not found
+        '403':
+          description: Category administration disabled (gating flag false)
   /api/orders:
     post:
       summary: Submit order

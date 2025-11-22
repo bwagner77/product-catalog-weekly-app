@@ -1,11 +1,11 @@
-# Implementation Plan: Product Catalog (Extended: E-commerce & Images)
+# Implementation Plan: Shoply Product Catalog (Extended: E-commerce, Images, Navigation, Gating)
 
-**Branch**: `001-product-catalog` | **Date**: 2025-11-14 (updated 2025-11-20) | **Spec**: ./spec.md
+**Branch**: `001-product-catalog` | **Date**: 2025-11-14 (updated 2025-11-21 for Shoply branding, gating, dual modal dismissal) | **Spec**: ./spec.md
 **Input**: Feature specification from `/specs/001-product-catalog/spec.md`
 
 ## Summary
 
-Initial MVP delivered read‑only product listing. This extension adds categories (CRUD), product search & filtering, stock display and cart gating, client‑side cart with persistence, order submission with snapshot semantics and inventory stock decrement, deterministic product images plus fallback behavior, and responsive layout refinements (grid breakpoints, collapsible cart sidebar, nav bar). Seed volume increases (≥20 products, ≥5 categories) to better exercise filtering and search. Product images use deterministic placeholder filenames (`product<N>.jpg`); no upload or transformation pipeline. Performance, accessibility, and containerization principles remain unchanged.
+Initial MVP delivered read‑only product listing. This extension adds categories (CRUD – now environment‑gated for write operations), product search & filtering, stock display and cart gating, client‑side cart with persistence, order submission with snapshot semantics and inventory stock decrement, deterministic product images plus fallback behavior, responsive layout refinements (grid breakpoints, collapsible cart sidebar, navigation bar), Shoply branding (logo + name), and dual dismissal for the order confirmation modal. Seed volume increases (≥20 products, ≥5 categories) to better exercise filtering and search. Product images use deterministic placeholder filenames (`product<N>.jpg`); no upload or transformation pipeline. Performance, accessibility, and containerization principles remain unchanged.
 
 ## Technical Context
 
@@ -15,20 +15,20 @@ Initial MVP delivered read‑only product listing. This extension adds categorie
 **Storage**: MongoDB (Mongoose ODM) — collections: products, categories, orders (orders store snapshots)  
 **Testing**: Backend: Jest + Supertest; Frontend: Vitest + RTL; ≥80% coverage (must include new flows: search/filter, cart persistence, category CRUD, order creation, image fallback)  
 **Target Platform**: Docker Compose (frontend 5173, backend 3000, MongoDB 27017)  
-**Performance Goals**: Frontend initial render ≤2s p95 (typical ≤1s); API list/search ≤1s p95; cart ops & order submission ≤500ms typical; image loading/fallback ≤1s detection  
+**Performance Goals**: Frontend initial render ≤2s p95 (typical ≤1s); API list/search ≤1s p95; cart ops & order submission ≤500ms typical; navigation view switch (Products ↔ Categories) median ≤200ms p95 ≤400ms; image loading/fallback ≤1s detection  
 **Constraints**: No authentication; no image upload; no caching/CDN; Tailwind-only; prices two decimals; UUID immutable; idempotent extended seed; lean queries; product volume ≤200 (search/filter) without pagination  
 **Scale/Scope**: ≤200 products; low concurrency; cart local-only (no multi-user sync)  
 **Out-of-Scope**: Advanced image optimization, pagination, discounting, tax, payments.
 
 ## Constitution Check (Pre-Extension Re-evaluated)
 
-Gate evaluation per Constitution (v1.0.0):
+Gate evaluation per Constitution (v1.1.0):
 
 | Principle | Gate | Status | Notes |
 |-----------|------|--------|-------|
 | Code Quality | Single responsibility, Prettier 2‑space enforced | PASS | ESLint + Prettier planned; modular components/services |
 | Testing Standards | Unit + integration, ≥80% coverage, no E2E | PASS | Jest/Vitest configured; thresholds enforced |
-| UX Consistency | Mobile‑first, Tailwind‑only, accessibility | PASS | Responsive layout and a11y checks included |
+| UX Consistency | Mobile‑first, Tailwind‑only, accessibility, Shoply branding, dual modal dismissal | PASS | Branding tasks planned; modal has two dismissal controls |
 | Performance | Page ≤2s, API ≤1s, cart/order ops ≤500ms | PASS | New ops targets added; still feasible locally |
 | Deployment Strategy | Docker Compose multi‑service | PASS | One‑command up via compose, .env used |
 | Technology Choices | Mature, testable, container‑friendly | PASS | Express, React, Mongoose, Vite |
@@ -123,13 +123,13 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 - Error handling: 400 (validation), 404 (not found), 409 (category deletion conflict).
 - Stock Decrement (UPDATED 2025-11-21): Order submission performs atomic stock decrement via Mongo `bulkWrite` with conditional filters per line item. Failure of any filter (insufficient stock or race) aborts the entire operation with 409; snapshot persisted only on success. Concurrency validated in test T121.
 
-### Frontend specifics (Extended):
+### Frontend specifics (Extended & Updated 2025-11-21):
 - Vite + React 18 + TS + Tailwind; use `import.meta.env.VITE_API_BASE_URL`.
 - New pages/components:
   - **NavBar**:
     - Fixed at top of page, full-width.
-    - Left: site logo / name ("Ecomora").
-    - Right: icons/links (Cart count, Categories dropdown).
+    - Left: site logo SVG + brand name "Shoply" (accessible alt "Shoply logo").
+    - Right: navigation controls (Products, Categories), cart count indicator.
     - Responsive: collapses menu on mobile; sticky behavior.
   - **SearchBar + CategoryFilter**:
     - Positioned at top of ProductList page, horizontally aligned.
@@ -141,20 +141,22 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
     - Displays `imageUrl` with consistent width/height (e.g., 200x200px), `object-fit: cover`.
     - Fallback placeholder if image missing/broken (required).
     - Stock = 0 disables add-to-cart and shows explicit “Out of stock” (required).
-    - Tooltip on hover for image/title (optional enhancement).
   - **CartSidebar**:
     - Right-hand side on desktop.
     - Collapsible/hidden on mobile; toggled via icon in NavBar.
     - Displays current items, quantities, and totals in real time (required).
   - **OrderConfirmation**:
-    - Modal or page after order submission.
-    - Displays product images, names, quantities, and total price (required).
+    - Modal after order submission.
+    - Displays product images, names, quantities, total price (required).
+    - Dual dismissal: close icon (×) + explicit "Close" button (both keyboard accessible).
   - **CategoryManagement**:
-    - Admin-style CRUD interface for categories (optional placeholder access for MVP).
+    - Admin-style CRUD interface for categories.
+    - Navigation reachable via NavBar button (no page reload).
+    - Write operations (create/update/delete) subject to environment flag `ENABLE_CATEGORY_ADMIN` (disabled in production by default; reads always allowed).
 - Local cart hook/module manages state + persistence (add/remove/update, total computation, required).
 - Order flow: capture snapshot, then decrement product stock atomically per ordered quantity, then clear cart. If any requested quantity exceeds current stock, reject order (409) with explanatory message; no partial fulfillment.
 - Accessibility:
-  - Alt text for images (required), keyboard focus preserved after cart updates (required).
+    - Alt text for images (required), keyboard focus preserved after cart updates (required), focus order includes logo then navigation then main content logically.
 - Layout responsiveness:
   - Grid adapts per breakpoints, sidebar collapsible, top components sticky/responsive (required).
 - Interactions/UX:
@@ -163,13 +165,13 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
   - Empty cart triggers `EmptyState` component (required).
   - Failed order submission shows `ErrorMessage` with guidance (required).
 
-### Testing (Extended):
+### Testing (Extended & Updated):
 - Backend: Add tests for category CRUD, product search/filter queries (including zero-results), order creation (snapshot integrity, validation failures), imageUrl presence, stock decrement success, insufficient stock rejection, post-order stock consistency.
-- Frontend: Add tests for cart persistence (localStorage), quantity updates, disabled add-to-cart for stock 0, search + filter interactions, image fallback rendering, responsive layout breakpoints, order confirmation view.
+- Frontend: Add tests for cart persistence (localStorage), quantity updates, disabled add-to-cart for stock 0, search + filter interactions, image fallback rendering, responsive layout breakpoints, order confirmation view, dual modal dismissal (both controls), Shoply branding (logo alt text + name), navigation switching (Products ↔ Categories) with aria-current, category gating disabled state messaging.
 - Performance probe remains opt-in; consider adding lightweight cart operation timing (skipped by default) using environment flag.
 
 ### Performance validation (Extended):
-- Manual checks expanded: ensure cart add/remove and order submission typical latency ≤500ms (including stock decrement updates); image loading does not push page render beyond 2s p95; fallback substitution <1s.
+- Manual checks expanded: ensure cart add/remove and order submission typical latency ≤500ms (including stock decrement updates); navigation view switches achieve median ≤200ms p95 ≤400ms across ≥50 toggles; image loading does not push page render beyond 2s p95; fallback substitution <1s.
 
 ### Containerization (Unchanged Mechanics):
 - Docker Compose unchanged but backend now exposes additional routes; verify health check unaffected.
@@ -195,11 +197,21 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 6. Implement NavBar, SearchBar, CategoryFilter, CartSidebar, OrderConfirmation components.
 7. Enhance ProductCard: image, stock gating, alt/fallback behavior.
 8. Cart state module/hook with localStorage persistence & quantity updates.
-9. Order submission flow (snapshot + stock decrement) & success confirmation page/modal.
-10. Accessibility review (focus order after cart updates, alt text correctness, zero-results messaging distinct from empty state).
-11. Tests: backend (search/filter, categories, orders), frontend (cart persistence, images, search + filter interactions, order confirmation).
-12. Performance sampling scripts update (optional) to include cart & order timings.
-13. Documentation updates (`quickstart.md`, README additions for new features).
+9. Order submission flow (snapshot + stock decrement) & success confirmation modal (dual dismissal).
+10. Accessibility review (focus order after cart updates, alt text correctness, zero-results messaging distinct from empty state, logo + nav accessible order, modal dual dismissal).
+11. Tests: backend (search/filter, categories, orders), frontend (cart persistence, images, search + filter interactions, order confirmation dual dismissal, navigation switching, branding, category gating disabled state).
+12. Performance sampling scripts update (optional) to include cart & order timings + navigation view switch.
+13. Documentation updates (`quickstart.md`, README additions for new features & branding).
+14. Frontend cleanup: verify single `import React` in `App.tsx` (remove duplicate) and update plan references (DONE).
+15. Seed consistency: ensure first 5 seeded products include `imageUrl` & `stock` (value 5); update seed script & backend seed test assertions.
+16. Modal enhancement: add explicit "Close" button to `OrderConfirmation` component; tests assert both dismissal paths restore focus.
+17. Branding integration: add `public/images/logo.svg` asset; update NavBar to display Shoply name + logo alt text; tests confirm presence.
+18. Navigation integration: add Products & Categories buttons with aria-current state; tests validate switching without reload and focus retention.
+19. Category admin gating: implement environment flag `ENABLE_CATEGORY_ADMIN`; when false, write endpoints return 403/405; tests cover disabled mode (production simulation) and enabled mode (development).
+20. Product response validation: extend backend tests to assert `imageUrl` non-empty and `stock >= 0` for all products.
+21. Image fallback validation: tests for broken/missing image substituting `fallback.jpg` within 1s.
+22. Navigation SLO refinement: capture timing metrics for view switches; finalize thresholds (NEEDS CLARIFICATION) aligning with SC-023.
+23. Update spec & plan references for new FR-044..FR-051 and SC-021..SC-025 alignment.
 
 ## Risk & Mitigation
 
@@ -223,5 +235,5 @@ Release of extended e‑commerce scope requires:
 2. Post-order product list reflects updated stock on refresh (manual verification + automated test).
 3. Backend tests cover: snapshot integrity, insufficient stock (409), concurrent decrement path (simulated sequential requests), total accuracy after decrement.
 4. Frontend tests cover: disabled add-to-cart when stock hits zero after order, order confirmation unaffected by subsequent stock changes.
-5. Success criteria SC‑001..SC‑020 remain green; no new performance regressions introduced by stock writes.
+5. Success criteria SC‑001..SC‑025 remain green; no new performance regressions introduced by stock writes or navigation/branding additions.
 6. Documentation (quickstart, research) aligned with stock decrement behavior.
