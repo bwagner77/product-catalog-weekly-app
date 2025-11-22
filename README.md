@@ -10,6 +10,10 @@ It was developed using the 🌱[GitHub Spec Kit](https://github.com/github/spec-
 
 ---
 
+📂 Detailed documentation including **design artifacts, screenshots, demo video, AI prompts, and AI outputs**, can be found in the project [/docs](./docs) folder.
+
+---
+
 ## 📌 Table of Contents
 
 * [Design Artifacts](#design-artifacts)
@@ -223,16 +227,6 @@ Base: `/api`
 | POST   | /products       | Create product                        | Admin                 |
 | PUT    | /products/:id   | Update product                        | Admin                 |
 | DELETE | /products/:id   | Delete product                        | Admin                 |
-
----
-
-<h2 id="screenshots">📸 Screenshots</h2>
-
-* [**API Products Response 1**](#) – Example products API response.
-* [**API Products Response 2**](#) – JSON response of products from the API.
-* [**Container Logs**](#) – Docker logs showing backend activity.
-* [**Product List**](#) – Default catalog view with seeded products.
-* [**Error State**](#) – Error displayed when API fails.
 
 ---
 

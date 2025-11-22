@@ -72,7 +72,7 @@ const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
     <header className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10" role="banner">
       <div className="flex items-center space-x-3" aria-label="Brand" data-testid="brand">
         <div className="w-8 h-8 flex items-center justify-center rounded bg-indigo-600 text-white font-bold" aria-label="Shoply logo" data-testid="logo">S</div>
-        <h1 className="text-xl font-semibold" data-testid="brand-name">Shoply Catalog</h1>
+        <h1 className="text-xl font-semibold" data-testid="brand-name">Shoply</h1>
       </div>
       {!isMobile && (
         <nav aria-label="Primary" className="flex items-center space-x-2" role="navigation">
