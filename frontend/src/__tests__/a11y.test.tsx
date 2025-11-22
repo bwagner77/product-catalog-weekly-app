@@ -31,6 +31,10 @@ describe('[US3] Accessibility and responsiveness', () => {
     vi.restoreAllMocks();
     (import.meta as any).env = (import.meta as any).env || {};
     (import.meta as any).env.VITE_API_BASE_URL = '';
+    // Seed admin token so categories nav item is rendered for focus order tests
+    const header = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+    const payload = 'eyJyb2xlIjoiYWRtaW4iLCJleHAiOjk5OTk5OTk5OTl9';
+    localStorage.setItem('shoply_admin_token', `${header}.${payload}.sig`);
   });
 
   it('renders a list with listitems that contain articles named by the product name', async () => {

@@ -1,61 +1,188 @@
 openapi: 3.0.3
 info:
   title: Product Catalog API
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: http://localhost:3000
 paths:
+  /api/auth/login:
+    post:
+      summary: Admin login
+      description: Exchanges valid admin credentials for a short-lived JWT.
+      operationId: adminLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+            examples:
+              loginExample:
+                value:
+                  username: admin
+                  password: secret
+      responses:
+        '200':
+          description: Successful authentication response containing JWT and expiry.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, expiresAt]
+                properties:
+                  token:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardError'
+              examples:
+                invalidCredentials:
+                  value:
+                    error: invalid_credentials
+                    message: Invalid admin credentials
   /api/products:
     get:
       summary: List products
-      description: Returns up to 100 products (hard cap). No pagination in this phase. Supports optional text search and category filtering.
+      description: Returns up to 100 products (hard cap). Optional text search and category filtering.
       operationId: listProducts
       parameters:
         - in: query
           name: search
-          required: false
           schema:
             type: string
-          description: Case-insensitive partial substring matched against name and description (multi-word treated as a single phrase).
+          description: Case-insensitive substring matched against name and description.
         - in: query
           name: categoryId
-          required: false
           schema:
             type: string
           description: Filter products by category id.
       responses:
         '200':
-          description: OK — array of Product (max 100 items; no pagination)
+          description: OK — array of Product (max 100 items)
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Product'
-              examples:
-                sampleList:
-                  summary: Sample product list response
-                  value:
-                    - id: "11111111-1111-4111-8111-111111111111"
-                      name: "Sample Product A"
-                      description: "Example A description"
-                      price: 10
-                      categoryId: "22222222-2222-4222-8222-222222222222"
-                      stock: 5
-                      imageUrl: "images/product1.jpg"
-                      createdAt: "2025-11-21T00:00:00.000Z"
-                      updatedAt: "2025-11-21T00:00:00.000Z"
-                    - id: "33333333-3333-4333-8333-333333333333"
-                      name: "Sample Product B"
-                      description: "Example B description"
-                      price: 3.33
-                      categoryId: "22222222-2222-4222-8222-222222222222"
-                      stock: 0
-                      imageUrl: "images/product2.jpg"
-                      createdAt: "2025-11-21T00:00:00.000Z"
-                      updatedAt: "2025-11-21T00:00:00.000Z"
         '500':
           description: Server error
+    post:
+      summary: Create product
+      description: Creates a product (admin only).
+      security:
+        - bearerAuth: []
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, description, price]
+              properties:
+                name: { type: string }
+                description: { type: string }
+                price: { type: number }
+                categoryId: { type: string }
+                stock: { type: integer, minimum: 0 }
+            examples:
+              createProduct:
+                value:
+                  name: Sample Product A
+                  description: Example A description
+                  price: 10
+                  categoryId: 22222222-2222-4222-8222-222222222222
+                  stock: 5
+      responses:
+        '201':
+          description: Created product.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400': { description: Validation error }
+        '401':
+          description: Missing or invalid admin authentication.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StandardError' }
+        '403':
+          description: Authenticated but lacks required admin role.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StandardError' }
+  /api/products/{id}:
+    get:
+      summary: Get product by id
+      operationId: getProduct
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Product found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '404': { description: Not found }
+    put:
+      summary: Update product
+      description: Updates product fields (admin only).
+      security: [ { bearerAuth: [] } ]
+      operationId: updateProduct
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                price: { type: number }
+                categoryId: { type: string }
+                stock: { type: integer, minimum: 0 }
+      responses:
+        '200': { description: Updated product, content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
+        '400': { description: Validation error }
+        '401': { description: Admin auth required, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
+        '403': { description: Forbidden admin role, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
+        '404': { description: Not found }
+    delete:
+      summary: Delete product
+      description: Deletes product (admin only).
+      security: [ { bearerAuth: [] } ]
+      operationId: deleteProduct
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Deleted }
+        '401': { description: Admin auth required, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
+        '403': { description: Forbidden admin role, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
+        '404': { description: Not found }
   /api/categories:
     get:
       summary: List categories
@@ -67,54 +194,22 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Category'
-              examples:
-                sampleCategories:
-                  summary: Sample category list
-                  value:
-                    - id: "22222222-2222-4222-8222-222222222222"
-                      name: "Books"
-                      createdAt: "2025-11-21T00:00:00.000Z"
-                      updatedAt: "2025-11-21T00:00:00.000Z"
-                    - id: "44444444-4444-4444-8444-444444444444"
-                      name: "Electronics"
-                      createdAt: "2025-11-21T00:00:00.000Z"
-                      updatedAt: "2025-11-21T00:00:00.000Z"
+                items: { $ref: '#/components/schemas/Category' }
     post:
       summary: Create category
-      description: Creates a category when administration enabled. Returns 403 if `ENABLE_CATEGORY_ADMIN=false`.
+      description: Creates a category (admin only).
       operationId: createCategory
+      security: [ { bearerAuth: [] } ]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/CategoryInput'
-            examples:
-              createCategory:
-                summary: Create category request
-                value:
-                  name: "Accessories"
+            schema: { $ref: '#/components/schemas/CategoryInput' }
       responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Category'
-              examples:
-                createdCategory:
-                  summary: Created category response
-                  value:
-                    id: "55555555-5555-4555-8555-555555555555"
-                    name: "Accessories"
-                    createdAt: "2025-11-21T00:00:00.000Z"
-                    updatedAt: "2025-11-21T00:00:00.000Z"
-        '400':
-          description: Validation error
-        '403':
-          description: Category administration disabled (gating flag false)
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
+        '400': { description: Validation error }
+        '401': { description: Admin auth required, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
+        '403': { description: Forbidden admin role, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
   /api/categories/{id}:
     get:
       summary: Get category by id
@@ -123,137 +218,61 @@ paths:
         - in: path
           name: id
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Category'
-              examples:
-                categoryExample:
-                  summary: Single category response
-                  value:
-                    id: "22222222-2222-4222-8222-222222222222"
-                    name: "Books"
-                    createdAt: "2025-11-21T00:00:00.000Z"
-                    updatedAt: "2025-11-21T00:00:00.000Z"
-        '404':
-          description: Not found
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
+        '404': { description: Not found }
     put:
       summary: Update category
-      description: Updates a category name when administration enabled. Returns 403 if `ENABLE_CATEGORY_ADMIN=false`.
+      description: Updates category name (admin only).
       operationId: updateCategory
+      security: [ { bearerAuth: [] } ]
       parameters:
         - in: path
           name: id
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/CategoryInput'
+            schema: { $ref: '#/components/schemas/CategoryInput' }
       responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Category'
-              examples:
-                updatedCategory:
-                  summary: Updated category response
-                  value:
-                    id: "22222222-2222-4222-8222-222222222222"
-                    name: "Books & Media"
-                    createdAt: "2025-11-21T00:00:00.000Z"
-                    updatedAt: "2025-11-21T00:05:00.000Z"
-        '400':
-          description: Validation error
-        '404':
-          description: Not found
-        '403':
-          description: Category administration disabled (gating flag false)
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
+        '400': { description: Validation error }
+        '401': { description: Admin auth required, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
+        '403': { description: Forbidden admin role, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
+        '404': { description: Not found }
     delete:
       summary: Delete category (blocked if products exist)
-      description: Deletes a category when administration enabled and no products reference it. Returns 409 if products reference category, 403 if `ENABLE_CATEGORY_ADMIN=false`.
+      description: Deletes category if no products reference it (admin only). Returns conflict if referenced.
       operationId: deleteCategory
+      security: [ { bearerAuth: [] } ]
       parameters:
         - in: path
           name: id
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
-        '204':
-          description: Deleted
-        '409':
-          description: Conflict — category has assigned products
-          content:
-            application/json:
-              examples:
-                conflictDeletion:
-                  summary: Blocked deletion when products reference category
-                  value:
-                    error: "Category has products and cannot be deleted"
-        '404':
-          description: Not found
-        '403':
-          description: Category administration disabled (gating flag false)
+        '204': { description: Deleted }
+        '409': { description: Conflict — category has assigned products }
+        '401': { description: Admin auth required, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
+        '403': { description: Forbidden admin role, content: { application/json: { schema: { $ref: '#/components/schemas/StandardError' } } } }
+        '404': { description: Not found }
   /api/orders:
     post:
       summary: Submit order
-      description: Creates an order snapshot (items: productId, name, price at submission, quantity) then atomically decrements stock using conditional updates. Rejects with 409 if any item lacks sufficient stock. Total rounded once (half-up) to two decimals. Returns immutable snapshot.
+      description: Creates order snapshot then atomically decrements stock. Rejects entirely if any item lacks stock.
       operationId: createOrder
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/OrderInput'
-            examples:
-              sample:
-                summary: Simple two-line order
-                value:
-                  items:
-                    - productId: "11111111-1111-4111-8111-111111111111"
-                      quantity: 2
-                    - productId: "22222222-2222-4222-8222-222222222222"
-                      quantity: 1
+            schema: { $ref: '#/components/schemas/OrderInput' }
       responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-              examples:
-                sample:
-                  summary: Successful order response
-                  value:
-                    id: "b3d6e7b4-9f0c-4a11-9c1c-1d5c2d7f0abc"
-                    items:
-                      - productId: "11111111-1111-4111-8111-111111111111"
-                        name: "Sample Product A"
-                        price: 10
-                        quantity: 2
-                      - productId: "22222222-2222-4222-8222-222222222222"
-                        name: "Sample Product B"
-                        price: 3.33
-                        quantity: 1
-                    total: 23.33
-                    status: "submitted"
-                    createdAt: "2025-11-21T00:00:00.000Z"
-                    updatedAt: "2025-11-21T00:00:00.000Z"
-        '400':
-          description: Validation error (empty cart or invalid items)
-        '409':
-          description: Conflict — insufficient stock for one or more items (no partial fulfillment)
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }
+        '400': { description: Validation error }
+        '409': { description: Conflict — insufficient stock }
   /api/orders/{id}:
     get:
       summary: Get order by id
@@ -262,128 +281,68 @@ paths:
         - in: path
           name: id
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-              examples:
-                orderExample:
-                  summary: Retrieved order snapshot
-                  value:
-                    id: "b3d6e7b4-9f0c-4a11-9c1c-1d5c2d7f0abc"
-                    items:
-                      - productId: "11111111-1111-4111-8111-111111111111"
-                        name: "Sample Product A"
-                        price: 10
-                        quantity: 2
-                      - productId: "22222222-2222-4222-8222-222222222222"
-                        name: "Sample Product B"
-                        price: 3.33
-                        quantity: 1
-                    total: 23.33
-                    status: "submitted"
-                    createdAt: "2025-11-21T00:00:00.000Z"
-                    updatedAt: "2025-11-21T00:00:00.000Z"
-        '404':
-          description: Not found
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }
+        '404': { description: Not found }
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
+    StandardError:
+      type: object
+      required: [error, message]
+      properties:
+        error: { type: string }
+        message: { type: string }
     Product:
       type: object
       required: [id, name, description, price, stock, imageUrl, createdAt, updatedAt]
       properties:
-        id:
-            type: string
-            format: uuid
-        name:
-            type: string
-        description:
-            type: string
-        price:
-            type: number
-            format: double
-        categoryId:
-            type: string
-            nullable: true
-        stock:
-            type: integer
-            minimum: 0
-        imageUrl:
-            type: string
-        createdAt:
-            type: string
-            format: date-time
-        updatedAt:
-            type: string
-            format: date-time
-    example:
-    id: "11111111-1111-4111-8111-111111111111"
-    name: "Sample Product"
-    description: "Example product used in contract documentation"
-    price: 19.99
-    categoryId: "22222222-2222-4222-8222-222222222222"
-    stock: 12
-    imageUrl: "images/product1.jpg"
-    createdAt: "2025-11-21T00:00:00.000Z"
-    updatedAt: "2025-11-21T00:00:00.000Z"
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        price: { type: number, format: double }
+        categoryId: { type: string, nullable: true }
+        stock: { type: integer, minimum: 0 }
+        imageUrl: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     Category:
       type: object
       required: [id, name, createdAt, updatedAt]
       properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
+        id: { type: string, format: uuid }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     CategoryInput:
       type: object
       required: [name]
       properties:
-        name:
-          type: string
+        name: { type: string }
     OrderItem:
       type: object
       required: [productId, name, price, quantity]
       properties:
-        productId:
-          type: string
-        name:
-          type: string
-        price:
-          type: number
-        quantity:
-          type: integer
-          minimum: 1
+        productId: { type: string }
+        name: { type: string }
+        price: { type: number }
+        quantity: { type: integer, minimum: 1 }
     Order:
       type: object
       required: [id, items, total, status, createdAt]
       properties:
-        id:
-          type: string
-          format: uuid
+        id: { type: string, format: uuid }
         items:
           type: array
-          items:
-            $ref: '#/components/schemas/OrderItem'
-        total:
-          type: number
-        status:
-          type: string
-          enum: [submitted]
-        createdAt:
-          type: string
-          format: date-time
+          items: { $ref: '#/components/schemas/OrderItem' }
+        total: { type: number }
+        status: { type: string, enum: [submitted] }
+        createdAt: { type: string, format: date-time }
     OrderInput:
       type: object
       required: [items]
@@ -394,8 +353,5 @@ components:
             type: object
             required: [productId, quantity]
             properties:
-              productId:
-                type: string
-              quantity:
-                type: integer
-                minimum: 1
+              productId: { type: string }
+              quantity: { type: integer, minimum: 1 }

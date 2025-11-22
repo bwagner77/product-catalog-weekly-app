@@ -27,15 +27,12 @@ description: "Task list for Product Catalog MVP"
  [X] T133 [P] [US4] (Replaced) Ensure category POST/PUT/DELETE protected via `authAdmin` only; legacy environment gating removed.
  [X] T134 [P] [US4] Frontend test: anonymous/unauthenticated category write attempts blocked with branded 403 message (FR-051, SC-025) in `frontend/src/__tests__/categoryAuth.test.tsx`
  [X] T132 [P] Update category endpoints in `specs/001-product-catalog/contracts/openapi.yaml` to require bearer auth for POST/PUT/DELETE and remove legacy flag gating notes; include 401/403 examples.
- [ ] T142 [P] Backend auth test: POST/PUT/DELETE /api/categories return 403 & no write when missing/invalid admin token in `backend/tests/api/categoriesAuth.test.ts` (FR-051, SC-025)
- [ ] T148 Apply `authAdmin` to category writes in `backend/src/routes/categories.ts` (POST/PUT/DELETE); remove any legacy gating branches.
- [ ] T164 [P] Backend tests: protected category/product writes 401 (missing/invalid/expired token) and 403 (unauthorized role) in `backend/tests/api/{categoriesAuth.test.ts,productsAuth.test.ts}` (SC-029, SC-030)
-- [X] T010 Implement traceId middleware and logger format including duration (ms) in `backend/src/utils/traceId.ts`
-- [X] T011 Configure Mongo connection util with error handling in `backend/src/config/db.ts`
-- [X] T012 Define Product model with UUID id and timestamps in `backend/src/models/product.ts`
-- [X] T013 Implement idempotent seed script for ≥5 products using Mongoose query methods (findOne/upsert) in `backend/src/seed/seedProducts.ts`
- - [X] T125 Ensure ALL seeded products (≥20) include non-empty `imageUrl` pattern `product<N>.jpg` and non-negative `stock` (some may be 0, example stock 5 for initial subset) per FR-047; extend `backend/tests/seed/seedProducts.test.ts` to assert full set
-- [X] T014 Wire seed on startup (one-time log) in `backend/src/server.ts`
+ [X] T142 [P] Backend auth tests: Ensure category POST/PUT/DELETE reject with 401 for missing/invalid/expired token and 403 for valid non-admin role; no writes occur when unauthorized. Create `backend/tests/api/categoriesAuth.test.ts` (FR-051, SC-025, SC-029, SC-030)
+ [X] T154 [P] Create `frontend/src/pages/Login.tsx` (POST `/api/auth/login`; store JWT in `localStorage` key `shoply_admin_token`)
+ [X] T155 [P] Add `frontend/src/context/AuthContext.tsx` (parse token, expose `{ role, authenticated, exp }`, check expiry)
+ [X] T156 [P] Implement `frontend/src/components/PrivateRoute.tsx` guarding CategoryManagement & ProductManagement (redirect /login or render AccessDenied)
+ [X] T157 [P] Hide admin-only nav links when unauthenticated in `frontend/src/App.tsx`
+ [X] T158 [P] Handle 401/403: API interceptor in `frontend/src/api/http.ts` clears token + redirects to /login (expired or invalid)
 - [X] T015 Add backend Jest config and scripts in `backend/jest.config.ts`
 - [X] T016 Add frontend Vite config with /api proxy in `frontend/vite.config.ts`
 - [X] T017 Setup Tailwind config and styles in `frontend/tailwind.config.js` `frontend/postcss.config.js` `frontend/src/index.css`
@@ -383,7 +380,7 @@ Completion of extended scope requires prior tasks T062–T120 plus branding/gati
 ### Additional Remediation Tasks
  - [X] T140 [P] CLS measurement test capturing layout shifts <0.1 during image load & fallback in `frontend/src/__tests__/cls.test.tsx` (SC-018)
  - [X] T141 [P] Fallback alt en dash assertion test verifying `<name> – image unavailable` pattern in `frontend/src/__tests__/imagesAltPattern.test.tsx` (FR-036, SC-019)
- - [ ] T142 [P] Backend auth test: POST/PUT/DELETE /api/categories return 403 & no write when missing/invalid admin token in `backend/tests/api/categoriesAuth.test.ts` (FR-051, SC-025)
+ - [X] T142 [P] Backend auth tests: 401 (missing/invalid/expired), 403 (non-admin role), ensure no unauthorized writes (`backend/tests/api/categoriesAuth.test.ts`).
 
 ---
 
@@ -391,13 +388,13 @@ Completion of extended scope requires prior tasks T062–T120 plus branding/gati
 
 Context: Introduce unified login endpoint and JWT protection for admin write operations (legacy environment flag removed).
 
-- [ ] T143 [P] Add `jsonwebtoken` and `@types/jsonwebtoken` to `backend/package.json`
-- [ ] T144 [P] Create `backend/src/routes/auth.ts` with `POST /api/auth/login` (env creds → issue HS256 JWT `{ role:'admin', iat, exp }` exp=1h)
-- [ ] T145 Wire auth routes in `backend/src/app.ts` (mount `/api/auth`)
-- [ ] T146 [P] Create `backend/src/middleware/authAdmin.ts` (validate Bearer JWT; role=admin; 401 missing/invalid/expired; attach `req.admin=true`)
-- [ ] T147 [P] Add helper `backend/src/utils/errors.ts` returning standardized JSON `{ error:'admin_auth_required', message:'Admin authentication required' }`
-- [ ] T148 Apply `authAdmin` to category writes in `backend/src/routes/categories.ts` (POST/PUT/DELETE); ensure zero legacy flag logic.
-- [ ] T149 Apply `authAdmin` to product writes in `backend/src/routes/products.ts` (POST/PUT/DELETE) (add missing write handlers if absent)
+- [X] T143 [P] Add `jsonwebtoken` and `@types/jsonwebtoken` to `backend/package.json`
+- [X] T144 [P] Create `backend/src/routes/auth.ts` with `POST /api/auth/login` (env creds → issue HS256 JWT `{ role:'admin', iat, exp }` exp=1h)
+- [X] T145 Wire auth routes in `backend/src/app.ts` (mount `/api/auth`)
+- [X] T146 [P] Create `backend/src/middleware/authAdmin.ts` (validate Bearer JWT; role=admin; 401 missing/invalid/expired; attach `req.admin=true`)
+- [X] T147 [P] Add helper `backend/src/utils/errors.ts` returning standardized JSON `{ error:'admin_auth_required', message:'Admin authentication required' }`
+- [X] T148 Apply `authAdmin` to category writes in `backend/src/routes/categories.ts` (POST/PUT/DELETE); ensure zero legacy flag logic.
+- [X] T149 Apply `authAdmin` to product writes in `backend/src/routes/products.ts` (POST/PUT/DELETE) (add missing write handlers if absent)
 - [ ] T150 Update OpenAPI `specs/001-product-catalog/contracts/openapi.yaml`: add `bearerAuth`, secure writes, add `/api/auth/login`, remove flag references
 - [ ] T151 [P] Docs: Update `specs/001-product-catalog/quickstart.md` with auth env vars, login flow, token storage, expiry (1h)
 - [ ] T152 [P] Docs: Update `specs/001-product-catalog/research.md` with JWT decisions (HS256, 1h expiry, no refresh) and alternatives
@@ -439,8 +436,8 @@ Independent Test: Valid admin CRUD succeeds; anonymous/invalid token blocked; dr
 - [ ] T163 [P] Backend tests: `/api/auth/login` 200 + 401 invalid credentials, token exp claim correctness in `backend/tests/api/auth.test.ts`
 - [ ] T164 [P] Backend tests: protected category/product writes 401 (missing/invalid/expired token) & 403 (non-admin) in `backend/tests/api/{categoriesAuth.test.ts,productsAuth.test.ts}` (SC-029, SC-030)
 - [ ] T165 [P] Frontend tests: route guard redirects unauthenticated access to `/login` and hides admin nav in `frontend/src/__tests__/authGuard.test.tsx`
-- [ ] T171 [P] Frontend tests: standardized error body on unauthorized write attempts (parse `{ error, message }`) in `frontend/src/__tests__/authErrorBody.test.tsx`
-- [ ] T172 Backend test: expired token (past exp) returns 401 and zero mutation for category/product writes in `backend/tests/api/authExpiry.test.ts` (SC-030)
+- [X] T171 [P] Frontend test: categories API auth error mapping (token_expired, admin_auth_required, forbidden_admin_role) in `frontend/src/__tests__/categoriesApiAuthErrors.test.tsx`
+- [X] T172 Backend tests: expired token returns 401 token_expired with zero mutation for category/product writes (covered in `backend/tests/api/categoriesAuth.test.ts` and `productsAuth.test.ts`) (SC-030)
 - [ ] T173 [P] Docs update: add SC-029/SC-030 mapping in `specs/001-product-catalog/checklists/requirements.md`
 
 

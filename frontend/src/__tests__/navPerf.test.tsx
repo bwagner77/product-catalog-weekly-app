@@ -32,7 +32,10 @@ describe('[Perf] Navigation latency (Products \u2194 Categories)', () => {
       }
       return { ok: false, status: 404, json: async () => ({ error: 'not found' }) } as any;
     };
-
+    // Seed admin token so categories nav is present under auth gating
+    const header = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+    const payload = 'eyJyb2xlIjoiYWRtaW4iLCJleHAiOjk5OTk5OTk5OTl9';
+    localStorage.setItem('shoply_admin_token', `${header}.${payload}.sig`);
     render(<App />);
     const navProducts = await screen.findByTestId('nav-products');
     const navCategories = screen.getByTestId('nav-categories');

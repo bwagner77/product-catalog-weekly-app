@@ -1,16 +1,11 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import Category from '../models/category';
 import Product from '../models/product';
+import { authAdmin } from '../middleware/authAdmin';
 
 const router = Router();
 
-// Environment gating: block write operations when ENABLE_CATEGORY_ADMIN === 'false'
-function gateCategoryAdmin(_req: Request, res: Response, next: NextFunction) {
-  if (process.env.ENABLE_CATEGORY_ADMIN === 'false') {
-    return res.status(403).json({ error: 'Category administration disabled' });
-  }
-  return next();
-}
+// Legacy environment gating removed; RBAC enforced via authAdmin middleware.
 
 // GET /api/categories
 router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
@@ -34,7 +29,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // POST /api/categories
-router.post('/', gateCategoryAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', authAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name } = req.body || {};
     if (typeof name !== 'string' || !name.trim()) {
@@ -56,7 +51,7 @@ router.post('/', gateCategoryAdmin, async (req: Request, res: Response, next: Ne
 });
 
 // PUT /api/categories/:id
-router.put('/:id', gateCategoryAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', authAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name } = req.body || {};
     if (typeof name !== 'string' || !name.trim()) {
@@ -83,7 +78,7 @@ router.put('/:id', gateCategoryAdmin, async (req: Request, res: Response, next: 
 });
 
 // DELETE /api/categories/:id (guarded)
-router.delete('/:id', gateCategoryAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', authAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id;
     const existing = await Category.findOne({ id }).lean();

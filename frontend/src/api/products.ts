@@ -1,4 +1,5 @@
 import type { Product } from '../types/product';
+import { apiFetch } from './http';
 
 type FetchOptions = {
   signal?: AbortSignal;
@@ -27,7 +28,7 @@ function buildApiUrl(baseUrl?: string, search?: string, categoryId?: string): st
 export async function fetchProducts(options: FetchOptions = {}): Promise<Product[]> {
   const { signal, baseUrl, search, categoryId } = options;
   const url = buildApiUrl(baseUrl, search, categoryId);
-  const res = await fetch(url, { signal } as RequestInit);
+  const res = await apiFetch(url, { signal } as RequestInit);
   if (!res.ok) {
     throw new Error(`Request failed: ${res.status}`);
   }

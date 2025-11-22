@@ -103,6 +103,52 @@ Sampling Guidance:
 ## Coverage & Instrumentation Summary (Added 2025-11-21)
 Backend test coverage: >94% statements / >81% branches (≥80% target). Frontend coverage: >95% statements / >86% branches. Performance probes (`perf.test.ts`, `orderPerf.test.ts`) gated behind `PERF=1` environment variable to avoid CI noise; they log average and p95 latencies. Logging & metrics test (`loggingMetrics.test.ts`) validates structured request log format and error counter increments. Image timing and fallback tests assert synchronous substitution (<1000ms) and alt pattern correctness ensuring SC-015..SC-019. Accessibility suite covers focus management for order confirmation dialog.
 
+### Protected Admin Write Performance Sampling (Added 2025-11-22)
+Purpose: Establish baseline latency for protected admin POST operations (categories & products) under local loopback conditions and confirm CRUD responsiveness meets SC-028 (<1000 ms p95).
+
+Probe File: `backend/tests/api/protectedPerf.test.ts` (activated only when `PERF_PROTECTED=1`). Measures average and p95 over N authenticated POST requests to `/api/categories` and `/api/products` using a freshly issued admin JWT.
+
+Environment Variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PERF_PROTECTED` | (unset) | Set to `1` to enable protected write probe describe blocks. |
+| `PERF_PROTECTED_RUNS` | `10` | Number of iterations per endpoint. |
+| `PERF_PROTECTED_ASSERT` | (unset) | Set to `1` to enable threshold assertions. |
+| `PERF_PROTECTED_CATEGORY_THRESHOLD_MS` | `1000` | p95 threshold for category POST when asserting. |
+| `PERF_PROTECTED_PRODUCT_THRESHOLD_MS` | `1000` | p95 threshold for product POST when asserting. |
+
+Sample Local Results (Windows, Node 20, Mongo local):
+```
+POST /api/categories p95 ≈ 25 ms (avg ≈ 20 ms)
+POST /api/products  p95 ≈ 13 ms (avg ≈ 13 ms)
+```
+
+Interpretation:
+- First category POST in a run may be slower (index checks/JIT); subsequent stabilize.
+- Both endpoints far below the 1000 ms guardrail; headroom for future complexity.
+- Slight difference expected (product validation path warmed quickly, category name uniqueness check occasionally hits duplicate avoidance logic).
+
+Execution (PowerShell):
+```powershell
+cd backend
+$env:PERF_PROTECTED='1'; npm test -- --runTestsByPath ./tests/api/protectedPerf.test.ts
+
+# With assertions
+$env:PERF_PROTECTED='1'; $env:PERF_PROTECTED_ASSERT='1'; \
+	$env:PERF_PROTECTED_CATEGORY_THRESHOLD_MS='1000'; \
+	$env:PERF_PROTECTED_PRODUCT_THRESHOLD_MS='1000'; \
+	npm test -- --runTestsByPath ./tests/api/protectedPerf.test.ts
+```
+
+Guidance:
+- Investigate local p95 > 250 ms (may indicate locking or synchronous CPU work).
+- Track p95 & avg; ignore pronounced cold-start outlier if isolated.
+- For production SLO planning, add p50/p95/p99 histograms and segregate by endpoint.
+- If drift occurs, profile auth middleware (JWT verify & expiration) and Mongo insert path (ensure indexes stable).
+
+Future Enhancements (Deferred): Add PUT/DELETE probes, capture concurrency under load, and export histogram metrics (StatsD or Prometheus) instead of console JSON.
+
 ### Order Snapshot
 - Decision: Capture name, price, quantity at submission; immutable total.
 - Rationale: Guards against product changes post-order; stable audit view.

@@ -45,6 +45,6 @@
 
 ## Outstanding Items (for implementation phase, not spec quality)
 
-- [ ] Auth token expiry handling tests (future phase)
-- [ ] Expired session UX messaging consistency audit
-- [ ] Performance sampling for protected endpoints under load
+- [x] Auth token expiry handling tests (covered via backend categories/products auth expired token cases + new frontend UX test)
+- [x] Expired session UX messaging consistency audit (frontend CategoryManagement expired session message standardized)
+- [x] Performance sampling for protected endpoints under load (protectedPerf.test.ts added documenting p95 values)

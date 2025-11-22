@@ -1,11 +1,14 @@
 import React from 'react';
 import ProductList from './pages/ProductList';
 import CategoryManagement from './pages/CategoryManagement';
+import Login from './pages/Login';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
 import { CartProvider, useCart } from './hooks/useCart';
 import OrderConfirmation from './components/OrderConfirmation';
 import type { Order } from './types/order';
 
-type ActiveView = 'products' | 'categories';
+type ActiveView = 'products' | 'categories' | 'login';
 
 interface NavBarProps {
   active: ActiveView;
@@ -14,6 +17,7 @@ interface NavBarProps {
 
 const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
   const cart = useCart();
+  const { authenticated } = useAuth();
   return (
     <header className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10" role="banner">
       <div className="flex items-center space-x-3" aria-label="Brand" data-testid="brand">
@@ -29,13 +33,24 @@ const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
           className={`px-3 py-1 rounded text-sm font-medium border ${active === 'products' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
           data-testid="nav-products"
         >Products</button>
-        <button
-          type="button"
-          onClick={() => onChange('categories')}
-          aria-current={active === 'categories' ? 'page' : undefined}
-          className={`px-3 py-1 rounded text-sm font-medium border ${active === 'categories' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-          data-testid="nav-categories"
-        >Categories</button>
+        {authenticated && (
+          <button
+            type="button"
+            onClick={() => onChange('categories')}
+            aria-current={active === 'categories' ? 'page' : undefined}
+            className={`px-3 py-1 rounded text-sm font-medium border ${active === 'categories' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+            data-testid="nav-categories"
+          >Categories</button>
+        )}
+        {!authenticated && (
+          <button
+            type="button"
+            onClick={() => onChange('login')}
+            aria-current={active === 'login' ? 'page' : undefined}
+            className={`px-3 py-1 rounded text-sm font-medium border ${active === 'login' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+            data-testid="nav-login"
+          >Login</button>
+        )}
       </nav>
       <div className="flex items-center space-x-4" aria-label="Cart summary">
         <span className="text-sm" data-testid="cart-count">Cart: {cart.count}</span>
@@ -100,6 +115,7 @@ function InnerApp() {
   const [loading, setLoading] = React.useState(false);
   const cart = useCart();
   const [active, setActive] = React.useState<ActiveView>('products');
+  const { authenticated } = useAuth();
 
   const checkout = async () => {
     if (cart.items.length === 0) return;
@@ -133,7 +149,12 @@ function InnerApp() {
       <div className="flex-1 p-4 md:flex md:space-x-6" aria-live="polite" aria-relevant="additions removals">
         <div className="flex-1" data-testid="active-view">
           {active === 'products' && <ProductList />}
-          {active === 'categories' && <CategoryManagement />}
+          {active === 'login' && !authenticated && <Login onSuccess={() => setActive('categories')} />}
+          {active === 'categories' && (
+            <PrivateRoute>
+              <CategoryManagement />
+            </PrivateRoute>
+          )}
         </div>
         <CartSidebar onCheckout={checkout} loading={loading} />
       </div>
@@ -144,8 +165,10 @@ function InnerApp() {
 
 export default function App() {
   return (
-    <CartProvider>
-      <InnerApp />
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <InnerApp />
+      </CartProvider>
+    </AuthProvider>
   );
 }
