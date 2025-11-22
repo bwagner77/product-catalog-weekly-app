@@ -47,7 +47,8 @@ const CategorySchema = new Schema(
 // Manual duplicate guard to ensure immediate uniqueness before index build completes.
 CategorySchema.pre('save', async function (next) {
   const self = this as mongoose.Document;
-  if (!self.isModified('name')) return next();
+  // Always check on new docs; on existing docs only when name changed.
+  if (!self.isNew && !self.isModified('name')) return next();
   try {
     const name = String(self.get('name'));
     const _id = self.get('_id');

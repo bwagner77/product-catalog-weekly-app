@@ -1,4 +1,6 @@
 import request from 'supertest';
+// Increase timeout to accommodate initial Mongo connection & inserts on slower CI hosts
+jest.setTimeout(15000);
 import app from '../../src/app';
 import { connectDB, disconnectDB } from '../../src/config/db';
 import Product from '../../src/models/product';
