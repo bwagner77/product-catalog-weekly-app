@@ -57,7 +57,7 @@ description: "Task list for Product Catalog MVP"
 - [X] T024 [P] [US1] Create Product type in `frontend/src/types/product.ts`
 - [X] T025 [P] [US1] Implement ProductCard component in `frontend/src/components/ProductCard.tsx`
 - [X] T026 [US1] Implement ProductList page fetching from `${import.meta.env.VITE_API_BASE_URL}/api/products` in `frontend/src/pages/ProductList.tsx`
- - [X] T127 [US1] Add branding (Shoply logo + name) and navigation controls (Products, Categories) to `frontend/src/App.tsx` (FR-044, FR-045, SC-022, SC-023)
+ - [ ] T127 [US1] Add branding (Shoply logo + name) and navigation controls in amended order (Products, Category Management, Product Management (admin only), Logout) to `frontend/src/App.tsx`; rename legacy label "Categories" → "Category Management" and ensure single `aria-current` and stable focus order (FR-044, FR-045, SC-022, SC-023, SC-035, SC-036)
 
 ## Phase 4: User Story 2 - Loading, Empty, Error States (Priority: P2)
 
@@ -306,7 +306,7 @@ Goal: Add/update/remove items; persist across refresh; stock gating.
 
  - [X] T094 [US6] Implement cart hook/module `frontend/src/hooks/useCart.ts` (state, add, update qty, remove, clear)
  - [X] T095 [P] [US6] LocalStorage persistence & hydration logic with schema version
- - [X] T096 [US6] Stock gating: disable add-to-cart for stock=0 product & message
+ - [X] T096 [US6] Stock gating: disable add-to-cart for stock=0 product & message; on order completion if stock decrements to 0 update ProductCard immediately (≤1s) to show "Out of Stock" and apply `disabled` + `aria-disabled="true"` (FR-015, FR-016, SC-037, SC-038)
  - [X] T097 [P] [US6] CartSidebar component (responsive, collapsible)
  - [X] T098 [P] [US6] Cart icon/count in NavBar component
  - [X] T099 [US6] Frontend tests (SC-008): add/update/remove/clear, persistence after refresh, stock gating (out-of-stock & exceeding-stock rejection) in `frontend/src/__tests__/cart.test.tsx`
