@@ -1,0 +1,165 @@
+NOTE: This implementation plan extends the existing `plan.md` in `specs/001-product-catalog/`. 
+Do NOT create a new plan file or folder; merge all content and enhancements in place.
+
+---
+
+Generate a detailed technical implementation plan building on the existing `001-product-catalog` plan, based on the following specifications. Extend in place to support product images and explicit layout/behavior instructions without creating a new folder or duplicating content.
+
+---
+
+Specifications Overview
+- **Frontend**: React 18 + TypeScript + Vite + TailwindCSS. Displays products, supports search/filter, category selection, stock status, shopping cart (localStorage), and order submission. All data fetched from backend API except cart.
+- **Backend**: Express API + TypeScript:
+  - `GET /api/products` – list all products with optional filters (category, search term). Includes out-of-stock products; frontend disables add-to-cart.
+  - `GET /api/categories` – full CRUD for categories.
+  - `POST /api/orders` – submit new order; updates stock counts.
+- **MongoDB Schema**:
+  - **Product**: `name`, `description`, `price`, `categoryId`, `stock` (integer), `imageUrl` (string, non-empty), `createdAt`, `updatedAt`, immutable `id` (UUID). Seed ≥20 products with deterministic placeholder images (`product1.jpg`, `product2.jpg`, …).
+  - **Category**: `name`, `description`, immutable `id` (UUID), `createdAt`, `updatedAt`.
+  - **Order**: snapshot of products and totals, timestamp, immutable `id` (UUID). Stock counts updated on order creation.
+- **Application Scope**: Products read-only; Categories full CRUD; Orders create-only; Cart frontend-only.
+- **Exclusions**: No authentication, caching/CDN, image upload/processing, advanced analytics.
+- **Containerization**: Docker Compose for frontend, backend, MongoDB. One-command environment spin-up.
+- **Performance Goals**: 
+  - Frontend render ≤1s typical, goal ≤2s.
+  - API response ≤1s typical.
+  - Order submission ≤500ms typical.
+
+---
+
+Implementation Sections
+
+1. **Database Setup**
+   - Extend MongoDB schemas for Product, Category, and Order using TypeScript + Mongoose.
+   - Add `imageUrl` to Product (non-empty string); seed deterministic filenames (`product1.jpg`, …) even for placeholders.
+   - Include timestamps and immutable UUIDs (`id`) for all entities.
+   - Ensure idempotent seeding for products (≥20) and categories (≥5).
+   - Implement stock tracking; order creation decreases stock counts.
+   - Seed logic checks for existing entries before inserting.
+   - Files: `backend/src/models/` and `backend/src/seed/`.
+
+2. **Backend API Development**
+   - Implement endpoints:
+     - `GET /api/products` with optional filters (category, search term); include `imageUrl` in all responses.
+     - `GET /api/categories` full CRUD.
+     - `POST /api/orders` updates stock counts and stores immutable snapshot.
+   - TraceId middleware, logging, error handling (400/404/500).
+   - Lean MongoDB queries with TypeScript type safety.
+   - CORS support for frontend URL.
+   - Files:
+     - `backend/src/routes/products.ts`
+     - `backend/src/routes/categories.ts`
+     - `backend/src/routes/orders.ts`
+     - `backend/src/models/*.ts`
+     - `backend/src/seed/*.ts`
+     - `backend/src/utils/traceId.ts`
+
+3. **Frontend Development**
+   - **Site Layout / Navigation**:
+     - Global NavBar at top of all pages:
+       - Site logo or name (e.g., "Shoply") on left.
+       - Cart icon with item count on right.
+       - Optional link to Category management page (for admin).
+       - Responsive: collapse nav links into hamburger menu on mobile.
+   - **Pages/Components & Placement**:
+     - **ProductList**: main content area.
+       - Desktop: 3–4 columns grid, gap 1rem.
+       - Tablet: 2 columns.
+       - Mobile: 1 column.
+     - **ProductCard**: inside ProductList grid.
+       - Image, name, price, stock status, Add to Cart button.
+       - Stock = 0 disables button + explicit text “Out of stock”.
+       - Hover tooltip: full product description.
+       - Responsive image with fallback:
+         ```tsx
+         <img
+           src={product.imageUrl || '/images/placeholder.jpg'}
+           alt={product.imageUrl ? product.name : `${product.name} image unavailable`}
+           className="w-full h-48 object-cover"
+         />
+         ```
+     - **CartSidebar**:
+       - Right-hand side on desktop (fixed width).
+       - Collapsible slide-in on mobile.
+       - Shows list of cart items, quantities, subtotal, Checkout button.
+       - Add-to-cart triggers toast/notification or subtle animation.
+     - **SearchBar + CategoryFilter**:
+       - Top of ProductList, horizontally aligned on desktop.
+       - Stack vertically on mobile.
+       - SearchBar left, CategoryFilter right.
+     - **OrderSummary / Confirmation Modal**:
+       - Displays submitted items, images, quantities, totals.
+       - Success checkmark icon + confirmation message.
+     - **EmptyState Component**:
+       - For empty ProductList or CartSidebar.
+       - Includes informative text + optional icon.
+   - **Interactions**:
+     - Stock = 0 disables Add to Cart + shows “Out of stock”.
+     - Add-to-cart triggers toast/animation.
+     - Hovering image shows tooltip with full description.
+     - Order submission shows confirmation modal/page with images, quantities, totals.
+   - **Responsiveness**:
+     - Mobile-first layout.
+     - Grid breakpoints: 1 column mobile, 2 tablet, 3–4 desktop.
+     - CartSidebar collapsible on mobile, slides in/out.
+     - SearchBar + CategoryFilter stack vertically on narrow widths.
+   - **Data & Cart Handling**:
+     - Filters/search query backend.
+     - Cart in localStorage; add/remove/update items with real-time totals.
+     - Orders submit cart snapshot; display confirmation.
+   - Files:
+     - `frontend/src/pages/` and `frontend/src/components/`
+     - `frontend/src/api/*.ts` (products, categories, orders)
+
+4. **Testing**
+   - Frontend tests (`frontend/src/__tests__/`):
+     - Rendering: ProductList, ProductCard, CartSidebar, SearchBar, CategoryFilter, NavBar.
+     - Layout: grid columns at breakpoints, CartSidebar collapses on mobile, SearchBar + CategoryFilter alignment.
+     - Stock behavior: Add to Cart disabled for zero stock, button shows “Out of stock”.
+     - Interactions:
+       - Add-to-cart triggers toast/animation.
+       - Hover tooltip appears.
+       - Order confirmation displays product images, names, totals.
+     - Edge cases:
+       - Empty ProductList shows EmptyState.
+       - Empty CartSidebar shows EmptyState.
+       - Broken/missing image fallback works.
+       - Failed order submission shows error message component.
+     - Image testing:
+       - Presence, fallback behavior, consistent dimensions, responsive resizing, broken image load events.
+   - Backend tests (`backend/tests/`):
+     - API endpoints, model validation, seed idempotency, stock updates.
+     - Verify `imageUrl` presence, non-empty, and correct seeding pattern.
+   - Unit + integration tests with coverage ≥80%.
+   - Backend: Jest + Supertest; Frontend: Vitest + React Testing Library.
+
+6. **Containerization**
+   - Docker Compose: frontend (5173), backend (3000), MongoDB (27017).
+   - Map `.env` files; build args for frontend API URL.
+   - `/health` endpoints for health checks.
+
+7. **Technical Context Updates**
+   - TypeScript, TailwindCSS, ESLint, Prettier maintained.
+   - Strict typing frontend/backend.
+   - npm run dev scripts for frontend/backend.
+   - Vite proxy for API requests.
+
+8. **Constitution Alignment**
+   - Manual testing only, CI/CD deferred.
+   - Ensure performance, accessibility, modularity, coverage align with constitution.
+
+---
+
+Additional Notes
+- Product volume ≤100 items; pagination optional.
+- Cart stored in frontend localStorage.
+- Stock updates only on order submission.
+- Filters/search query backend.
+- ESLint + Prettier enforced consistently.
+- Images: static/public placeholder files only; no upload/processing.
+- Fallback image for missing/broken `imageUrl`, with alt text.
+- Image handling must maintain layout stability and accessibility.
+- NavBar included on all pages with logo/site name, cart indicator, optional links; responsive.
+- Toast/notification for add-to-cart; confirmation modal shows images and totals.
+- Mobile-first layout, grid breakpoints, sidebar collapse, stackable search/filter.
+- Edge cases handled: empty ProductList, empty CartSidebar, failed order submission.

@@ -1,0 +1,88 @@
+Please update and extend the existing Product Catalog specification in specs/001-product-catalog/ 
+to support a lightweight e-commerce feature set. 
+Do NOT create a new folder. Extend the current spec in place.
+
+Add the following new functional areas:
+
+## 1. Product Enhancements
+- Add a new field to Product: categoryId (string).
+- Add a new field to Product: stock (number).
+- Update the Product List UI to display stock status (“In Stock” or “Out of Stock”).
+- Add validation: stock must be >= 0.
+
+## 2. Category Management
+Create a new Category entity with:
+- id (string)
+- name (string)
+
+Backend:
+- Expose CRUD endpoints:
+  - GET /api/categories
+  - GET /api/categories/:id
+  - POST /api/categories
+  - PUT /api/categories/:id
+  - DELETE /api/categories/:id
+
+Frontend:
+- Add a Category Management page that lists categories in a table with columns: id, name, actions (edit/delete).
+- Include a form for creating and editing categories with a single field: name (required).
+- Add a category dropdown/filter to the product list page.
+
+## 3. Product Search
+Extend GET /api/products to accept query parameters:
+- search: text search on name and description.
+- categoryId: filter products by category.
+
+Frontend:
+- Add a search bar that triggers backend search.
+
+## 4. Client-Side Shopping Cart
+Cart is stored in React state + persisted in localStorage.
+
+Features:
+- Add product to cart.
+- Remove product from cart.
+- Update quantity.
+- Display item count in a CartIcon component.
+- Cart persists when browser refreshes.
+
+React components/pages:
+- CartPage showing item list, quantity controls, total price.
+- CartItem component.
+- CartIcon showing item count.
+- OrderSummary section.
+
+## 5. Basic Order Submission
+Create an Order entity:
+- id (string)
+- items: array of { productId, name, price, quantity }
+- total (number)
+- status: "submitted"
+- createdAt (datetime)
+
+Backend:
+- POST /api/orders: creates a new order.
+- GET /api/orders/:id: returns the order.
+
+Frontend:
+- "Place Order" button on CartPage.
+- Order Confirmation page displaying order details.
+
+## 6. Testing
+Backend tests must cover:
+- Product search
+- Category CRUD
+- Order creation
+
+Frontend tests must cover:
+- Cart state updates
+- Search behavior
+- Category filter
+- Cart persistence (localStorage)
+
+## 7. Nonfunctional Requirements
+- UI must remain responsive and accessible.
+- No authentication required.
+- Assume ≤ 200 products; no pagination.
+
+Please merge these requirements into the existing spec while preserving all previous content and produce an updated unified specification.

@@ -1,0 +1,64 @@
+**Please update the existing Product Catalog specification in**
+`specs/001-product-catalog/spec.md`
+**to reflect the following changes**:
+
+---
+
+### 1. **Navigation Updates**
+
+* **FR-001**: The navigation for the frontend application must include an updated label and order for the buttons:
+
+  * The button previously labeled **"Categories"** must be renamed to **"Category Management"**.
+
+  * The order of the buttons in the navigation must be as follows:
+
+    1. Products
+    2. Category Management
+    3. Product Management
+    4. Logout
+
+  * **SC-001**: The navigation order and button labeling must be consistent throughout the application.
+
+  * **SC-002**: The updated navigation should be visually clear and maintain accessibility requirements.
+
+---
+
+### 2. **Product Stock Management**
+
+* **FR-002**: When a product's stock reaches zero following a completed order, the frontend should reflect the product’s **out-of-stock** status:
+
+  * The product card should display a clear **"Out of Stock"** label.
+
+  * The **Add to Cart** button for out-of-stock products must be disabled to prevent further interaction.
+
+  * **SC-003**: The system must ensure that any product with zero stock is displayed as out of stock in all user-facing areas.
+
+  * **SC-004**: The "Add to Cart" button for out-of-stock products must be disabled and visually distinguishable from active buttons.
+
+---
+
+### 3. **Role-Based Access Control (RBAC) and Authentication**
+
+* **FR-003**: Role-based access control (RBAC) enforcement must be implemented for the following pages and actions:
+
+  * Only **authenticated admin users** should have access to **Category Management** and **Product Management** pages.
+
+  * Non-admin users (including unauthenticated users) should be blocked from accessing these pages and should receive an **"Access Denied"** message or a **safe redirect** to the login page.
+
+  * **SC-005**: Unauthorized access to Category Management or Product Management must return a 403 status with a clear error message indicating that admin access is required.
+
+  * **SC-006**: Login state must be consistent across page reloads, and logout must clear all user-specific state, including access rights.
+
+---
+
+### 4. **Removal of Feature Flags (`ENABLE_CATEGORY_ADMIN`)**
+
+* **FR-004**: The specification must **no longer reference** or rely on the transitional feature flag **`ENABLE_CATEGORY_ADMIN`** for controlling access to Category Management and Product Management pages.
+
+  * Access to Category Management and Product Management should depend entirely on the user's authenticated role (admin or non-admin).
+
+  * **SC-007**: Any reference to `ENABLE_CATEGORY_ADMIN` must be removed from the specification.
+
+  * **SC-008**: Access control should be enforced based purely on the **user's role** as determined by the authentication process.
+
+---

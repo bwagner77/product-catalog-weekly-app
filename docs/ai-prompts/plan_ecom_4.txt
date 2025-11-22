@@ -1,0 +1,143 @@
+Please update and extend the existing Product Catalog plan in
+`plans/001-product-catalog/plan.md` **in-place** to reflect the planned admin/auth and product management requirements.
+
+**Do NOT create a new plan; preserve current structure, formatting, and task numbering.**
+
+### Apply the following changes:
+
+---
+
+## **1. Admin Authentication (JWT)**
+
+* Implement **JWT-based authentication** for admin users.
+
+* Backend tasks should include:
+
+  * Authentication endpoint:
+    **`POST /api/auth/login`** accepting `{ username, password }`.
+
+  * JWT issuance with:
+
+    * **minimum 1-hour expiration** (HS256)
+    * claims including `{ role: 'admin', iat, exp }`
+
+  * Middleware `authAdmin` validating:
+
+    * presence of Bearer token
+    * signature validity
+    * expiration
+    * role claim === `"admin"`
+
+  * No refresh token flow; frontend must handle token expiration by logout + redirect.
+
+  * Optional: log failed login attempts for auditing.
+
+* All write endpoints for CategoryManagement and ProductManagement must require a valid admin JWT.
+
+* Update plan tasks and tests to include:
+
+  * Successful login returns JWT and expiration.
+  * Incorrect credentials return 401.
+  * Expired token returns 401/403 depending on middleware stage.
+  * Middleware blocks unauthorized or improperly-scoped requests.
+  * Expired token triggers automatic frontend logout + redirect.
+
+---
+
+## **2. Protect CategoryManagement Page**
+
+* Restrict access to `frontend/src/pages/CategoryManagement.tsx`:
+
+  * Only logged-in admins can access CRUD operations.
+  * Anonymous / unauthorized users receive redirect to login or a 403 Access Denied page.
+
+* Update plan tasks and tests to cover:
+
+  * Admin access granted for all CRUD operations.
+  * Non-admin access blocked with correct UI messaging.
+  * NavBar and other UI elements hide admin-only controls for non-admin users.
+
+---
+
+## **3. Product Management Page**
+
+* Add new page: `frontend/src/pages/ProductManagement.tsx` with **full CRUD** for products.
+
+* Editable fields must include:
+
+  * `name`
+  * `description`
+  * `price`
+  * `imageUrl`
+  * `stock`
+  * `category` (dropdown tied to `Category` model, stores `categoryId`)
+
+* Backend must provide CRUD endpoints for products with validation, and all **write operations gated by admin JWT**.
+
+* Plan tasks and tests must include:
+
+  * Product create/read/update/delete.
+  * All editable fields update correctly.
+  * Category dropdown loads and lists **all categories**.
+  * Admin-only access enforced on frontend and backend.
+  * Anonymous users can still **view product list page**, including categories.
+
+---
+
+## **4. Frontend Route Protection & Access Control**
+
+* Implement **route guarding / PrivateRoute pattern** for:
+
+  * `CategoryManagement`
+  * `ProductManagement`
+
+* Behavior:
+
+  * If token is missing → redirect to Login.
+  * If token is expired or role ≠ `"admin"` → logout + redirect to Login.
+  * Public pages (ProductList, category browsing) remain accessible without auth.
+
+* Update tasks/tests to verify:
+
+  * Admin access succeeds.
+  * Anonymous and invalid tokens are blocked.
+  * NavBar correctly hides admin-only links if not authenticated.
+  * Token expiry triggers logout + redirect consistently.
+
+---
+
+## **5. Task & Plan Integration**
+
+* Merge these new tasks into the existing task list:
+
+  * Assign sequential task numbers after current highest.
+  * Ensure tasks reference relevant files/components/tests explicitly.
+  * Maintain existing formatting, context, and priority ordering.
+
+---
+
+# **Observations / Recommendations / Clarifications (Updated)**
+
+* The unified endpoint **`POST /api/auth/login`** is now used; this future-proofs the system for eventual shopper login without rewriting backend or frontend auth plumbing.
+* JWT expiration must be **≥ 1 hour**.
+* No refresh tokens; frontend handles redirect on expiry.
+* Store token in `localStorage` or `sessionStorage` (implementation choice documented in plan).
+* ProductList page remains fully **public**, including category browsing.
+* ProductManagement and CategoryManagement remain **admin-only**, gated both frontend and backend.
+* Category dropdown in ProductManagement must list **all categories**, even if empty.
+* Frontend must decode token expiration and clear invalid tokens proactively.
+* Tests must cover:
+
+  * route guarding behavior
+  * token expiry handling
+  * button visibility in NavBar
+  * category dropdown completeness
+  * admin-only CRUD enforcement
+* Backend tests must validate:
+
+  * role claim enforcement
+  * full permission matrix for protected endpoints
+  * backward-compatible anonymous read access
+* This structure allows adding user login in the future via the same `/api/auth/login` endpoint with different role claims (`role: "user"`), requiring **no backend route changes**.
+
+---

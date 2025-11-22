@@ -6,6 +6,7 @@ coverage/
 .vscode/
 .idea/
 **/*.min.js
-# Generated outputs
+*.log
+*.lcov
 backend/dist/
 frontend/dist/

@@ -1,0 +1,19 @@
+I have a plan.md and tasks.md for an extended e-commerce MVP. 
+
+Currently, stock decrement on order submission is marked out-of-scope in both:
+- "Out-of-Scope" section in plan.md
+- Future / Not In Scope Tasks list (D004)
+
+I now want stock decrement to be **in-scope**. Please:
+
+1. Remove all mentions that stock decrement is out-of-scope (plan.md and deferred tasks).  
+2. Update **Phase 11 (Order Submission)** to:
+   - Implement stock decrement on order submission
+   - Validate sufficient stock (reject order if insufficient)
+   - Add backend tests for stock decrement, insufficient stock, and post-order stock consistency
+   - Update frontend tests if needed (cart / order confirmation)
+3. Update **Completion Criteria** in plan.md to include stock decrement implementation & tests.
+4. Remove D004 from “Future / Not In Scope Tasks” section.
+5. Keep everything else unchanged (formatting, task IDs, other features).  
+
+Return the full **updated plan.md** and **updated Phase 11 tasks** in tasks.md.

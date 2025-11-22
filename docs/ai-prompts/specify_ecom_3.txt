@@ -1,0 +1,73 @@
+Please update and extend the existing Product Catalog specification in
+`specs/001-product-catalog/spec.md` to align with the current state of the code
+and the new Shoply requirements. Do NOT create a new folder; update the spec in place.
+
+Apply the following changes:
+
+## 1. Seed Data Clarifications
+
+* The first 5 seeded products were missing the `imageUrl` and `stock` fields in earlier versions.
+* Clarify that all seeded products **must include**:
+
+  * `imageUrl`: placeholder value following pattern `"product<N>.jpg"` consistent with existing seeds.
+  * `stock`: non-negative integer (example value: 5 for the first 5 products).
+* Update the **Clarifications** section to reflect that seeded products now include these fields and are consistent across runs.
+
+## 2. Branding & Navigation Updates
+
+* Update all references to the app name from **“Product Catalog”** to **“Shoply”**.
+* Clarify that the **top navigation banner** must include:
+
+  * The Shoply brand name.
+  * A logo or image to the left of the brand name.
+  * Navigation links/buttons for key pages (at minimum: Products, Categories).
+* Update User Stories and Acceptance Criteria where the navigation banner is referenced (e.g., User Story 1 / View Product List, User Story 3 / Accessibility & Responsiveness) to include branding and logo presence.
+* Include navigation to the **CategoryManagement page** via the navbar:
+
+  * User Story 4 / Manage Categories acceptance criteria must specify that the page is reachable through navigation.
+  * Success criteria should reflect that navigation and branding updates are present and functional.
+
+## 3. Order Confirmation Modal Updates
+
+* The order confirmation modal/dialog must include **two ways to dismiss**:
+
+  1. Top-right “X” button (existing behavior)
+  2. Explicit **“Close” button** inside the modal.
+* Update User Story 7 / Submit Order acceptance criteria to reflect that the modal can be closed via either mechanism.
+* Include accessibility requirements (keyboard navigation, ARIA labels, focus management) for both dismissal mechanisms.
+
+## 4. Functional Requirements Updates
+
+* Add/clarify functional requirements for:
+
+  * FR-044: Navbar includes Shoply brand name and logo.
+  * FR-045: Navbar includes navigation to Products and CategoryManagement pages.
+  * FR-046: Order confirmation modal includes explicit Close button in addition to existing X.
+  * FR-047: All seeded products include `stock` and `imageUrl` fields.
+  * FR-048: CategoryManagement page is reachable via navigation.
+  * FR-049: All UI changes (modal, navbar, navigation) meet accessibility standards (alt text, ARIA, keyboard navigation).
+  * FR-050: Acceptance tests for modal dismissal and navigation must be implemented and pass.
+* Increment FR numbers consistently with existing spec (as above).
+
+## 5. Success Criteria Updates
+
+* SC-021: All products returned from GET /api/products include valid `imageUrl` and `stock`.
+* SC-022: Navigation bar displays Shoply name, logo, and navigable links.
+* SC-023: CategoryManagement page is reachable via navbar.
+* SC-024: Order confirmation modal can be dismissed by either Close button or X, with correct focus behavior and accessibility.
+
+## 6. Clarifications Section Updates
+
+* Seeded products now include `imageUrl` and `stock`; values are deterministic for first 5 products.
+* Navigation routes added for CategoryManagement page via navbar.
+* Branding updated to Shoply, with logo inclusion.
+
+## 7. Spec Integrity
+
+* Preserve all previous content, formatting, and user stories in `spec.md`.
+* Merge new requirements into existing functional requirements, edge cases, and success criteria without removing prior context.
+* Ensure numbering and references (FR, SC) are consistent and non-conflicting.
+
+**Goal:** Produce an updated, fully unified specification that reflects Shoply branding, seeded product consistency, accessible UI updates, and routing/navigation improvements. All previous functionality, user stories, and test coverage expectations remain in place.
+
+---

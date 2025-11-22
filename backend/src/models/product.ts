@@ -7,6 +7,9 @@ export type ProductDocument = {
   name: string;
   description: string;
   price: number;
+  categoryId?: string;
+  stock: number;
+  imageUrl: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -42,6 +45,27 @@ const ProductSchema = new Schema(
       type: Number,
       required: true,
       min: [0, 'price must be >= 0'],
+    },
+    categoryId: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    stock: {
+      type: Number,
+      required: true,
+      min: [0, 'stock must be >= 0'],
+      default: 0,
+      validate: {
+        validator: (v: number) => Number.isInteger(v) && v >= 0,
+        message: 'stock must be a non-negative integer',
+      },
+    },
+    imageUrl: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: [1, 'imageUrl cannot be empty'],
     },
   },
   {

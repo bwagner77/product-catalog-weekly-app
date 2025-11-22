@@ -1,0 +1,37 @@
+**Please update the existing `plan.md` for the `Shoply Product Catalog` in place.**
+
+### Goal:
+
+Make the following updates to the current plan:
+
+1. **Rename the button in `App.tsx` from "Categories" to "Category Management".**
+2. **Reorder the buttons in `App.tsx` to the following:**
+
+   * Products
+   * Category Management
+   * Product Management
+   * Logout
+3. **Modify the behavior of the `ProductCard` component:**
+
+   * After completing an order, if the product stock quantity is decremented to zero, the `ProductCard` should display "Out of Stock" and disable the "Add to Cart" button.
+
+### Requirements:
+
+* **Task Breakdown Updates**: Add/update tasks in the **Task Breakdown** section of the plan to reflect the following:
+
+  * Renaming and reordering buttons in the navigation.
+  * Modifying the `ProductCard` behavior based on stock availability.
+* **Do not replace or remove any existing sections**, such as:
+
+  * Metadata (`Branch`, `Date`, `Spec`)
+  * Summary
+  * Technical Context
+  * Phase Plan
+  * Existing tasks or implementation notes, except where related to the new requirements above.
+
+### Expected Outcome:
+
+* Only the relevant tasks and details regarding the renaming of the button, reordering of buttons, and product stock behavior will be **added or updated**.
+* **No sections** (like metadata, summary, etc.) will be removed or replaced.
+
+---

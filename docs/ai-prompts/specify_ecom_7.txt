@@ -1,0 +1,23 @@
+**Please update the existing Product Catalog specification in**
+`specs/001-product-catalog/spec.md`
+**to reflect the following changes**:
+
+---
+
+#### Navigation Hamburger Menu (Mobile/Responsive)
+
+1. **Hamburger Menu**:
+
+   * On **mobile screens** (below a defined breakpoint, e.g., 768px), collapse the navigation buttons (Products, Category Management, Product Management, Logout) into a **hamburger button**.
+   * Clicking the hamburger button should toggle the visibility of the navigation menu items.
+   * Ensure that the menu is responsive and can toggle visibility correctly, displaying items vertically when expanded.
+   * Implement accessible behavior for the hamburger button with proper `aria` attributes:
+
+     * Use `aria-expanded` to indicate whether the menu is open or closed.
+     * Ensure each navigation item inside the hamburger menu has appropriate focus and is visible based on the menu state.
+   * **Testing**: Write tests for:
+
+     * Hamburger button behavior (expanding/collapsing the menu).
+     * Correct visibility toggling of the navigation links.
+     * Proper accessibility features (e.g., `aria-expanded`, `aria-controls`, etc.).
+     * Test for the correct active state (`aria-current`) when toggling between views.

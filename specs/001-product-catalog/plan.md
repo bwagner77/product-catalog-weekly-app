@@ -1,34 +1,36 @@
-# Implementation Plan: Product Catalog
+# Implementation Plan: Shoply Product Catalog (Extended: E-commerce, Images, Navigation, Gating)
 
-**Branch**: `001-product-catalog` | **Date**: 2025-11-14 | **Spec**: ./spec.md
+**Branch**: `001-product-catalog` | **Date**: 2025-11-14 (updated 2025-11-21 for Shoply branding, gating, dual modal dismissal; extended 2025-11-21 for Admin JWT Auth & Product Management) | **Spec**: ./spec.md
 **Input**: Feature specification from `/specs/001-product-catalog/spec.md`
 
 ## Summary
 
-MVP delivers a read‑only product catalog. A React 18 + TypeScript + Vite + TailwindCSS frontend renders a list of products (name, description, price) from a TypeScript Express API `GET /api/products` backed by MongoDB (Mongoose). At least 5 products are seeded idempotently on first run. UI is clean, responsive, and accessible; prices display a currency symbol with two decimals. Clarification: up to 100 items, no pagination.
+Initial MVP delivered read‑only product listing. This extension adds categories (CRUD – now RBAC‑enforced for write operations), product search & filtering, stock display and cart gating, client‑side cart with persistence, order submission with snapshot semantics and inventory stock decrement, deterministic product images plus fallback behavior, responsive layout refinements (grid breakpoints, collapsible cart sidebar, navigation bar), Shoply branding (logo + name), dual dismissal for the order confirmation modal, and admin authentication via JWT with user state–based role enforcement (anonymous vs admin). Seed volume increases (≥20 products, ≥5 categories) to better exercise filtering and search. Product images use deterministic placeholder filenames (`product<N>.jpg`); no upload or transformation pipeline. Performance, accessibility, and containerization principles remain unchanged.
 
 ## Technical Context
 
 **Language/Version**: TypeScript (ES2022), Node.js 20.x, React 18  
-**Primary Dependencies**: Express, Mongoose, uuid, cors, Vite, React, TailwindCSS, Jest, Supertest, Vitest, React Testing Library, ESLint, Prettier, ts-node-dev  
-**Storage**: MongoDB (Mongoose ODM)  
-**Testing**: Backend: Jest + Supertest; Frontend: Vitest + React Testing Library; Coverage ≥80% on critical paths  
+**Primary Dependencies**: Express, Mongoose, uuid, cors, Vite, React, TailwindCSS, Jest, Supertest, Vitest, React Testing Library, ESLint, Prettier, ts-node-dev (unchanged)  
+**Added Concerns**: Client-side cart (localStorage), order snapshot logic, category CRUD flows, image display + fallback  
+**Storage**: MongoDB (Mongoose ODM) — collections: products, categories, orders (orders store snapshots)  
+**Testing**: Backend: Jest + Supertest; Frontend: Vitest + RTL; ≥80% coverage (must include new flows: search/filter, cart persistence, category CRUD, order creation, image fallback)  
 **Target Platform**: Docker Compose (frontend 5173, backend 3000, MongoDB 27017)  
-**Project Type**: Web application (separate backend + frontend)  
-**Performance Goals**: Frontend initial render ≤2s p95 (typical ≤1s); API GET /api/products ≤1s p95 (typical ≤500ms local)  
-**Constraints**: Read‑only scope; no authentication; no caching/CDN; Tailwind‑only styling; prices formatted to two decimals; immutable UUID id; idempotent seed; lean Mongo queries; product volume ≤100 items, no pagination  
-**Scale/Scope**: ≤100 products visible; low concurrency (developer local)
+**Performance Goals**: Frontend initial render ≤2s p95 (typical ≤1s); API list/search ≤1s p95; cart ops & order submission ≤500ms typical; navigation view switch (Products ↔ Categories) median ≤200ms p95 ≤400ms; image loading/fallback ≤1s detection  
+**Constraints**: Admin authentication via JWT (HS256, ≥1h expiration, role claim `admin`, no refresh tokens); no image upload; no caching/CDN; Tailwind-only; prices two decimals; UUID immutable; idempotent extended seed; lean queries; product volume ≤200 (search/filter) without pagination  
+**Scale/Scope**: ≤200 products; low concurrency; cart local-only (no multi-user sync)  
+**Out-of-Scope**: Advanced image optimization, pagination, discounting, tax, payments.
 
-## Constitution Check
+## Constitution Check (Pre-Extension Re-evaluated / Auth Extension)
 
-Gate evaluation per Constitution (v1.0.0):
+Gate evaluation per Constitution (v1.1.0):
 
 | Principle | Gate | Status | Notes |
 |-----------|------|--------|-------|
 | Code Quality | Single responsibility, Prettier 2‑space enforced | PASS | ESLint + Prettier planned; modular components/services |
 | Testing Standards | Unit + integration, ≥80% coverage, no E2E | PASS | Jest/Vitest configured; thresholds enforced |
-| UX Consistency | Mobile‑first, Tailwind‑only, accessibility | PASS | Responsive layout and a11y checks included |
-| Performance | Page ≤2s, API ≤1s | PASS | Targets documented and validated manually |
+| UX Consistency | Mobile‑first, Tailwind‑only, accessibility, Shoply branding, dual modal dismissal | PASS | Branding tasks planned; modal has two dismissal controls |
+| Performance | Page ≤2s, API ≤1s, cart/order ops ≤500ms | PASS | New ops targets added; still feasible locally |
+| Security & RBAC | Admin-only write ops protected | PASS | Enforce via JWT middleware; legacy environment gating removed |
 | Deployment Strategy | Docker Compose multi‑service | PASS | One‑command up via compose, .env used |
 | Technology Choices | Mature, testable, container‑friendly | PASS | Express, React, Mongoose, Vite |
 | Governance | Versioning, plan/spec/tasks artifacts | PASS | Plan/spec/contracts/data‑model/quickstart present |
@@ -111,30 +113,206 @@ frontend/
 
 Phase 0 (Research): Completed — decisions for stack, observability, performance validation documented in `research.md`.
 
-Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.yaml`, and `quickstart.md` present. Clarification integrated: ≤100 items, no pagination.
+Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.yaml`, and `quickstart.md` present. Clarification updated: ≤200 items, no pagination (legacy ≤100 superseded; consolidated in spec FR-012).
 
-Backend specifics:
+### Backend specifics (Extended):
 - Express + TypeScript with ts-node-dev (`--respawn --transpile-only`).
-- CORS: enable with origin `${FRONTEND_URL:-http://localhost:5173}`; methods [GET] sufficient for MVP.
+- CORS: origin `${FRONTEND_URL:-http://localhost:5173}`; methods [GET, POST, PUT, DELETE] for category/order operations.
+- Routes added: `/api/categories` (CRUD), `/api/orders` (POST + GET by id), extended `/api/products` with `search`, `categoryId` query params.
+- Validation layers: product (stock >=0, imageUrl non-empty), category (name non-empty), order (items array not empty, each quantity >=1).
+- Search: case-insensitive substring on name + description (phrase semantics).
+- Error handling: 400 (validation), 404 (not found), 409 (category deletion conflict).
+- Stock Decrement (UPDATED 2025-11-21): Order submission performs atomic stock decrement via Mongo `bulkWrite` with conditional filters per line item. Failure of any filter (insufficient stock or race) aborts the entire operation with 409; snapshot persisted only on success. Concurrency validated in test T121.
+ - Admin Authentication (UPDATED 2025-11-21):
+   - Endpoint `POST /api/auth/login` accepts JSON `{ username, password }` validated against env `ADMIN_USERNAME`, `ADMIN_PASSWORD`.
+   - Issues JWT (HS256) claims: `{ role: 'admin', iat, exp }` with 1h expiry; secret `JWT_SECRET`.
+   - Middleware `authAdmin` validates Bearer token (presence, signature, expiration, role === 'admin'); failures return 401 JSON `{ "error": "admin_auth_required", "message": "Admin authentication required" }`.
+   - All protected write endpoints (category/product POST/PUT/DELETE) require valid token; enforcement based solely on token role (no environment flag gating).
+   - Failed login attempts logged (optional); placeholder for future rate limiting.
+   - No refresh tokens; client re-authenticates after expiration.
 
-Frontend specifics:
-- Vite + React 18 + TS + Tailwind; use `import.meta.env.VITE_API_BASE_URL` directly.
-- Components: ProductCard, Loading, ErrorMessage, EmptyState; page: ProductList.
-- Create `src/api/products.ts` for fetch utilities to isolate data layer.
-- Accessibility: semantic markup, keyboard navigation; minimal ARIA.
+### Frontend specifics (Extended & Updated 2025-11-21):
+- Vite + React 18 + TS + Tailwind; use `import.meta.env.VITE_API_BASE_URL`.
+- New pages/components:
+  - **NavBar**:
+    - Fixed at top of page, full-width.
+    - Left: site logo SVG + brand name "Shoply" (accessible alt "Shoply logo").
+    - Right: navigation controls (Products, Category Management, Product Management (admin only), Logout), cart count indicator.
+    - Responsive: collapses menu on mobile; sticky behavior.
+    - Implemented in `frontend/src/components/NavBar.tsx` with conditional rendering of admin-only `ProductManagement` link (hidden unless `role === 'admin'`).
+    - Adds route link to `/admin/product-management` guarded by `PrivateRoute` in `frontend/src/App.tsx`.
+  - **SearchBar + CategoryFilter**:
+    - Positioned at top of ProductList page, horizontally aligned.
+    - Filters/search query backend dynamically.
+  - **ProductList**:
+    - Main content area, grid layout.
+    - Breakpoints: 1 column mobile, 2 columns tablet, 3–4 columns desktop.
+  - **ProductCard**:
+    - Displays `imageUrl` with consistent width/height (e.g., 200x200px), `object-fit: cover`.
+    - Fallback placeholder if image missing/broken (required).
+    - Stock = 0 disables add-to-cart and shows explicit “Out of stock” (required).
+  - **CartSidebar**:
+    - Right-hand side on desktop.
+    - Collapsible/hidden on mobile; toggled via icon in NavBar.
+    - Displays current items, quantities, and totals in real time (required).
+  - **OrderConfirmation**:
+    - Modal after order submission.
+    - Displays product images, names, quantities, total price (required).
+    - Dual dismissal: close icon (×) + explicit "Close" button (both keyboard accessible).
+  - **CategoryManagement**:
+    - Admin-style CRUD interface for categories.
+    - Navigation reachable via NavBar button (no page reload).
+    - Write operations (create/update/delete) restricted to authenticated admin; anonymous users see access denied messaging; reads always public.
+- Local cart hook/module manages state + persistence (add/remove/update, total computation, required).
+- Order flow: capture snapshot, then decrement product stock atomically per ordered quantity, then clear cart. If any requested quantity exceeds current stock, reject order (409) with explanatory message; no partial fulfillment.
+- Accessibility:
+    - Alt text for images (required), keyboard focus preserved after cart updates (required), focus order includes logo then navigation then main content logically.
+- Layout responsiveness:
+  - Grid adapts per breakpoints, sidebar collapsible, top components sticky/responsive (required).
+- Interactions/UX:
+   - Admin Auth & RBAC Enforcement (UPDATED 2025-11-22):
+    - Login Page collects credentials, calls `/api/auth/login`, stores JWT in `localStorage` under key `shoply_admin_token`.
+    - Observable user state object `{ id, role, authenticated }` is updated on login/logout and persisted.
+    - Route Guard `PrivateRoute` restricts `CategoryManagement` and `ProductManagement` to users with `role: "admin"` only; anonymous or non-admin users see branded "Access Denied" messaging or are redirected to login.
+    - ProductManagement Page provides full CRUD for products (`name`, `description`, `price`, `imageUrl`, `stock`, `categoryId`), accessible only to authenticated admins. Category dropdown lists all categories. Stock cannot go negative. UI hides admin-only controls for non-admin users.
+    - NavBar and other UI elements hide admin-only links for unauthorized users.
+    - Expired sessions (JWT exp) automatically trigger logout and redirect to login, with focus on login heading.
+    - Backend endpoints for all CRUD operations enforce admin role claims via JWT. Unauthorized UI or API attempts produce zero mutations and standardized error responses (401/403).
+    - Tests verify: admin CRUD success, non-admin/anonymous access blocked (UI + API), route guarding, user state persistence, expired session handling, and UI hiding of admin-only links (SC‑026, FR‑052, FR‑059).
+    - **Login & User State Management (NEW 2025-11-22):**
+      - Observable user state object `{ id, role, authenticated }` maintained in frontend context/provider.
+      - Login persists user state and JWT across page reloads (localStorage); logout clears state and storage.
+      - Expired sessions (JWT exp) automatically trigger logout and redirect to login page, with focus management.
+      - No transitional environment flags; all enforcement is via user state and JWT claims.
+    - **CategoryManagement (UPDATED 2025-11-22):**
+      - CRUD operations remain restricted to admins only (UI and backend).
+      - Anonymous/non-admin access is blocked consistently, both frontend and backend.
+      - UI reflects access restrictions (buttons/links hidden if non-admin).
+  - Add-to-cart triggers toast/notification (optional animation/enhancement).
+  - Zero-stock products clearly labeled; add-to-cart button disabled (required).
+  - Empty cart triggers `EmptyState` component (required).
+  - Failed order submission shows `ErrorMessage` with guidance (required).
 
-Testing:
-- Backend: Jest + Supertest; thresholds ≥80% (branches/functions/lines/statements).
-- Frontend: Vitest + RTL (+ jsdom, jest-dom); thresholds ≥80%.
-- State tests: loading/empty/error; a11y checks; model validation; seed idempotency.
+### Testing (Extended & Updated):
+- Backend: Add tests for category CRUD, product search/filter queries (including zero-results), order creation (snapshot integrity, validation failures), imageUrl presence, stock decrement success, insufficient stock rejection, post-order stock consistency.
+- Frontend: Add tests for cart persistence (localStorage), quantity updates, disabled add-to-cart for stock 0, search + filter interactions, image fallback rendering, responsive layout breakpoints, order confirmation view, dual modal dismissal (both controls), Shoply branding (logo alt text + name), navigation switching (Products ↔ Categories) with aria-current, category gating disabled state messaging.
+ - Frontend (Auth Additions): Tests for login success (token stored + exp decoded), invalid credentials (error shown), route guarding (redirect/deny), nav visibility toggling, ProductManagement CRUD flows, category dropdown completeness, token expiry logout, unauthorized write attempt shows branded message.
+ - Backend (Auth Additions): Tests for `/api/auth/login` success & 401 invalid creds, protected product/category write endpoints return 401 (missing/invalid) or 403 (legacy gating disabled), expired token scenario, standardized error response body, logging of failed attempts (mock logger), OpenAPI bearerAuth alignment.
+- Performance probe remains opt-in; consider adding lightweight cart operation timing (skipped by default) using environment flag.
 
-Performance validation:
-- Manual local checks (Playwright): page render ≤2s p95; API latency ≤1s p95; steps recorded in `research.md`.
+### Performance validation (Extended):
+- Manual checks expanded: ensure cart add/remove and order submission typical latency ≤500ms (including stock decrement updates); navigation view switches achieve median ≤200ms p95 ≤400ms across ≥50 toggles; image loading does not push page render beyond 2s p95; fallback substitution <1s.
 
-Containerization:
-- Docker Compose with frontend, backend, mongo services; health checks via `/health` endpoints.
-- Environment mapping via `.env`; optional build arg for Vite `VITE_API_BASE_URL` in frontend image.
+### Containerization (Unchanged Mechanics):
+- Docker Compose unchanged but backend now exposes additional routes; verify health check unaffected.
+- Add placeholder images to `frontend/public/images/` (e.g., product1.jpg .. product20.jpg) or single fallback for missing references.
 
-## Complexity Tracking
+## Phase Plan
 
-No violations or exceptional complexity introduced. MVP scope constrained to a single read‑only list.
+| Phase | Focus | Outputs | Exit Criteria |
+|-------|-------|---------|---------------|
+| 0 | Research extensions | Updated `research.md` decisions | All new decisions documented (search, images, cart, categories) |
+| 1 | Data & Contracts | Updated `data-model.md`, extended `openapi.yaml` | Entities & endpoints reflect extensions |
+| 2 | Implementation scaffolding | Code mods: models, routes, frontend components structure, seed updates | All new artifacts compile & baseline tests pass |
+| 3 | Feature completion | Cart, search/filter, category CRUD, images, order flow fully implemented | Functional tests green, coverage ≥80% |
+| 4 | Performance & polish | Optional perf probes, accessibility audits, docs updates | Success criteria SC-001..SC-020 met |
+
+## Task Breakdown (High-Level)
+
+1. Extend Product model (categoryId, stock, imageUrl) & migration seed logic.
+2. Create Category model + CRUD route + validation tests.
+3. Augment products route with search & category filtering query params.
+4. Implement Order model & POST/GET routes (snapshot logic, total calc, validations).
+5. Update frontend types (Product includes new fields; Order, Category types).
+6. Implement NavBar, SearchBar, CategoryFilter, CartSidebar, OrderConfirmation components.
+7. Enhance ProductCard: image, stock gating, alt/fallback behavior.
+8. Cart state module/hook with localStorage persistence & quantity updates.
+9. Order submission flow (snapshot + stock decrement) & success confirmation modal (dual dismissal).
+10. Accessibility review (focus order after cart updates, alt text correctness, zero-results messaging distinct from empty state, logo + nav accessible order, modal dual dismissal).
+11. Tests: backend (search/filter, categories, orders), frontend (cart persistence, images, search + filter interactions, order confirmation dual dismissal, navigation switching, branding, category gating disabled state).
+12. Performance sampling scripts update (optional) to include cart & order timings + navigation view switch.
+13. Documentation updates (`quickstart.md`, README additions for new features & branding).
+14. Frontend cleanup: verify single `import React` in `App.tsx` (remove duplicate) and update plan references (DONE).
+15. Seed consistency: ensure first 5 seeded products include `imageUrl` & `stock` (value 5); update seed script & backend seed test assertions.
+16. Modal enhancement: add explicit "Close" button to `OrderConfirmation` component; tests assert both dismissal paths restore focus.
+17. Branding integration: add `public/images/logo.svg` asset; update NavBar to display Shoply name + logo alt text; tests confirm presence.
+18. Navigation integration: add Products & Category Management buttons with aria-current state; tests validate switching without reload and focus retention.
+19. (Removed legacy gating – number retained for continuity) Category write protection now solely via JWT admin role; ensure test coverage verifies anonymous attempts receive 403 and zero mutation.
+20. ProductManagement: Implement full CRUD interface for products (name, description, price, imageUrl, stock, categoryId) accessible only to authenticated admins. Category dropdown lists all categories. Stock cannot go negative. UI hides admin-only controls for non-admin users. Route path `/admin/product-management` added to `frontend/src/App.tsx` wrapped in `PrivateRoute`. Tests verify: admin CRUD success, non-admin/anonymous access blocked (UI + API), route guarding, user state persistence, expired session handling, and UI hiding of admin-only links.
+21. CategoryManagement: CRUD operations remain restricted to admins only. Anonymous/non-admin access blocked consistently, both frontend and backend. UI reflects access restrictions (buttons/links hidden if non-admin).
+22. Frontend login/user state: Implement observable user state object { id, role, authenticated }. Login persists state across reloads and clears on logout. Expired sessions auto-logout and redirect to login. No environment flags used for gating.
+23. Product response validation: extend backend tests to assert `imageUrl` non-empty and `stock >= 0` for all products.
+24. Image fallback validation: tests for broken/missing image substituting `fallback.jpg` within 1s.
+25. Navigation SLO refinement: capture timing metrics for view switches; enforce median ≤200ms, p95 ≤400ms across ≥50 toggles, aligning with SC‑023.
+26. Update spec & plan references for new FR-044..FR-051 and SC-021..SC-025 alignment.
+27. Backend: Implement `POST /api/auth/login` (env credentials, issue HS256 JWT ≥1h exp, return `{ token, expiresInSeconds }`).
+28. Backend: Implement `authAdmin` middleware (parse Authorization bearer, verify signature/exp/role, attach `req.admin = true`, handle failures with branded 401/403).
+29. Backend: Apply `authAdmin` to category POST/PUT/DELETE and product POST/PUT/DELETE (add product write endpoints if missing); remove any legacy gating logic; 403 only on missing/invalid/unauthorized (role) or expired token.
+30. Backend: Extend OpenAPI (`contracts/openapi.yaml`) adding `bearerAuth` security scheme, `/api/auth/login`, and security requirements for protected endpoints.
+31. Backend: Product CRUD validation tests (create/update/delete) including category association and stock non-negative enforcement under auth.
+32. Backend: Add failed login attempt logging (count metric or log line) + test verifying log output format.
+33. Frontend: Create Login Page + form submission to `/api/auth/login`; store JWT in `localStorage`; provide auth context/provider.
+34. Frontend: Implement `PrivateRoute` guard for CategoryManagement & ProductManagement (redirect to login or show Access Denied if unauthenticated/invalid).
+35. Frontend: Implement ProductManagement page (list products, create/edit/delete forms, category dropdown loads all categories via GET /api/categories).
+36. Frontend: Hide admin-only nav links when no valid token; show after auth; update nav tests.
+37. Frontend: Token expiry handling (check exp on navigation & on 401 responses; clear token + redirect to login); test simulated expired token.
+38. Frontend: Add branded unauthorized error display for blocked CRUD attempts (consistent JSON parsing).
+39. Frontend Tests: Route guarding, nav visibility, login success/failure, ProductManagement CRUD, category dropdown completeness, token expiry logout.
+40. Backend Tests: Auth middleware valid/invalid/expired token paths; protected endpoints permission matrix; product/category CRUD under auth.
+41. Docs: Update `quickstart.md` with auth env vars (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `JWT_SECRET`), login instructions, token storage note (flag fully removed, no transitional gating).
+42. Docs: Update `research.md` with JWT decision (HS256, ≥1h expiry, no refresh, rationale & alternatives) and future rate limiting note.
+43. Docs: Update `data-model.md` with AdminUser pseudo entity and JWT claims breakdown.
+44. Plan: Add success criterion references SC-029 (unauthorized write blocking) & SC-030 (expired token enforcement) to Completion Criteria if not already present.
+45. Refactor: Centralize auth error responses and integrate with existing error handler.
+46. Future-proofing: Note potential consolidation of additional roles via the same `/api/auth/login` endpoint; no changes now beyond admin.
+47. Frontend: Implement user state persistence (1h token) and logout clearing plus automatic redirect on expired token detection.
+48. Frontend Tests: Add persistence & logout suite (reload retains admin until expiry; logout immediately blocks Product/Category management pages).
+49. Backend Tests: Add expired token simulation (manually craft exp in past) ensuring protected writes return 401/403 and zero mutation.
+50. Error Handling: Standardize unauthorized response body `{ "error": "admin_auth_required", "message": "Admin authentication required" }`; tests assert consistency across all protected endpoints.
+51. Frontend: Add branded "Access Denied" component or inline message for blocked admin page access; integrate with route guard.
+52. Frontend: Hide ProductManagement link when role missing; test nav visibility before/after login and after logout.
+53. Docs: Add section describing user state object shape `{ role, authenticated, id?, exp }` and persistence strategy; reference FR-057..FR-062.
+54. Accessibility: Verify focus management on redirect after expired token (focus on login form heading) and add test.
+55. Security Note: Document absence of refresh tokens and manual re-login flow; add rationale (simplicity, reduced attack surface for MVP) to `research.md`.
+56. ProductManagement Implementation File: Create `frontend/src/pages/ProductManagement.tsx` with full product CRUD UI (fields: name, description, price, imageUrl, stock, categoryId). Enforce admin-only access via `PrivateRoute`. Include category dropdown (all categories), prevent negative stock, hide admin controls for non-admin/anonymous users. Add unit & integration tests covering: admin CRUD success, unauthorized (anonymous/non-admin) access blocked (UI + API) with branded messaging (SC‑026), route guarding reliability, user state persistence across reloads, expired session auto-logout + redirect focus, NavBar admin link visibility toggling (FR‑052, FR‑059). Acceptance Criteria: SC‑026, FR‑052, FR‑059 all satisfied.
+
+54. Navigation rename & reorder update: Rename "Categories" navigation/button label to "Category Management" everywhere (`App.tsx`, `NavBar.tsx`, related tests, spec references). Enforce new ordered sequence (left-to-right or top-to-bottom focus order) for visible buttons: Products, Category Management, Product Management (admin only), Logout. Update tests to assert: (a) label text changed, (b) order sequence, (c) aria-current applied only to active view, (d) Product Management hidden for non-admin, (e) Logout always last. Ensure no regressions to existing branding tests.
+55. Dynamic ProductCard zero-stock transition: On successful order submission when any product's stock decrements to 0, immediately reflect state in UI without requiring full page reload (optimistic local update or refetch minimal product list). ProductCard must: show "Out of Stock" badge/text, disable Add to Cart button (native `disabled`), expose `aria-disabled="true"`, and visually de-emphasize (Tailwind opacity class). Add logic to reconcile server response stock values vs local optimistic state. Prevent negative stock display. Acceptance Criteria: FR-015/FR-016 extended scenario satisfied.
+56. Frontend tests (navigation + dynamic stock): Add/extend test suites to cover: renamed label assertion, navigation order sequence, hidden Product Management link for non-admin, dynamic ProductCard stock 0 transition post-order (simulate order reducing stock), disabled button state + accessibility announcement, aria-current exclusivity across nav buttons. Include regression snapshot for pre/post order card content.
+57. Accessibility adjustments for new tasks: Verify keyboard tab order matches navigation order after rename/reorder; ensure "Out of Stock" text has sufficient contrast and is announced (screen reader reads disabled button with adjacent status text). Add tests utilizing RTL queries (`getByRole('button', { name: /category management/i })`) and verifying `disabled` attribute plus announcement text present. Confirm focus retention after dynamic stock update does not shift unexpectedly. Update a11y test file accordingly.
+
+## Risk & Mitigation
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Search performance with 200 products | Moderate | Keep substring search simple; add indexes if slowdown observed |
+| Image load delays | Layout shift | Reserve space with fixed height classes; fallback image immediate |
+| Cart persistence corruption | User confusion | Validate stored JSON shape; fall back to empty cart with notice |
+| Category deletion conflicts | Data integrity loss | Explicit 409 response + UI messaging |
+| Order total mismatch after price changes | User trust | Snapshot price & name at order time; never recompute |
+| Stock race conditions on concurrent orders | Inventory integrity | Conditional bulkWrite; all line filters must pass or request aborts (409). Test T121 ensures only one succeeds. |
+| Expired admin token during active session | Sudden loss of admin controls | Detect on guarded route entry & 401 responses; clear state, redirect to login with focus management (Task 44, 46, 51). |
+| Missing standardized auth error body across endpoints | Inconsistent UX & test fragility | Centralize error generator (Task 47) and assert snapshot in tests. |
+| Overexposed admin links for anonymous users | Confusing UI / false expectations | Conditional NavBar rendering based on user state (Task 49). |
+
+## Updated Complexity Tracking
+
+Complexity increased moderately (additional entities, client persistence, filtering, stock mutation). Mitigated by: clear boundaries (no auth/uploads), deterministic seed, atomic stock decrement, local-only cart. No constitution violations.
+
+## Completion Criteria (Extended & Updated 2025-11-22)
+
+Release of extended e‑commerce scope requires:
+1. All tasks through Phase 11 including stock decrement implementation & tests (order creation rejects insufficient stock, decrements inventory accurately, no negative stock values).
+2. Post-order product list reflects updated stock on refresh (manual verification + automated test).
+3. Backend tests cover: snapshot integrity, insufficient stock (409), concurrent decrement path (simulated sequential requests), total accuracy after decrement.
+4. Frontend tests cover: disabled add-to-cart when stock hits zero after order, order confirmation unaffected by subsequent stock changes.
+5. Success criteria SC‑001..SC‑025 remain green; no new performance regressions introduced by stock writes or navigation/branding additions.
+6. Documentation (quickstart, research) aligned with stock decrement behavior.
+7. Auth artifacts complete: login endpoint, middleware, protected endpoints, ProductManagement page, route guard, and docs/tests for auth flows.
+8. Unauthorized write blocking validated end-to-end: 100% unauthorized attempts produce correct 401/403 with branded body; 0 mutations.
+9. User-state (JWT role) enforcement validated end-to-end; no legacy gating remains; expired token attempts blocked (SC-030) with zero mutation.
+10. ProductManagement access attempts by anonymous/non-admin users are blocked with 403, no mutation, and actionable branded messaging (SC-026).
+11. ProductManagement CRUD interface is accessible only to authenticated admins (FR-052).
+12. Admin-only areas enforce access control with branded messaging (FR-059).
+ 13. Navigation label rename & order consistency validated across all routes (SC-035, SC-036).
+ 14. Dynamic out-of-stock transition shows updated UI ≤1s with accessible disabled state (SC-037, SC-038).

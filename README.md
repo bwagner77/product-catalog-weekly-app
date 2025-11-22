@@ -1,278 +1,289 @@
-# Product Catalog (SDD Weekly Project)
+# Shoply E-commerce Web Application
 
-⚠️ This is a milestone submission for the SDD Weekly Project, not the Final Project version.  
+⚠️ This is a milestone submission for the **SDD Weekly Project**.
 
-The Product Catalog is a simple web application that displays a list of products with names, descriptions, and prices. It fetches data from a backend API and presents it in a responsive, accessible interface. The app includes unit tests for frontend and backend, ensuring functionality and code quality. It is fully built using **GitHub Spec Kit**, with no manual coding, allowing automated generation of components, tasks, and tests.
+**Shoply** is a full-stack e-commerce web application that enables users to browse products, create orders, and view detailed product information. Admin users can manage products and categories, with full CRUD (Create, Read, Update, Delete) operations for both. The app fetches product data from a backend API and presents it in a responsive, accessible interface. Unit tests for both the frontend and backend ensure robustness, functionality, and code quality.
 
-This document follows the **Spec Kit Detailed Workflow**:
+It was developed using the 🌱[GitHub Spec Kit](https://github.com/github/spec-kit) framework, powered by the **GPT-5 coding agent**, with no manual coding. By leveraging AI-driven automation, the development process eliminates human error, accelerates iteration, and maintains a seamless workflow across the entire project.
 
 > Initialize → Constitution → Specify → Plan → Tasks → Implement (via Agents) → Validate → Containerize & Deploy → Document Everything
 
-It outlines each step of the build process, including commands, validations, and output artifacts.
+---
 
+## 📌 Table of Contents
 
-## 📌 Navigation
+* [Design Artifacts](#design-artifacts)
+* [Goals & Requirements](#goals-requirements)
+* [User Journeys](#user-journeys)
+* [Constraints (Constitution)](#constraints)
+* [Plan → Tasks → Implement](#plan--tasks--implement)
+* [Project Structure](#project-structure)
+* [Tech Stack](#tech-stack)
+* [API Summary](#api-summary)
+* [Screenshots](#screenshots)
+* [Containerize & Deploy](#containerize--deploy)
+* [License](#license)
+* [Attributions](#attributions)
 
-- [Design Artifacts](#design-artifacts)
-- [Specification (SDD)](#specification-sdd)
-  - [Goals & Why](#goals--why)
-  - [Functional Requirements](#functional-requirements)
-  - [Non-Functional Requirements](#non-functional-requirements)
-- [User Journeys](#user-journeys)
-- [Constraints (Constitution)](#constraints-constitution)
-- [Plan → Tasks → Implement](#plan--tasks--implement)
-  - [Plan](#plan)
-  - [Tasks](#tasks)
-  - [Implement](#implement)
-- [Build Log](#build-log)
-  - [Conversion of Design Artifacts to Spec](#1-conversion-of-design-artifacts-to-spec)
-  - [Spec Kit Commands, Validation, Agent Handoffs](#2-spec-kit-commands-validation-agent-handoffs)
-  - [Iteration Summary](#3-iteration-summary)
-  - [Screenshots](#4-screenshots)
-- [Containerize & Deploy](#containerize--deploy)
-
+---
 
 <h2 id="design-artifacts">📦 Design Artifacts</h2>
 
-The Product Catalog System design artifacts were systematically transformed into actionable specifications using Spec Kit. Each artifact informs functional and non-functional requirements, API schema, frontend components, and automated tasks.
+Design artifacts were systematically transformed into actionable specifications using **Spec Kit**. These artifacts inform both functional and non-functional requirements, API schema, frontend components, and automated tasks.
 
-| Artifact            | Description                                                                                                      | Link                                                                  |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Class Diagram       | Represents the core data model, including the `Product` class and attributes.                                    | [class-diagram.png](/docs/design-artifacts/class-diagram.png)         |
-| Component Diagram   | Shows high-level components: UI, Backend, Database, and their interactions.                                      | [component-diagram.png](/docs/design-artifacts/component-diagram.png) |
-| Sequence Diagram    | Illustrates interactions between the User and Product Catalog App for requesting and displaying product details. | [sequence-diagram.png](/docs/design-artifacts/sequence-diagram.png)   |
-| Use Case Diagram    | Depicts primary and secondary use cases, including “View Product List” and handling empty/loading/error states.  | [use-case-diagram.png](/docs/design-artifacts/use-case-diagram.png)   |
-| Constitution Prompt | Defines project rules, constraints, and architecture principles for Spec Kit.                                    | [constitution.txt](/docs/ai-prompts/constitution.txt)                    |
-| Specify Prompt      | Instructs the agent to create functional requirements, API contracts, and component definitions.                 | [specify.txt](/docs/ai-prompts/specify.txt)                              |
-| Plan Prompt         | Guides the agent to generate a structured plan and gated phases for specification and implementation.            | [plan.txt](/docs/ai-prompts/plan.txt)                                    |
+| Artifact            | Description                                                                                             | Link                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Class Diagram       | Represents the core data model, including the `Product` class and its attributes.                       | [class-diagram.png](#)     |
+| Component Diagram   | High-level overview of components: UI, Backend, Database, and their interactions.                       | [component-diagram.png](#) |
+| Sequence Diagram    | Illustrates interactions between the User and Product Catalog App.                                      | [sequence-diagram.png](#)  |
+| Use Case Diagram    | Depicts primary and secondary use cases, such as “View Product List”.                                   | [use-case-diagram.png](#)  |
+| Constitution Prompt | Defines project rules, constraints, and architecture principles for Spec Kit.                           | [constitution.txt](#)      |
+| Specify Prompt      | Instructions for the agent to create functional requirements, API contracts, and component definitions. | [specify.txt](#)           |
+| Plan Prompt         | Guides the agent to generate a structured plan and phases for implementation.                           | [plan.txt](#)              |
 
+---
 
+<h2 id="goals-requirements">📊 Goals & Requirements</h2>
 
-<h2 id="specification-sdd">📊 Specification (SDD)</h2>
+### 🏆 Goals & Why
 
-<h3 id="goals--why">Goals & Why</h3>
+1. **Easy Product Browsing and Ordering**: Users should be able to quickly browse, filter, and purchase products.
+2. **Seamless and Responsive User Experience**: The UI must be intuitive and accessible, with quick load times.
+3. **Admin Control Over Products and Categories**: Admins should be able to easily manage products and categories.
+4. **Smooth Cart and Checkout Experience**: Ensure that the cart system is easy to manage, with accurate stock updates.
+5. **Intuitive Search and Navigation**: Users must be able to search for and filter products.
+6. **Optimal Performance and Scalability**: Fast response times and scalability to handle growing traffic.
+7. **Clear Feedback and Error Handling**: Provide actionable error messages and status updates.
+8. **Secure Admin Access**: Implement role-based access control (RBAC) for secure admin workflows.
+9. **Reliability Through Monitoring and Logging**: Implement monitoring and logging to ensure platform stability.
 
-The primary goal is to provide an **intuitive, accessible, and responsive experience** for users browsing products. The system fully leverages GitHub Spec Kit for automated generation, ensuring consistency, reducing human error, and accelerating development.
+---
 
-1. **Display Product Information**: Users can view products with name, description, and price.
-   *Why*: Core functionality, ensures informed decisions.
+<h3 id="functional-requirements">🧾 Functional Requirements</h3>
 
-2. **Responsive UI**: Interface must be intuitive, visually appealing, and display products correctly.
-   *Why*: Fast, responsive UI improves user experience; page load <2s.
+* **Product Catalog**: The system must allow users to browse products with filters (e.g., by category).
+* **User Authentication**: Admins must log in with JWT tokens to access restricted routes for managing products and categories.
+* **Order Management**: Users should be able to place orders, with accurate stock decrements handled on the backend.
+* **Admin Functionality**: Admins should be able to perform CRUD operations on products and categories.
+* **Cart Management**: The cart system must support adding/removing items, updating quantities, and verifying stock.
 
-3. **Error Handling**: Display "No products available" if no products exist.
-   *Why*: Provides clear user guidance during failures.
+---
 
-4. **Accessibility**: Full keyboard navigation and ARIA compliance.
-   *Why*: Broadens potential user base to include users with disabilities.
+<h3 id="non-functional-requirements">📊 Non-Functional Requirements</h3>
 
-5. **Performance**: API <1s, UI load <2s.
-   *Why*: Crucial for user satisfaction and engagement.
+1. **Performance**: APIs must respond in under 1 second, and frontend pages should load in under 2 seconds.
+2. **Scalability**: The application must scale to handle large product catalogs and growing user traffic.
+3. **Security**: Ensure role-based access control (RBAC) for admin routes, and secure JWT token handling.
+4. **Usability**: The app must be responsive and mobile-first, with WCAG accessibility standards followed.
+5. **Testing**: Maintain ≥80% test coverage with automated unit and integration tests.
 
-
-
-<h3 id="functional-requirements">Functional Requirements</h3>
-
-| ID     | Requirement                                                                                                         |
-| ------ | ------------------------------------------------------------------------------------------------------------------- |
-| FR-001 | Display products with name, description, and price.                                                                 |
-| FR-002 | Fetch products from API and render results.                                                                         |
-| FR-003 | Format prices with currency symbol and two decimal places.                                                          |
-| FR-004 | Provide loading, empty, and error states.                                                                           |
-| FR-005 | Meet accessibility standards (keyboard, ARIA, color contrast).                                                      |
-| FR-006 | Backend exposes `GET /api/products` returning JSON: `id`, `name`, `description`, `price`, `createdAt`, `updatedAt`. |
-| FR-007 | Database must persist products.                                                                                     |
-| FR-008 | Seed at least 5 sample products on first run.                                                                       |
-| FR-009 | Frontend tests: rendering, formatting, accessibility.                                                               |
-| FR-010 | Backend tests: unit logic, endpoint integration, seed verification.                                                 |
-| FR-011 | Observability: log requests, startup seed verification, error metrics.                                              |
-| FR-012 | Single-page UI, up to 100 products, no pagination.                                                                  |
-| FR-013 | Health endpoints for frontend and backend container healthchecks.                                                   |
-
-
-
-<h3 id="non-functional-requirements">Non-Functional Requirements</h3>
-
-| ID      | Requirement                                                                                  |
-| ------- | -------------------------------------------------------------------------------------------- |
-| NFR-001 | Performance: API ≤1s, page load ≤2s, handle 1,000 calls <300ms under load.                   |
-| NFR-002 | Accessibility: keyboard, ARIA, responsive layout (desktop, tablet, mobile).                  |
-| NFR-003 | Reliability: graceful error handling, logging of requests and status codes.                  |
-| NFR-004 | Security: future CRUD must require authentication and authorization.                         |
-| NFR-005 | Maintainability: unit/integration tests, modular architecture, clear separation of concerns. |
-
-
+---
 
 <h2 id="user-journeys">🧾 User Journeys</h2>
 
-### Use Case 1 – View Product List
+### **1. Product Browsing & Discovery**
 
-* **Goal**: Shopper browses available products.
-* **Actors**: Shopper
-* **Steps**:
+**User Goal**: As a shopper, I want to browse products by searching or filtering, so I can find items that match my interests.
 
-  1. Open catalog page.
-  2. System retrieves product list from API.
-  3. Display products (name, description, price).
-  4. Layout adapts to device screen.
-* **Acceptance**: All seeded products visible; page load ≤2s.
+* **Journey Steps**: Shopper opens homepage → Shopper searches for a product by keyword or filters by category → System returns relevant products with details (name, price, stock) → Shopper selects a product to view details.
+* **Emotions**: Curious, Interested, Impatient if the page loads slowly.
+* **Pain Points**: Difficulty finding the right product if search/filter isn’t accurate.
 
-### Use Case 2 – Handle Loading, Empty, Error States
+### **2. Product Detail Viewing**
 
-* **Goal**: Shopper wants feedback while loading, empty, or error states.
-* **Steps**:
+**User Goal**: As a shopper, I want to view detailed information about a product, so I can make an informed purchasing decision.
 
-  1. Loading indicator while API request pending.
-  2. Show "No products available" if empty.
-  3. Show actionable error message if API fails.
-* **Acceptance**: Clear feedback in all states.
+* **Journey Steps**: Shopper selects a product → System fetches and displays detailed product info (images, specs, reviews) → Shopper reads through the details and may add item to cart or continue browsing.
+* **Emotions**: Confident, Satisfied when details are clear and complete.
+* **Pain Points**: Missing or unclear product info, broken images.
 
-### Use Case 3 – Accessibility & Responsiveness
+### **3. Managing the Shopping Cart**
 
-* **Goal**: Shopper with assistive tech or mobile device can navigate catalog.
-* **Steps**:
+**User Goal**: As a shopper, I want to add, remove, or modify quantities of items in my cart, so I can manage my order before purchasing.
 
-  1. Navigate using keyboard only.
-  2. Use screen reader; details exposed correctly.
-  3. Layout adapts to small screen.
-* **Acceptance**: Full keyboard/screen reader access; responsive layout.
+* **Journey Steps**: Shopper clicks "Add to Cart" → System updates the cart and displays the item → Shopper chooses to modify quantity or remove item → Shopper may proceed to checkout or continue shopping.
+* **Emotions**: Empowered when cart is easy to manage, Frustrated if errors happen or stock is unavailable.
+* **Pain Points**: Confusing cart UI, issues with stock validation, accidental additions.
 
+### **4. Order Placement & Confirmation**
 
+**User Goal**: As a shopper, I want to place my order, so I can purchase the items I’ve selected.
 
-<h2 id="constraints-constitution">📊 Constraints (Constitution)</h2>
+* **Journey Steps**: Shopper clicks "Checkout" → Shopper confirms items in the cart → Shopper enters shipping and payment details → System validates stock and processes the order → Shopper receives order confirmation with summary and delivery estimate.
+* **Emotions**: Excited, Relieved when everything works smoothly.
+* **Pain Points**: Delays or errors in payment processing, confusing confirmation.
 
-1. **Fixed Stack**: Must use specified frameworks; deviations require Constitution amendment.
-2. **Code Quality & Testing**: ≥80% coverage; tests run automatically in CI; all tests must pass.
-3. **Continuous Integration**: All branches pass CI, including linting, formatting, tests.
-4. **Development Workflow**: Tasks follow MVP-first prioritization, small units, PR compliance.
-5. **Governance & Versioning**: Amendments require PR with rationale; Constitution is authoritative.
+### **5. Product & Category Management (Admin)**
 
-*Rationale*: Ensures consistency, reliability, reproducibility, and governance adherence.
+**Admin Goal**: As an admin, I need to be able to manage products and categories so that I can keep the store’s offerings current.
 
+* **Journey Steps**: Admin logs into the admin dashboard → Admin selects "Manage Products" → Admin views product list → Admin adds, updates, or deletes product listings.
+* **Emotions**: In control, Empowered with a clear and efficient interface.
+* **Pain Points**: Confusing UI, slow updates, difficulty finding specific products.
 
+### **6. User Authentication & Authorization**
 
-<h2 id="plan--tasks--implement">🛠️ Plan → Tasks → Implement</h2>
+**Admin Goal**: As an admin, I need to securely log in to access protected admin features.
 
-<h3 id="plan">Plan</h3>
+* **Journey Steps**: Admin clicks "Login" → Admin enters credentials → System authenticates the user and issues a JWT → Admin accesses secure admin features.
+* **Emotions**: Secure, Confident in system security.
+* **Pain Points**: Frustration if login fails or the system forgets login state.
 
-- **API & Storage**: TypeScript + Express API `GET /api/products` with MongoDB.
-- **Data Contracts**: Product schema (`id`, `name`, `description`, `price`) with OpenAPI specification.
-- **Frontend**: React 18 + Vite + TailwindCSS; responsive, accessible product list.
-- **Seeding**: ≥5 sample products, idempotent insertion.
-- **Performance & Constraints**: ≤100 products, no pagination; UI render ≤2s, API ≤1s.
+### **7. Mobile Navigation**
 
-<h3 id="tasks">Tasks</h3>
+**User Goal**: As a shopper on mobile, I want an easy-to-use navigation menu, so I can browse the site efficiently on a small screen.
 
-| Task                           | Description                                  | User Story | Notes                                           |
-| ------------------------------ | -------------------------------------------- | ---------- | ----------------------------------------------- |
-| Create Products API            | `GET /api/products` with MongoDB integration | US1        | Match JSON schema                               |
-| Seed Sample Products           | Idempotent insertion of ≥5 products          | US1        | Include UUID, price formatting                  |
-| Frontend Product List UI       | Display products, responsive, accessible     | US1        | Components: ProductCard, Loading, ErrorMessage, EmptyState |
-| Loading / Empty / Error States | Handle latency, empty results, and errors    | US2        | Visual feedback, keyboard focus, ARIA labels   |
-| Unit & Integration Tests       | Backend & frontend, ≥80% coverage            | US1 + US2  | Jest + Supertest (backend), Vitest + RTL (frontend) |
-| Observability & Logging        | Track API calls, errors, seed verification   | All        | Debugging, performance monitoring               |
+* **Journey Steps**: Shopper opens site on mobile → Navigation collapses into hamburger menu → Shopper taps the hamburger icon → Shopper selects a category or product and proceeds to browse.
+* **Emotions**: Frustrated if the navigation is difficult to use, Satisfied if it’s intuitive.
+* **Pain Points**: Small text or hard-to-read layout, buttons that are too close together.
 
-<h3 id="implement">Implement</h3>
+---
 
-- Spec Kit agent executes tasks automatically based on templates.
-- Implementation strictly follows Core Principles, Constraints, and NFRs.
-- Continuous Integration ensures all tasks pass tests before merge/deploy.
-- Observability and coverage checks are verified at build time.
+<h2 id="constraints">📊 Constraints (Constitution)</h2>
 
-*Rationale*: Ensures a repeatable, automated development pipeline that delivers a performant, accessible MVP.
+1. **Code Quality**: Codebase must be clean, maintainable, and follow best practices (e.g., Prettier formatting).
+2. **Testing Standards**: Maintain ≥80% unit/integration test coverage; automated in CI.
+3. **User Experience**: Mobile-first, WCAG-compliant UI with role-based access control (RBAC).
+4. **Performance**: Ensure fast loading times (≤2s for pages, ≤1s for APIs).
+5. **Deployment**: Docker for containerization, environment synchronization.
+6. **Technology Choices**: Use widely adopted, mature tools; implement RBAC for admin functionality.
+7. **Deferred Features**: No CDN or advanced image processing for now.
+8. **Governance**: PRs required for changes, with versioning (major for breaking changes, minor for expansions).
 
+---
 
+<h2 id="plan--tasks--implement">🚀 Plan → Tasks → Implement</h2>
 
-<h2 id="build-log">📝 Build Log</h2>
+### Plan
 
-<h3 id="1-conversion-of-design-artifacts-to-spec">1. Conversion of Design Artifacts to Spec</h3>
+* **API & Storage**: Implement a TypeScript + Express API with MongoDB for product, category, and order management (`GET /api/products`, `GET /api/categories`, `POST /api/orders`), including JWT authentication for admin routes.
+* **Frontend**: React 18 + Vite + TailwindCSS for responsive UI. Implement components: NavBar, CategoryFilter, SearchBar, CartSidebar, OrderConfirmation.
+* **Performance**: Ensure fast API responses (<1s) and frontend load times (≤2s).
+* **Security**: Secure admin CRUD operations with JWT-based RBAC.
 
-* Class Diagram → Backend schema + frontend TypeScript interfaces
-* Component Diagram → Frontend components + backend routes
-* Sequence Diagram → API endpoints + frontend state management
-* Use Case Diagram → User stories, acceptance criteria
-* Prompts ([Constitution](/docs/ai-prompts/constitution.txt), [Plan](/docs/ai-prompts/plan.txt), [Specify](/docs/ai-prompts/specify.txt)) guided agent to structured spec and tasks
+### Tasks
 
+* **Create Product API**: Implement `GET /api/products` for searching and filtering products by category and stock.
+* **Create Category API**: Implement CRUD operations for categories (admin-only).
+* **Create Order API**: Implement `POST /api/orders` with stock decrement and order snapshot.
+* **Admin Authentication API**: Implement JWT login for admin routes.
+* **UI Components**: Build responsive UI components like NavBar, Product List, Cart Sidebar.
+* **Product Card UI**: Implement stock checks and fallback images for out-of-stock items.
+* **Cart & Order Flow**: Implement client-side cart persistence with localStorage.
+* **Admin Management UI**: Build CRUD interfaces for managing products and categories (admin-only access).
+* **Backend & Frontend Tests**: Add unit tests for APIs and frontend behavior (e.g., cart persistence, login).
 
-<h3 id="2-spec-kit-commands-validation-agent-handoffs">2. Spec Kit Commands, Validation, Agent Handoffs</h3>
+### Implement
 
-| Command                 | Description                                                                         | Validation                                                                                      | Agent Handoff                                           |
-| ----------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| `/speckit.constitution` | Initialize project rules, constraints, architecture principles                      | • Verified rules applied in subsequent phases                                                  | GPT-5 generates constitution                             |
-| `/speckit.specify`      | Converts artifacts into functional requirements, API contracts, frontend components | • Confirm FR-001 → FR-013 completed<br>• Endpoints, props, flows mapped<br>• `[Needs Clarification]` marked | GPT-5 generates `spec.md` and API YAML                  |
-| `/speckit.clarify`      | Resolves `[Needs Clarification]` markers                                            | • Ambiguities resolved<br>• Spec coherent and traceable                                        | GPT-5 updates `spec.md`                                 |
-| `/speckit.plan`         | Generates gated plan for specification, tasks, implementation                       | • Completeness reviewed<br>• Task sequencing validated<br>• Dependencies verified              | GPT-5 produces `plan.md`                                 |
-| `/speckit.tasks`        | Breaks spec into discrete implementation tasks                                      | • Tasks validated against requirements<br>• Executed in batches                                  | GPT-5 outputs task list                                  |
-| `/speckit.analyze`      | Reviews app for issues (severity: severe/high/medium)                               | • Code quality checked<br>• Coverage verified<br>• Spec compliance checked<br>• Severe/high/medium issues resolved | GPT-5 identifies issues pre-implementation             |
-| `/speckit.implement`    | Implements code based on tasks and spec                                             | • Frontend/backend functionality verified<br>• State management correct<br>• MongoDB schema & seed artifacts generated<br>• All batch tasks implemented<br>• CI tests pass, coverage ≥80% | GPT-5 generates frontend/backend code and MongoDB artifacts |
+* **Spec Kit Agent**: Automates tasks based on predefined templates and specifications.
+* **CI/CD**: Integrate continuous testing and deployment pipelines.
+* **Admin Role Enforcement**: Ensure that admin routes are secured with JWT.
 
+---
 
-<h3 id="3-iteration-summary">3. Iteration Summary</h3>
+<h2 id="project-structure">🗂️ Project Structure</h2>
 
-* Plan adjustments: task sequencing/dependencies refined
-* Spec refinement: FR clarifications via `/clarify`
-* Task re-batching: smaller batches per agent recommendations
-* Validation feedback loop: `/analyze` feedback led to updates in plan/tasks
-* Traceability improvements: enhanced links between artifacts, FRs, tasks
+```
+backend/
+  src/ (app, routes, models, middleware, seed, utils)
+  tests/ (api, models, utils, seed)
+frontend/
+  src/ (components, pages, hooks, context, api, __tests__)
+docker-compose.yml
+specs/ (specification, plans, tasks, checklists)
+docs/ (design artifacts, screenshots, ai prompts)
+```
 
+---
 
-<h3 id="4-screenshots">4. Screenshots</h3>
+<h2 id="tech-stack">🔌 Tech Stack</h2>
 
-* [**API Products Response 1**](/docs/screenshots/api-products-1.jpg) – Products API request with response headers.
-* [**API Products Response 2**](/docs/screenshots/api-products-2.jpg) – JSON payload response of products from the API.
-* [**Container Logs**](/docs/screenshots/container-logs.jpg) – Docker logs showing activity.
-* [**Docker Build**](/docs/screenshots/docker-build.jpg) – Successful build output of frontend, backend, and MongoDB containers.
-* [**Error State**](/docs/screenshots/error-state.jpg) – Frontend display when API fails.
-* [**Loading State**](/docs/screenshots/loading-state.jpg) – Frontend display while API request is in progress.
-* [**MongoDB Documents**](/docs/screenshots/mongo-documents.jpg) – Snapshot of seeded products stored in MongoDB.
-* [**Product List**](/docs/screenshots/product-list.jpg) – Default catalog view showing all seeded products.
-* [**Responsive Layout**](/docs/screenshots/responsive-layout.jpg) – Product list displayed on a smaller screen for responsiveness.
-* [**Backend Tests Passed**](/docs/screenshots/tests-backend-passed.jpg) – Successful backend unit and integration test results.
-* [**Frontend Tests Passed**](/docs/screenshots/tests-frontend-passed.jpg) – Successful frontend tests.
+* **Frontend**: React 18, Vite, TailwindCSS
+* **Backend**: Node.js, TypeScript, Express.js
+* **Database**: MongoDB
+* **Authentication**: JWT-based authentication (with role-based access control for admins)
+* **Testing**: Jest, React Testing Library, Supertest
+* **Containerization**: Docker, Docker Compose
 
+---
 
+<h2 id="api-summary">🔌 API Summary</h2>
+
+Base: `/api`
+
+| Method | Endpoint        | Purpose                               | Auth                  |
+| ------ | --------------- | ------------------------------------- | --------------------- |
+| GET    | /products       | List/search/filter products           | Public                |
+| POST   | /orders         | Submit order (atomic stock decrement) | Public (cart context) |
+| POST   | /auth/login     | Admin login (returns JWT)             | Public                |
+| GET    | /categories     | List categories                       | Public                |
+| POST   | /categories     | Create category                       | Admin                 |
+| PUT    | /categories/:id | Update category                       | Admin                 |
+| DELETE | /categories/:id | Delete (blocked if products assigned) | Admin                 |
+| POST   | /products       | Create product                        | Admin                 |
+| PUT    | /products/:id   | Update product                        | Admin                 |
+| DELETE | /products/:id   | Delete product                        | Admin                 |
+
+---
+
+<h2 id="screenshots">📸 Screenshots</h2>
+
+* [**API Products Response 1**](#) – Example products API response.
+* [**API Products Response 2**](#) – JSON response of products from the API.
+* [**Container Logs**](#) – Docker logs showing backend activity.
+* [**Product List**](#) – Default catalog view with seeded products.
+* [**Error State**](#) – Error displayed when API fails.
+
+---
 
 <h2 id="containerize--deploy">🚀 Containerize & Deploy</h2>
 
 1. **Clone Repository**
 
 ```bash
-git clone https://github.com/bwagner77/product-catalog-weekly-app.git
-cd product-catalog
+git clone https://github.com/your-repo/shoply.git
+cd shoply
 ```
 
-2. **Environment Variables**
-
-```bash
-cp .env.example .env
-```
-
-3. **Build & Start Containers**
+2. **Build & Start Containers**
 
 ```bash
 docker compose up --build
 ```
 
-4. **Access Application**
+3. **Access Application**
 
 * Frontend: [http://localhost:5173](http://localhost:5173)
 * Backend API: [http://localhost:3000/api/products](http://localhost:3000/api/products)
 
-5. **Run Tests**
+4. **Run Tests**
 
 ```bash
 docker compose run backend npm test
 docker compose run frontend npm test
 ```
 
-6. **Stop Containers**
+5. **Stop Containers**
 
 ```bash
 docker compose down
 ```
 
-*Notes*:
+*Notes:*
 
-* MongoDB persisted via Docker volume
-* Logs available in terminal
-* Ensure ports 3000 (backend) & 5173 (frontend) are free
+* MongoDB persisted via Docker volume.
+* Logs available in the terminal.
+
+---
+
+<h2 id="license">License</h2>
+
+This project is licensed under the **MIT License** – see the [LICENSE](./LICENSE) file for details.
+
+---
+
+<h2 id="attributions">Attributions</h2>
+
+Developed under an AI‑assisted specification workflow 🌱[GitHub Spec Kit](https://github.com/github/spec-kit).
+
+---

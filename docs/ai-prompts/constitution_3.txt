@@ -1,0 +1,39 @@
+version_bump: "MINOR"
+rationale: |
+  Add high-level guiding principles for authentication, role-based access, and admin CRUD functionality, ensuring secure and clear user experience while keeping implementation details in the spec and plan.
+
+changes:
+
+III. User Experience Consistency
+
+The UI MUST be simple, intuitive, and responsive.
+
+- Mobile-first, responsive layout that adapts from phones to desktops.
+- Use TailwindCSS for all layout and styling; no custom color palettes or CSS.
+- Provide clear visual feedback for user actions (loading, validation, states).
+- Error messages MUST be clear and actionable (e.g., "Product out of stock").
+- Key pages should load in under 2 seconds.
+- Ensure accessibility by following WCAG guidelines (ARIA, keyboard navigation, color contrast).
+- The product’s brand identity is **Shoply** and MUST be used consistently across navigation, titles, and user-facing text.
+- The main navigation bar MUST display the brand name **Shoply** and a logo in a consistent, accessible layout.
+- Application-wide modals MUST include an accessible, easily discoverable dismissal mechanism (e.g., close icon + button).
+- The system MUST support **multiple user roles**:
+  - **Anonymous users** can browse products and read content without login.
+  - **Admin users** MUST authenticate before accessing sensitive pages.
+- Pages involving sensitive operations (e.g., CategoryManagement, ProductManagement) MUST be **restricted to authorized admin users**, with a clear "Access Denied" message or safe redirect for unauthorized users.
+- Feedback on authentication, authorization, and restricted actions MUST be **clear, actionable, and consistent with Shoply branding**.
+
+Rationale: Protecting sensitive operations ensures security and trust while maintaining a smooth browsing experience for anonymous users.
+
+---
+
+VI. Technology Choices & Constraints
+
+The system MUST use a consistent, modern stack suitable for rapid MVP development. All technologies MUST be mature, widely adopted, and support modularity, testing, and containerization.
+
+- Seed data MUST remain schema-complete and updated whenever persistent schema fields evolve.
+- The system MUST support **role-based access control**, clearly distinguishing between anonymous and admin users.
+- Administrative functions, including CRUD for products and categories, MUST be **restricted to authorized admin users** to maintain data integrity.
+- Any new pages or features MUST be evaluated for **role-based restrictions** and documented in the spec.
+
+Rationale: Clear separation of user roles and restricted operations maintains system security, prevents accidental data modification, and enforces operational discipline.
