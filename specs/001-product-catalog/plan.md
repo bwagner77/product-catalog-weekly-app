@@ -137,7 +137,7 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
   - **NavBar**:
     - Fixed at top of page, full-width.
     - Left: site logo SVG + brand name "Shoply" (accessible alt "Shoply logo").
-    - Right: navigation controls (Products, Categories), cart count indicator.
+    - Right: navigation controls (Products, Category Management, Product Management (admin only), Logout), cart count indicator.
     - Responsive: collapses menu on mobile; sticky behavior.
     - Implemented in `frontend/src/components/NavBar.tsx` with conditional rendering of admin-only `ProductManagement` link (hidden unless `role === 'admin'`).
     - Adds route link to `/admin/product-management` guarded by `PrivateRoute` in `frontend/src/App.tsx`.
@@ -236,45 +236,50 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 15. Seed consistency: ensure first 5 seeded products include `imageUrl` & `stock` (value 5); update seed script & backend seed test assertions.
 16. Modal enhancement: add explicit "Close" button to `OrderConfirmation` component; tests assert both dismissal paths restore focus.
 17. Branding integration: add `public/images/logo.svg` asset; update NavBar to display Shoply name + logo alt text; tests confirm presence.
-18. Navigation integration: add Products & Categories buttons with aria-current state; tests validate switching without reload and focus retention.
+18. Navigation integration: add Products & Category Management buttons with aria-current state; tests validate switching without reload and focus retention.
 19. (Removed legacy gating – number retained for continuity) Category write protection now solely via JWT admin role; ensure test coverage verifies anonymous attempts receive 403 and zero mutation.
 20. ProductManagement: Implement full CRUD interface for products (name, description, price, imageUrl, stock, categoryId) accessible only to authenticated admins. Category dropdown lists all categories. Stock cannot go negative. UI hides admin-only controls for non-admin users. Route path `/admin/product-management` added to `frontend/src/App.tsx` wrapped in `PrivateRoute`. Tests verify: admin CRUD success, non-admin/anonymous access blocked (UI + API), route guarding, user state persistence, expired session handling, and UI hiding of admin-only links.
 21. CategoryManagement: CRUD operations remain restricted to admins only. Anonymous/non-admin access blocked consistently, both frontend and backend. UI reflects access restrictions (buttons/links hidden if non-admin).
 22. Frontend login/user state: Implement observable user state object { id, role, authenticated }. Login persists state across reloads and clears on logout. Expired sessions auto-logout and redirect to login. No environment flags used for gating.
-20. Product response validation: extend backend tests to assert `imageUrl` non-empty and `stock >= 0` for all products.
-21. Image fallback validation: tests for broken/missing image substituting `fallback.jpg` within 1s.
-22. Navigation SLO refinement: capture timing metrics for view switches; enforce median ≤200ms, p95 ≤400ms across ≥50 toggles, aligning with SC‑023.
-23. Update spec & plan references for new FR-044..FR-051 and SC-021..SC-025 alignment.
-24. Backend: Implement `POST /api/auth/login` (env credentials, issue HS256 JWT ≥1h exp, return `{ token, expiresInSeconds }`).
-25. Backend: Implement `authAdmin` middleware (parse Authorization bearer, verify signature/exp/role, attach `req.admin = true`, handle failures with branded 401/403).
-26. Backend: Apply `authAdmin` to category POST/PUT/DELETE and product POST/PUT/DELETE (add product write endpoints if missing); remove any legacy gating logic; 403 only on missing/invalid/unauthorized (role) or expired token.
-27. Backend: Extend OpenAPI (`contracts/openapi.yaml`) adding `bearerAuth` security scheme, `/api/auth/login`, and security requirements for protected endpoints.
-28. Backend: Product CRUD validation tests (create/update/delete) including category association and stock non-negative enforcement under auth.
-29. Backend: Add failed login attempt logging (count metric or log line) + test verifying log output format.
-30. Frontend: Create Login Page + form submission to `/api/auth/login`; store JWT in `localStorage`; provide auth context/provider.
-31. Frontend: Implement `PrivateRoute` guard for CategoryManagement & ProductManagement (redirect to login or show Access Denied if unauthenticated/invalid).
-32. Frontend: Implement ProductManagement page (list products, create/edit/delete forms, category dropdown loads all categories via GET /api/categories).
-33. Frontend: Hide admin-only nav links when no valid token; show after auth; update nav tests.
-34. Frontend: Token expiry handling (check exp on navigation & on 401 responses; clear token + redirect to login); test simulated expired token.
-35. Frontend: Add branded unauthorized error display for blocked CRUD attempts (consistent JSON parsing).
-36. Frontend Tests: Route guarding, nav visibility, login success/failure, ProductManagement CRUD, category dropdown completeness, token expiry logout.
-37. Backend Tests: Auth middleware valid/invalid/expired token paths; protected endpoints permission matrix; product/category CRUD under auth.
-38. Docs: Update `quickstart.md` with auth env vars (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `JWT_SECRET`), login instructions, token storage note (flag fully removed, no transitional gating).
-39. Docs: Update `research.md` with JWT decision (HS256, ≥1h expiry, no refresh, rationale & alternatives) and future rate limiting note.
-40. Docs: Update `data-model.md` with AdminUser pseudo entity and JWT claims breakdown.
-41. Plan: Add success criterion references SC-029 (unauthorized write blocking) & SC-030 (expired token enforcement) to Completion Criteria if not already present.
-42. Refactor: Centralize auth error responses and integrate with existing error handler.
-43. Future-proofing: Note potential consolidation of additional roles via the same `/api/auth/login` endpoint; no changes now beyond admin.
-44. Frontend: Implement user state persistence (1h token) and logout clearing plus automatic redirect on expired token detection.
-45. Frontend Tests: Add persistence & logout suite (reload retains admin until expiry; logout immediately blocks Product/Category management pages).
-46. Backend Tests: Add expired token simulation (manually craft exp in past) ensuring protected writes return 401/403 and zero mutation.
-47. Error Handling: Standardize unauthorized response body `{ "error": "admin_auth_required", "message": "Admin authentication required" }`; tests assert consistency across all protected endpoints.
-48. Frontend: Add branded "Access Denied" component or inline message for blocked admin page access; integrate with route guard.
-49. Frontend: Hide ProductManagement link when role missing; test nav visibility before/after login and after logout.
-50. Docs: Add section describing user state object shape `{ role, authenticated, id?, exp }` and persistence strategy; reference FR-057..FR-062.
-51. Accessibility: Verify focus management on redirect after expired token (focus on login form heading) and add test.
-52. Security Note: Document absence of refresh tokens and manual re-login flow; add rationale (simplicity, reduced attack surface for MVP) to `research.md`.
-53. ProductManagement Implementation File: Create `frontend/src/pages/ProductManagement.tsx` with full product CRUD UI (fields: name, description, price, imageUrl, stock, categoryId). Enforce admin-only access via `PrivateRoute`. Include category dropdown (all categories), prevent negative stock, hide admin controls for non-admin/anonymous users. Add unit & integration tests covering: admin CRUD success, unauthorized (anonymous/non-admin) access blocked (UI + API) with branded messaging (SC‑026), route guarding reliability, user state persistence across reloads, expired session auto-logout + redirect focus, NavBar admin link visibility toggling (FR‑052, FR‑059). Acceptance Criteria: SC‑026, FR‑052, FR‑059 all satisfied.
+23. Product response validation: extend backend tests to assert `imageUrl` non-empty and `stock >= 0` for all products.
+24. Image fallback validation: tests for broken/missing image substituting `fallback.jpg` within 1s.
+25. Navigation SLO refinement: capture timing metrics for view switches; enforce median ≤200ms, p95 ≤400ms across ≥50 toggles, aligning with SC‑023.
+26. Update spec & plan references for new FR-044..FR-051 and SC-021..SC-025 alignment.
+27. Backend: Implement `POST /api/auth/login` (env credentials, issue HS256 JWT ≥1h exp, return `{ token, expiresInSeconds }`).
+28. Backend: Implement `authAdmin` middleware (parse Authorization bearer, verify signature/exp/role, attach `req.admin = true`, handle failures with branded 401/403).
+29. Backend: Apply `authAdmin` to category POST/PUT/DELETE and product POST/PUT/DELETE (add product write endpoints if missing); remove any legacy gating logic; 403 only on missing/invalid/unauthorized (role) or expired token.
+30. Backend: Extend OpenAPI (`contracts/openapi.yaml`) adding `bearerAuth` security scheme, `/api/auth/login`, and security requirements for protected endpoints.
+31. Backend: Product CRUD validation tests (create/update/delete) including category association and stock non-negative enforcement under auth.
+32. Backend: Add failed login attempt logging (count metric or log line) + test verifying log output format.
+33. Frontend: Create Login Page + form submission to `/api/auth/login`; store JWT in `localStorage`; provide auth context/provider.
+34. Frontend: Implement `PrivateRoute` guard for CategoryManagement & ProductManagement (redirect to login or show Access Denied if unauthenticated/invalid).
+35. Frontend: Implement ProductManagement page (list products, create/edit/delete forms, category dropdown loads all categories via GET /api/categories).
+36. Frontend: Hide admin-only nav links when no valid token; show after auth; update nav tests.
+37. Frontend: Token expiry handling (check exp on navigation & on 401 responses; clear token + redirect to login); test simulated expired token.
+38. Frontend: Add branded unauthorized error display for blocked CRUD attempts (consistent JSON parsing).
+39. Frontend Tests: Route guarding, nav visibility, login success/failure, ProductManagement CRUD, category dropdown completeness, token expiry logout.
+40. Backend Tests: Auth middleware valid/invalid/expired token paths; protected endpoints permission matrix; product/category CRUD under auth.
+41. Docs: Update `quickstart.md` with auth env vars (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `JWT_SECRET`), login instructions, token storage note (flag fully removed, no transitional gating).
+42. Docs: Update `research.md` with JWT decision (HS256, ≥1h expiry, no refresh, rationale & alternatives) and future rate limiting note.
+43. Docs: Update `data-model.md` with AdminUser pseudo entity and JWT claims breakdown.
+44. Plan: Add success criterion references SC-029 (unauthorized write blocking) & SC-030 (expired token enforcement) to Completion Criteria if not already present.
+45. Refactor: Centralize auth error responses and integrate with existing error handler.
+46. Future-proofing: Note potential consolidation of additional roles via the same `/api/auth/login` endpoint; no changes now beyond admin.
+47. Frontend: Implement user state persistence (1h token) and logout clearing plus automatic redirect on expired token detection.
+48. Frontend Tests: Add persistence & logout suite (reload retains admin until expiry; logout immediately blocks Product/Category management pages).
+49. Backend Tests: Add expired token simulation (manually craft exp in past) ensuring protected writes return 401/403 and zero mutation.
+50. Error Handling: Standardize unauthorized response body `{ "error": "admin_auth_required", "message": "Admin authentication required" }`; tests assert consistency across all protected endpoints.
+51. Frontend: Add branded "Access Denied" component or inline message for blocked admin page access; integrate with route guard.
+52. Frontend: Hide ProductManagement link when role missing; test nav visibility before/after login and after logout.
+53. Docs: Add section describing user state object shape `{ role, authenticated, id?, exp }` and persistence strategy; reference FR-057..FR-062.
+54. Accessibility: Verify focus management on redirect after expired token (focus on login form heading) and add test.
+55. Security Note: Document absence of refresh tokens and manual re-login flow; add rationale (simplicity, reduced attack surface for MVP) to `research.md`.
+56. ProductManagement Implementation File: Create `frontend/src/pages/ProductManagement.tsx` with full product CRUD UI (fields: name, description, price, imageUrl, stock, categoryId). Enforce admin-only access via `PrivateRoute`. Include category dropdown (all categories), prevent negative stock, hide admin controls for non-admin/anonymous users. Add unit & integration tests covering: admin CRUD success, unauthorized (anonymous/non-admin) access blocked (UI + API) with branded messaging (SC‑026), route guarding reliability, user state persistence across reloads, expired session auto-logout + redirect focus, NavBar admin link visibility toggling (FR‑052, FR‑059). Acceptance Criteria: SC‑026, FR‑052, FR‑059 all satisfied.
+
+54. Navigation rename & reorder update: Rename "Categories" navigation/button label to "Category Management" everywhere (`App.tsx`, `NavBar.tsx`, related tests, spec references). Enforce new ordered sequence (left-to-right or top-to-bottom focus order) for visible buttons: Products, Category Management, Product Management (admin only), Logout. Update tests to assert: (a) label text changed, (b) order sequence, (c) aria-current applied only to active view, (d) Product Management hidden for non-admin, (e) Logout always last. Ensure no regressions to existing branding tests.
+55. Dynamic ProductCard zero-stock transition: On successful order submission when any product's stock decrements to 0, immediately reflect state in UI without requiring full page reload (optimistic local update or refetch minimal product list). ProductCard must: show "Out of Stock" badge/text, disable Add to Cart button (native `disabled`), expose `aria-disabled="true"`, and visually de-emphasize (Tailwind opacity class). Add logic to reconcile server response stock values vs local optimistic state. Prevent negative stock display. Acceptance Criteria: FR-015/FR-016 extended scenario satisfied.
+56. Frontend tests (navigation + dynamic stock): Add/extend test suites to cover: renamed label assertion, navigation order sequence, hidden Product Management link for non-admin, dynamic ProductCard stock 0 transition post-order (simulate order reducing stock), disabled button state + accessibility announcement, aria-current exclusivity across nav buttons. Include regression snapshot for pre/post order card content.
+57. Accessibility adjustments for new tasks: Verify keyboard tab order matches navigation order after rename/reorder; ensure "Out of Stock" text has sufficient contrast and is announced (screen reader reads disabled button with adjacent status text). Add tests utilizing RTL queries (`getByRole('button', { name: /category management/i })`) and verifying `disabled` attribute plus announcement text present. Confirm focus retention after dynamic stock update does not shift unexpectedly. Update a11y test file accordingly.
 
 ## Risk & Mitigation
 
@@ -309,3 +314,5 @@ Release of extended e‑commerce scope requires:
 10. ProductManagement access attempts by anonymous/non-admin users are blocked with 403, no mutation, and actionable branded messaging (SC-026).
 11. ProductManagement CRUD interface is accessible only to authenticated admins (FR-052).
 12. Admin-only areas enforce access control with branded messaging (FR-059).
+ 13. Navigation label rename & order consistency validated across all routes (SC-035, SC-036).
+ 14. Dynamic out-of-stock transition shows updated UI ≤1s with accessible disabled state (SC-037, SC-038).

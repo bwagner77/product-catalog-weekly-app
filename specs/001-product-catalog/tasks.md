@@ -22,7 +22,7 @@ description: "Task list for Product Catalog MVP"
 - [X] T003 Initialize frontend/package.json with Vite + React + TypeScript, Vitest, RTL, Tailwind in `frontend/`
 - [X] T004 [P] Add ESLint + Prettier configs (2-space) in `backend/.eslintrc.cjs` `frontend/.eslintrc.cjs` `.prettierrc`
 - [X] T005 Add root `.env.example` and `.env` with vars in repo root
- [X] T124 [P] (Deprecated – legacy gating removed) Preserve task ID for continuity; environment flag no longer used after RBAC update.
+ [X] T124 [P] (DEPRECATED – DO NOT IMPLEMENT) Historical only; legacy environment flag removed. Superseded by T166/T167 role-only enforcement tasks.
  [X] T130 [P] Update `research.md` with navigation SLO thresholds, dual dismissal accessibility rationale (FR-046, SC-024), CLS measurement plan (SC-018); remove legacy gating rationale.
  [X] T133 [P] [US4] (Replaced) Ensure category POST/PUT/DELETE protected via `authAdmin` only; legacy environment gating removed.
  [X] T134 [P] [US4] Frontend test: anonymous/unauthenticated category write attempts blocked with branded 403 message (FR-057, SC-025) in `frontend/src/__tests__/categoryAuth.test.tsx`
@@ -381,6 +381,18 @@ Completion of extended scope requires prior tasks T062–T120 plus branding/gati
  - [X] T140 [P] CLS measurement test capturing layout shifts <0.1 during image load & fallback in `frontend/src/__tests__/cls.test.tsx` (SC-018)
  - [X] T141 [P] Fallback alt en dash assertion test verifying `<name> – image unavailable` pattern in `frontend/src/__tests__/imagesAltPattern.test.tsx` (FR-036, SC-019)
        <!-- Duplicate T142 removed; primary definition in Phase 1 Setup -->
+
+## Phase N+3: Remediation & Validation (Navigation, Dynamic Stock, RBAC Consistency)
+
+- [ ] T160 [P] Dynamic zero-stock UI update implementation: After successful order POST, optimistically decrement affected product stock locally and update ProductCard; fallback minimal refetch if discrepancies. Acceptance: product reaching stock 0 displays “Out of Stock” badge/text ≤1s (FR-015, SC-037).
+- [ ] T161 [P] Dynamic zero-stock accessibility test: Assert `disabled` attribute, `aria-disabled="true"`, presence of status text (visible or sr-only), Tailwind classes `opacity-50 cursor-not-allowed`, and preserved focus order (FR-016, SC-038).
+- [ ] T162 [P] Navigation label audit test: Render primary routes/components and assert no occurrences of legacy label “Categories”; expect “Category Management” (SC-036, FR-045).
+- [ ] T163 [P] Multi-route navigation order test: Verify order (Products, Category Management, Product Management, Logout) and single `aria-current` across catalog, category, product management, login routes (SC-035, FR-045).
+- [ ] T164 [P] Unauthorized navigation denial test: Non-admin direct route access yields AccessDenied or safe redirect without privileged control flash (SC-039, FR-059).
+- [ ] T165 [P] Admin navigation persistence test: With valid token, reload retains admin-only nav links visibility (SC-040, FR-058).
+- [ ] T166 [P] Flag absence repository scan: Automated test/utility greps for `ENABLE_CATEGORY_ADMIN` (excluding this tasks.md historical note) ensuring zero active references (SC-041).
+- [ ] T167 [P] Role-only enforcement static analysis: Scan backend routes/middleware for conditional checks referencing removed flag; ensure all protected writes depend solely on `authAdmin` (SC-042).
+- [ ] T168 [P] Consolidated error schema test: Table-driven scenarios exercise each error code (`admin_auth_required`, `token_expired`, `forbidden_admin_role`, `invalid_credentials`, `category_name_conflict`, `stock_conflict`) asserting JSON `{ error, message }` shape and absence of deprecated `insufficient_stock` (FR-060, SC-033).
 
 ---
 

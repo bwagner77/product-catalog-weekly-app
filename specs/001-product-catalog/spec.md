@@ -2,7 +2,8 @@
 
 **Feature Branch**: `001-product-catalog`  
 **Created**: 2025-11-10  
-**Status**: Draft  
+**Status**: Draft (amended 2025-11-22)  
+**Amendment Summary (2025-11-22)**: Navigation label/order update; dynamic out-of-stock UI behavior; RBAC reaffirmed without legacy flags; removal of transitional feature flag `ENABLE_CATEGORY_ADMIN`; added success criteria for navigation consistency, stock state reflection, admin access control persistence.
 **Input**: User description: "Product Catalog app: frontend lists products (name, description, price), fetch from API; backend exposes GET /api/products returning JSON; persistent DB with 'products' collection; preload at least 5 sample products; clean responsive accessible UI; prices formatted to 2 decimals; tests in frontend/src/__tests__/ and backend/tests/."
 
 ## Clarifications
@@ -12,7 +13,7 @@
 - Q: What is the product search matching rule? → A: Case-insensitive partial substring match across both name and description fields; multiple words treated as a single phrase (no token AND logic).
 - Q: What pattern is used for seeded product images? → A: Deterministic placeholder filenames using the pattern "product<N>.jpg" starting at 1 (e.g., product1.jpg) matching seed insertion order; stable across runs.
 - Q: Were initial first 5 seeded products missing imageUrl/stock? → A: Earlier drafts omitted them; all seeded products now include non-empty imageUrl and non-negative stock (example first 5 may use stock 5) and remain stable across runs.
-- Q: How is Category Management accessed? → A: Via top navigation banner button "Categories" beside the Shoply brand/logo.
+- Q: How is Category Management accessed? → A: Via top navigation banner button (renamed to "Category Management") in the defined order (Products, Category Management, Product Management, Logout) beside the Shoply brand/logo.
 - Q: How can the order confirmation modal be dismissed? → A: Either the top-right × control or an explicit "Close" button; both accessible and keyboard operable.
 - Q: What branding changes apply? → A: Navigation banner shows **Shoply** name plus logo (accessible alt "Shoply logo").
  - Q: Are category/product management operations still open to anonymous users? → A: No. Prior assumption of open CRUD is overridden. Category and Product management (create/update/delete) now require authenticated admin role.
@@ -93,7 +94,7 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 
 **Acceptance Scenarios**:
 
-1. Given I use only a keyboard, When navigating the page, Then I can reach navigation (Products, Categories), product items, and controls in a logical order.
+1. Given I use only a keyboard, When navigating the page, Then I can reach navigation (Products, Category Management, Product Management (admin only), Logout), product items, and controls in a logical order.
 2. Given a small screen, When viewing the catalog, Then layout adapts without horizontal scrolling.
 
 ---
@@ -107,7 +108,7 @@ As a catalog maintainer (authenticated admin), I can view, create, edit, and rem
 
 **Acceptance Scenarios**:
 
-1. Given I am an authenticated admin and categories exist, When I activate the Categories navigation button, Then I see a management view list showing id and name.
+1. Given I am an authenticated admin and categories exist, When I activate the Category Management navigation button, Then I see a management view list showing id and name.
 2. Given I am an authenticated admin, When I submit a valid new category name, Then the category appears in the list with status 201.
 3. Given I am an authenticated admin and a category has no assigned products, When I delete it, Then it is removed (204) and subsequent GET by id returns 404.
 4. Given I am an authenticated admin and a category has assigned products, When I attempt deletion, Then the system returns 409 and shows a clear message (no deletion performed).
@@ -244,8 +245,12 @@ As an authenticated admin, I can create, view, update, and delete products (incl
 - **FR-012**: MVP assumes up to 200 products returned by the list endpoint and no pagination; the UI presents a single-page list. (Consolidates prior FR-031.)
 - **FR-013**: System MUST expose simple health endpoints for frontend and backend to support container healthchecks.
 - **FR-014**: Product entity MUST include categoryId (string) and stock (non-negative integer/number) fields; stock values < 0 MUST be rejected.
-- **FR-015**: System MUST display stock status labels only ("In Stock" when stock > 0, "Out of Stock" when stock = 0).
-- **FR-016**: System MUST prevent cart additions or quantity increases that would exceed available stock (reject with clear message) and block out-of-stock products entirely.
+- **FR-015** (amended 2025-11-22): System MUST display stock status labels only ("In Stock" when stock > 0, "Out of Stock" when stock = 0) and MUST update product cards to show "Out of Stock" immediately (≤1s) after an order reduces stock to zero, without requiring a full page reload.
+- **FR-016** (amended 2025-11-22): System MUST prevent cart additions or quantity increases that would exceed available stock (reject with clear message) and block out-of-stock products entirely; Add to Cart button MUST be disabled (focusable only if announced as disabled) and visually distinct when stock = 0, with accessible status communicated to assistive technologies.
+ - **FR-016** (amended 2025-11-22, clarified 2025-11-22 remediation): System MUST prevent cart additions or quantity increases that would exceed available stock (reject with clear message) and block out-of-stock products entirely; Add to Cart button MUST be disabled and visually distinct when stock = 0, with accessible status communicated to assistive technologies.
+   - Disabled styling MUST apply Tailwind classes `opacity-50 cursor-not-allowed` while retaining keyboard focus outline via `focus:outline-none focus:ring-2`.
+   - Accessibility pattern MUST include `aria-disabled="true"` on the button AND an adjacent status indicator: either visible text “Out of Stock” (WCAG AA contrast) or a visually hidden `<span class="sr-only">Out of Stock</span>` plus a visible badge.
+   - Tests MUST assert presence of the `disabled` attribute, `aria-disabled`, status text, and that focus order does not skip the disabled control (SC-038).
 - **FR-017**: System MUST allow creation, viewing, listing, updating, and deletion of categories (subject to assumption blocking deletion when products assigned) with explicit status codes: 200 (list/get/update), 201 (create), 400 (validation failure), 404 (not found), 409 (deletion blocked due to assigned products).
 - **FR-018**: Category list MUST display id and name and provide edit and delete actions.
 - **FR-019**: Category form MUST require a non-empty name and show validation feedback on submit failure.
@@ -274,14 +279,19 @@ As an authenticated admin, I can create, view, update, and delete products (incl
 - **FR-042**: Broken image load events MUST trigger automatic fallback substitution within 1 second.
 **FR-043**: Order submission MUST atomically decrement product stock for each line item (never producing negative stock); MUST reject the order with a 409 if any requested quantity exceeds current stock; MUST maintain snapshot immutability independent of post-submission stock changes. Chosen implementation: single MongoDB `bulkWrite` with per-line conditional filters `{ stock: { $gte: quantity } }`; if any filter fails all updates abort (no partial fulfillment). Concurrency mitigation: second order after stock exhaustion returns 409.
  - **FR-044**: Navigation banner MUST display Shoply brand name and logo image with accessible alt text ("Shoply logo").
- - **FR-045**: Navigation MUST provide buttons/links for Products and CategoryManagement pages enabling view switching without full page reload.
+ - **FR-045** (amended 2025-11-22): Navigation MUST present buttons/links in the exact order: Products, Category Management (renamed from "Categories"), Product Management, Logout. Product Management and Category Management buttons MUST be hidden or access-blocked for non-admin users (no flash of privileged controls). Order MUST remain stable across all pages and reloads.
+ - **FR-045** (amended 2025-11-22, clarified 2025-11-22 remediation): Navigation MUST present buttons/links in the exact order: Products, Category Management (renamed from "Categories"), Product Management, Logout. Product Management and Category Management buttons MUST be hidden or access-blocked for non-admin users with no transient flash of privileged controls.
+   - Keyboard Tab order MUST match the visual order exactly.
+   - Exactly one navigation item MUST expose `aria-current="page"` at any time.
+   - Multi-route consistency (catalog, category management, product management, login) MUST preserve order and label naming (SC-035, SC-036).
+   - Tests (T162, T163) validate order, label replacement, absence of flash for non-admin, and single `aria-current` behavior.
  - **FR-046**: Order confirmation modal MUST provide two accessible dismissal controls: top-right close (×) and a "Close" action button.
  - **FR-047**: All seeded products MUST include non-empty imageUrl and non-negative stock fields (example: some initial products may use stock 5) and remain idempotent on reseeding (applies to full ≥20 product seed set, not only first 5).
  - **FR-048**: CategoryManagement page MUST be reachable via navigation and render its management heading after activation.
  - **FR-049**: New/updated UI elements (brand/logo, navigation buttons, modal Close button) MUST meet accessibility standards (focus order, roles/ARIA, alt text, keyboard operability).
  - **FR-050**: Acceptance tests MUST cover: dual modal dismissal (each independently closes and restores focus), navigation switching (Products ↔ Categories), presence of Shoply brand & logo, and backend product response including imageUrl & stock ≥ 0.
- - **FR-051** (updated): Category write operations (POST, PUT, DELETE) MUST be restricted to authenticated admin users. Unauthorized attempts follow decision tree: 401 `admin_auth_required` (missing/invalid), 401 `token_expired` (expired), 403 `forbidden_admin_role` (wrong role); all produce zero mutation. Reads/list remain public.
- - **FR-052**: ProductManagement CRUD interface MUST be accessible only to authenticated admin users; anonymous or non-admin attempts return structured 401/403 per decision tree and no mutation.
+ - **FR-051** (updated): Category write operations (POST, PUT, DELETE) MUST be restricted to authenticated admin users. Unauthorized attempts follow decision tree: 401 `admin_auth_required` (missing/invalid), 401 `token_expired` (expired), 403 `forbidden_admin_role` (wrong role); all produce zero mutation. Reads/list remain public. Transitional flag `ENABLE_CATEGORY_ADMIN` MUST NOT be used.
+ - **FR-052**: ProductManagement CRUD interface MUST be accessible only to authenticated admin users; anonymous or non-admin attempts return structured 401/403 per decision tree and no mutation. Transitional flag `ENABLE_CATEGORY_ADMIN` MUST NOT be used.
  - **FR-053**: Admin users MUST be able to update product stock ensuring resulting value is a non-negative integer; attempts to set stock < 0 are rejected with validation messaging (no partial update).
  - **FR-054**: All admin product CRUD operations (create, update, delete) MUST complete within ≤ 2 seconds (p95 in typical environment) and return appropriate status codes: 201 create, 200 update, 204 delete, 400 validation failure, 403 unauthorized, 404 not found.
  - **FR-055**: Category create/update MUST enforce case-insensitive name uniqueness; duplicates (including those differing only by case) return 409 JSON `{ "error": "Category name already exists" }` with no mutation.
@@ -290,6 +300,11 @@ As an authenticated admin, I can create, view, update, and delete products (incl
  - **FR-058**: Authenticated admin session state (role, authenticated flag, token reference) MUST persist across page reloads until explicit logout or token expiry; logout MUST clear all persisted state.
  - **FR-059**: Admin-only areas (CategoryManagement, ProductManagement) MUST enforce access control and present branded "Access Denied" messaging (or safe redirect) to non-admin users without rendering privileged controls.
  - **FR-060**: All unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous, non-admin, or expired token) MUST return a consistent structured JSON error body with machine-readable `error` and human-readable `message` fields and produce zero mutations.
+ - **FR-060** (clarified 2025-11-22 remediation): All unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous, non-admin, or expired token) MUST return a consistent structured JSON error body with machine-readable `error` and human-readable `message` fields and produce zero mutations.
+   - Consolidated error schema test (T168) MUST assert presence of all active error codes: `admin_auth_required`, `token_expired`, `forbidden_admin_role`, `invalid_credentials`, `category_name_conflict`, `stock_conflict`.
+   - Deprecated alias `insufficient_stock` MUST be absent after deprecation (any occurrence fails test).
+   - Error JSON MUST contain only `{ error, message }` (optional `traceId` allowed if globally adopted); no extraneous properties.
+   - Each code MUST appear in at least one simulated scenario; tests snapshot bodies.
 
 ### Error Codes (Structured Responses)
 
@@ -317,9 +332,11 @@ Status code decision tree (protected write):
 3. Valid admin token, business validation fails → 400 `validation_error`.
 4. Valid admin token, domain conflict (e.g., delete category with products or insufficient stock) → 409 domain-specific code (`category_name_conflict`, `stock_conflict`).
 
-FR-058 Clarification: Storage key MUST be `shoply_admin_token`; logout MUST clear this key and any derived user state (role, exp) and redirect focus to the login page heading.
+FR-058 Clarification: Storage key MUST be `shoply_admin_token`; logout MUST clear this key and any derived user state (role, exp) and redirect focus to the login page heading. Legacy gating flag `ENABLE_CATEGORY_ADMIN` removed; role-based access relies solely on JWT role claim.
 FR-059 Clarification: "Safe redirect" means client navigates to `/login?denied=<resource>` OR renders inline AccessDenied component retaining accessible focus management; implementation MUST avoid flashing privileged controls (no intermediate render).
 FR-060 Clarification: All emitted error codes MUST appear in the table above; tests assert schema shape and membership (SC-033).
+
+Legacy Gating Removal (2025-11-22 remediation): Transitional environment flag `ENABLE_CATEGORY_ADMIN` is permanently removed; any reintroduction constitutes a constitution violation (SC-041, SC-042). Enforcement relies solely on JWT role claim + token validity.
 
 Edge Case Addition: Token expiry mid-request results in auth middleware treating token as expired (status 401 `token_expired`); no partial write occurs.
 
@@ -385,19 +402,27 @@ Edge Case Addition: Token expiry mid-request results in auth middleware treating
 - **SC-019**: Zero critical accessibility violations introduced by images (all have alt text meeting specified rules and fallback alt pattern correctness).
 - **SC-020**: 0% of image renderings cause horizontal scroll at standard breakpoints.
  - **SC-021**: 100% sampled products (≥5) include non-empty imageUrl and stock ≥ 0.
- - **SC-022**: 100% initial catalog views display Shoply brand name, logo, and navigation controls.
+ - **SC-022**: 100% initial catalog views display Shoply brand name, logo, and navigation controls with amended order (Products, Category Management, Product Management (admin only), Logout); non-admin views omit admin-only buttons.
  - **SC-023**: Navigation view switches (Products ↔ Categories) median latency ≤ 200ms and p95 latency ≤ 400ms over ≥50 consecutive switches in typical environment.
  - **SC-024**: 100% order confirmations present both dismissal controls (× and Close) and either control dismisses with correct focus behavior.
  - **SC-025**: 100% category write attempts by anonymous (non-admin) users return 403 and perform no data mutation.
  - **SC-026**: 100% ProductManagement access attempts by anonymous users are blocked with 403 and actionable messaging (no mutation).
  - **SC-027**: 100% admin stock updates persist and never produce negative stock; invalid (<0) attempts rejected with clear message.
  - **SC-028**: 95% admin product CRUD operations complete within ≤ 2 seconds (p95) under typical environment conditions.
- - **SC-029**: 100% unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous, non-admin, or expired user state) return 403 with branded structured error body and produce zero mutations.
+ - **SC-029**: 100% unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous, non-admin, or expired user state) return 403 with branded structured error body and produce zero mutations (no environment flag conditions evaluated).
  - **SC-030**: 100% expired admin token attempts to perform protected writes result in 401 (invalid/expired) or 403 (unauthorized) and zero mutations; successful re-login restores access immediately.
  - **SC-031**: 95% cart add/update/remove interactions reflect updated UI state (icon count, totals) in ≤ 500ms in typical environment.
  - **SC-032**: 95% successful order submissions display confirmation modal with snapshot details in ≤ 1 second in typical environment.
  - **SC-033**: 100% unauthorized protected write responses use documented error codes and structured `{ error, message }` body.
- - **SC-034**: 100% expired token admin page access attempts hide privileged controls and show Access Denied messaging without flicker.
+ - **SC-034**: 100% expired token admin page access attempts hide privileged controls and show Access Denied messaging without flicker; logout clears role state so navigation updates immediately.
+ - **SC-035**: 100% navigation instances use amended order (Products, Category Management, Product Management, Logout) consistently.
+ - **SC-036**: 100% occurrences of former label "Categories" replaced with "Category Management".
+ - **SC-037**: 100% products reaching stock = 0 display "Out of Stock" within ≤1s across catalog, search results, and cart contexts.
+ - **SC-038**: 100% out-of-stock product cards present a disabled Add to Cart control visually distinct and announced as disabled.
+ - **SC-039**: 100% unauthorized navigation attempts to Category Management or Product Management yield Access Denied messaging or safe redirect with no privileged control flash.
+ - **SC-040**: 100% authenticated admin sessions retain visibility of admin-only navigation items across page reloads until logout or token expiry.
+ - **SC-041**: 0 references to transitional feature flag `ENABLE_CATEGORY_ADMIN` remain in specification text.
+ - **SC-042**: 100% access control decisions rely solely on authenticated role + token validity (no flag checks).
 
 ## Assumptions
 
