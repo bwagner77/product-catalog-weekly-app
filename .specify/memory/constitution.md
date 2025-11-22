@@ -2,21 +2,19 @@
 
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
-- Modified principles: III User Experience (branding + modals), I Code Quality (clarified single responsibility), II Testing (removed test doc bullet, aligned with current automation wording), V Deployment (explicit .env.example requirement retained), VI Technology Choices (added seed data rule)
-- Added sections:
-	- VII Deferred & Non-Goals
-	- IX Suggested Updates to Tasks Template (relocated & expanded guidance)
-- Removed sections:
-	- "Development Workflow, Review Process, and Tasks Guidance" (content redistributed to IX and Governance)
+- Version change: 1.1.0 → 1.2.0
+- Modified principles:
+	- III User Experience Consistency (added role-based access & admin restriction bullets)
+	- VI Technology Choices & Constraints (added role-based access control, admin CRUD restriction, evaluation requirement)
+- Added sections: (none)
+- Removed sections: (none)
 - Templates requiring updates:
-	- .specify/templates/plan-template.md ⚠ add explicit Shoply branding check
-	- .specify/templates/spec-template.md ⚠ reference brand name in UX/acceptance criteria
-	- .specify/templates/tasks-template.md ✅ already supports [P], may add branding mention
-	- README.md ⚠ replace old product name with Shoply branding & navbar/logo requirement
-	- docs/quickstart.md ⚠ ensure environment references brand Shoply
-	- Any UI copy guidelines (if present) ⚠ align with Shoply naming
-- Follow-up TODOs: None (all placeholders resolved)
+	- .specify/templates/plan-template.md ✅ add Constitution Check item for role-based access & branding
+	- .specify/templates/spec-template.md ✅ ensure acceptance criteria include access control where sensitive operations defined
+	- .specify/templates/tasks-template.md ✅ may add foundational task for authentication/authorization if feature introduces roles
+	- README.md ⚠ add brief note distinguishing anonymous vs admin capabilities
+	- docs/quickstart.md ⚠ include environment variable guidance for enabling admin functions (e.g., ENABLE_CATEGORY_ADMIN currently) and future auth stub
+- Follow-up TODOs: None (all updates embedded; auth implementation deferred to spec/plan phases)
 -->
 
 ## Core Principles
@@ -50,7 +48,7 @@ Rationale: Layered automated tests catch regressions early and sustain delivery 
 
 ### III. User Experience Consistency
 
-The UI MUST be simple, intuitive, accessible, and consistently branded as **Shoply**.
+The UI MUST be simple, intuitive, accessible, and consistently branded as **Shoply** while enforcing clear role-based access boundaries.
 
 - Mobile-first responsive layout scaling from phones to desktops.
 - TailwindCSS for all layout/styling; avoid ad-hoc color palettes or raw CSS overrides.
@@ -61,8 +59,13 @@ The UI MUST be simple, intuitive, accessible, and consistently branded as **Shop
 - Brand identity: Use the name **Shoply** uniformly in navigation, titles, and user-facing text.
 - Navigation bar MUST present the brand name **Shoply** and a logo with accessible text alternative.
 - Application-wide modals MUST include an accessible dismissal: close icon + clearly labeled button.
+- Role-based UX clarity:
+	- Anonymous users MAY browse public catalog data without authentication.
+	- Admin users MUST authenticate (mechanism defined in future spec) before accessing sensitive management views.
+- Sensitive pages (e.g., CategoryManagement, ProductManagement) MUST block unauthorized access with an "Access Denied" message or safe redirect.
+- Feedback for authorization failures MUST be branded, concise, and actionable (e.g., "Admin access required").
 
-Rationale: Consistent, accessible branding reduces cognitive load and increases user trust.
+Rationale: Consistent branding plus explicit access boundaries protects sensitive operations while preserving frictionless browsing for anonymous users.
 
 ### IV. Performance Requirements
 
@@ -90,13 +93,16 @@ Rationale: Containerization stabilizes environments, simplifying onboarding and 
 
 ### VI. Technology Choices & Constraints
 
-Adopt a modern, mainstream stack enabling modularity, testing, containerization, and rapid iteration.
+Adopt a modern, mainstream stack enabling modularity, testing, containerization, rapid iteration, and secure role-based access.
 
 - Select mature, widely adopted libraries with active maintenance.
 - Favor tooling that integrates seamlessly with Docker and CI.
 - Seed data MUST remain schema‑complete and updated whenever persistent schema fields evolve.
+- Implement role-based access control (RBAC) differentiating anonymous vs admin capabilities (initially feature-flag/environment-gated, later auth integration).
+- Administrative CRUD for products/categories MUST be restricted to authenticated admin context (or gating env flag in interim).
+- New pages/features MUST explicitly document whether they require admin access; omission is non-compliant.
 
-Rationale: Stable, common tooling reduces integration risk and accelerates feature delivery.
+Rationale: Stable, common tooling plus explicit RBAC rules maintain integrity and prevent accidental data modification while scaling safely.
 
 ### VII. Deferred & Non-Goals (Current Phase)
 
@@ -130,4 +136,4 @@ Rationale: Transparent, versioned governance prevents uncontrolled drift.
 
 Rationale: Structured, granular task management sustains momentum and enables safe parallel work.
 
-**Version**: 1.1.0 | **Ratified**: 2025-11-10 | **Last Amended**: 2025-11-21
+**Version**: 1.2.0 | **Ratified**: 2025-11-10 | **Last Amended**: 2025-11-21
