@@ -1,0 +1,50 @@
+Please **update** the existing **`plan.md`** in `/plans/001-product-catalog/plan.md` **in place** to include the following updates related to collapsing the navigation buttons into a **hamburger menu** on smaller/mobile devices.
+Do NOT create a new:
+
+---
+
+### **Goal:**
+
+Update `plan.md` to include tasks for implementing a **hamburger menu** for the navigation buttons (Products, Category Management, Product Management, Logout) on **small/mobile screens**. Ensure accessibility and correct functionality on mobile devices.
+
+---
+
+### **New Tasks to Add:**
+
+#### 1. **Hamburger Menu Implementation**:
+
+* **Collapse Navigation**: On small screens (e.g., `max-width: 768px`), collapse the following navigation buttons into a hamburger menu:
+
+  * Products
+  * Category Management
+  * Product Management (admin only)
+  * Logout
+* **Hamburger Button Behavior**:
+
+  * Clicking the hamburger button should toggle the visibility of the menu items.
+  * The menu items should display vertically when the menu is expanded.
+* **Accessibility**:
+
+  * Implement appropriate `aria` attributes (e.g., `aria-expanded`, `aria-controls`, etc.) to indicate the state of the hamburger menu (expanded/collapsed).
+  * Ensure that all menu items are keyboard accessible when the menu is open (focusable, `aria-current`, etc.).
+
+#### 2. **Routing and State Behavior**:
+
+* Ensure the hamburger menu items function correctly and allow for smooth navigation when selected.
+* Ensure focus is correctly managed when toggling the hamburger menu and when interacting with the menu items (e.g., maintaining focus on the active link, `Escape` closes the menu, etc.).
+
+#### 3. **Testing**:
+
+* **Hamburger Menu Interaction**:
+
+  * Add tasks to simulate clicking the hamburger button and test that the menu items toggle visibility.
+  * Verify that the active link (`aria-current`) is correctly displayed.
+* **Accessibility Testing**:
+
+  * Write tests to check that `aria-expanded`, `aria-controls`, and other relevant `aria` attributes are correctly applied to the hamburger button and menu.
+  * Test that keyboard navigation works inside the hamburger menu (tabbing through the menu, `Escape` to close).
+* **Responsive Layout Testing**:
+
+  * Test that the hamburger menu behaves correctly at the mobile breakpoint (`max-width: 768px`), ensuring the regular navigation buttons are hidden and the hamburger button appears.
+
+---

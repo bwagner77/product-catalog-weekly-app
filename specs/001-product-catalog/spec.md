@@ -222,6 +222,26 @@ As an authenticated admin, I can create, view, update, and delete products (incl
  - Attempt to create/update a category whose name differs only by casing from an existing one (blocked 409 Conflict with explanatory JSON message)
  - Order submission including disallowed PII fields (email/name/address/phone) (rejected 400; order not created)
 
+### User Story 10 - Mobile Hamburger Navigation (Priority: P3)
+
+As a mobile shopper on a narrow viewport (width < defined breakpoint), I can easily access navigation actions (Products, Category Management, Product Management, Logout) via a single accessible hamburger button that expands into a vertical menu, so that primary actions remain discoverable without consuming excessive screen space.
+
+**Why this priority**: Preserves core navigation usability and accessibility on mobile devices; reduces visual clutter while maintaining role-based gating.
+
+**Independent Test**: Set viewport width to 375px (mobile). Initial render shows hamburger button only (admin state determines available items). Activating button toggles menu visibility; items appear vertically in specified order with exactly one `aria-current` attribute. Closing re-hides items. Keyboard navigation cycles: hamburger → first item → subsequent items → (logout/admin items conditionally) → wraps.
+
+**Acceptance Scenarios**:
+
+1. Given a viewport width < 768px, When I load the app, Then I see a single hamburger button (navigation items hidden) labeled accessibly (text or aria-label "Menu").
+2. Given the hamburger button is collapsed, When I activate it via click or Enter/Space, Then the menu expands vertically showing navigation items in order (Products, Category Management, Product Management, Logout) respecting admin gating and setting `aria-expanded="true"`.
+3. Given the menu is expanded, When I press Tab, Then focus moves through each visible navigation item in visual order without skipping.
+4. Given the menu is expanded, When I activate a navigation item, Then the view changes, exactly one item has `aria-current="page"`, and the menu may remain open or auto-collapse (assume auto-collapse after selection for MVP) restoring focus to the newly active view heading.
+5. Given the menu is expanded, When I activate the hamburger button again, Then the menu collapses (`aria-expanded="false"`), items are hidden from assistive tech (e.g., `aria-hidden="true"` or removed from DOM), and focus returns to the hamburger button.
+6. Given I am a non-admin user, When I expand the menu, Then I do NOT see Category Management or Product Management items (no flash of hidden admin items).
+7. Given rapid toggle interactions (<300ms apart), When I toggle the menu multiple times, Then state remains consistent with no duplicate `aria-current` attributes and no layout shift > 0.1 CLS.
+8. Given viewport changes from <768px to ≥768px while menu is expanded, When the layout re-renders, Then the standard navigation bar appears and the hamburger button is hidden without losing current page active state.
+
+
 ## Requirements *(mandatory)*
 
 <!--
@@ -305,6 +325,14 @@ As an authenticated admin, I can create, view, update, and delete products (incl
    - Deprecated alias `insufficient_stock` MUST be absent after deprecation (any occurrence fails test).
    - Error JSON MUST contain only `{ error, message }` (optional `traceId` allowed if globally adopted); no extraneous properties.
    - Each code MUST appear in at least one simulated scenario; tests snapshot bodies.
+- **FR-061**: On viewports < 768px width the navigation controls MUST collapse into a single hamburger button (only visible navigation control besides brand/logo); individual navigation items MUST be hidden from both visual display and sequential focus until expansion.
+- **FR-062**: Hamburger button MUST implement accessible semantics: (`aria-label="Menu"` or visible text), `aria-expanded` reflecting state, and `aria-controls` referencing the controlled menu container id.
+- **FR-063**: Expanding the hamburger menu MUST reveal navigation items in the exact specified order (Products, Category Management, Product Management, Logout) vertically stacked, applying existing role gating (admin-only items omitted entirely for non-admin users without flash). Exactly one item MUST have `aria-current="page"` at any time.
+- **FR-064**: Collapsing the menu MUST hide items from assistive technologies (either removal from DOM or application of `aria-hidden="true"` plus exclusion from tab order). Focus after collapse MUST return to the hamburger button.
+- **FR-065**: Activating a navigation item in mobile context MUST auto-collapse the menu (MVP assumption) and shift focus to the primary heading of the newly active view within ≤ 500ms.
+- **FR-066**: Rapid toggling (≥3 toggles within 1 second) MUST NOT produce duplicate menu containers, orphaned focus targets, or multiple elements with `aria-current`.
+- **FR-067**: Responsive transition from mobile (<768px) to desktop (≥768px) MUST restore full horizontal navigation without losing current active state or causing layout shift > 0.1 CLS.
+- **FR-068**: Tests MUST cover hamburger collapsed state, expand/collapse behavior (click and keyboard activation), accessibility attributes (`aria-expanded`, `aria-controls`, `aria-current` uniqueness), auto-collapse on item activation, omission of admin-only items for non-admin, and viewport transition behavior.
 
 ### Error Codes (Structured Responses)
 
@@ -423,6 +451,14 @@ Edge Case Addition: Token expiry mid-request results in auth middleware treating
  - **SC-040**: 100% authenticated admin sessions retain visibility of admin-only navigation items across page reloads until logout or token expiry.
  - **SC-041**: 0 references to transitional feature flag `ENABLE_CATEGORY_ADMIN` remain in specification text.
  - **SC-042**: 100% access control decisions rely solely on authenticated role + token validity (no flag checks).
+- **SC-043**: 100% mobile initial renders (<768px) show only hamburger button (no visible individual nav items) within ≤ 200ms of load.
+- **SC-044**: 100% hamburger expansions apply correct vertical order with exactly one `aria-current` attribute and reflect `aria-expanded="true"`.
+- **SC-045**: 95% hamburger toggle interactions (expand or collapse) complete UI state change (visibility + aria updates) in ≤ 300ms.
+- **SC-046**: 100% non-admin mobile expansions omit admin-only items with zero flash of privileged controls.
+- **SC-047**: 100% mobile navigation item activations auto-collapse menu and shift focus to target view heading in ≤ 500ms.
+- **SC-048**: 0 occurrences of duplicate menu containers or multiple simultaneous `aria-current` values across ≥50 rapid toggle cycles.
+- **SC-049**: 100% viewport transitions (mobile→desktop and desktop→mobile) preserve active page state and avoid layout shift > 0.1.
+- **SC-050**: 0 critical accessibility violations related to hamburger button semantics (`aria-label`, `aria-expanded`, reachable via keyboard).
 
 ## Assumptions
 
@@ -454,3 +490,6 @@ Edge Case Addition: Token expiry mid-request results in auth middleware treating
  - Admin authentication login endpoint is standardized to a unified `POST /api/auth/login` that issues a JWT for admins (role claim `admin`).
  - Admin JWT lifetime is 1 hour; operations after expiry require re-login (no silent refresh cycle in scope).
  - Fallback alt text MUST use en dash (–) in pattern `<product name> – image unavailable`.
+- Mobile breakpoint assumed at 768px width (exclusive upper bound for hamburger activation). No intermediate tablet-specific layout defined.
+- Outside-click or ESC key collapse behavior is deferred; MVP collapse triggers are hamburger toggle and navigation item activation.
+- Auto-collapse after navigation item activation chosen for MVP; future enhancement may allow persistent open state.
