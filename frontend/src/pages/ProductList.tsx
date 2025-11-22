@@ -20,6 +20,21 @@ const ProductList = () => {
   const [initialFetchDone, setInitialFetchDone] = React.useState(false);
 
   React.useEffect(() => {
+    function onOrderPlaced(e: Event) {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || !Array.isArray(detail.items)) return;
+      setProducts(prev => prev.map(p => {
+        const found = detail.items.find((i: any) => i.productId === p.id);
+        if (!found) return p;
+        const newStock = Math.max(0, p.stock - found.quantity);
+        return newStock === p.stock ? p : { ...p, stock: newStock };
+      }));
+    }
+    window.addEventListener('order:placed', onOrderPlaced);
+    return () => window.removeEventListener('order:placed', onOrderPlaced);
+  }, []);
+
+  React.useEffect(() => {
     const controller = new AbortController();
 
     async function load() {

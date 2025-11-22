@@ -63,15 +63,15 @@ describe('[US3] Accessibility and responsiveness', () => {
     expect(className).toContain('sm:grid-cols-2');
     expect(className).toContain('lg:grid-cols-3');
   });
-  it('focus order: Products nav → Categories nav → search → category filter → first product item', async () => {
+  it('focus order: Products nav → Category Management nav → Product Management nav → Logout nav → search → category filter → first product item', async () => {
     vi.spyOn(global, 'fetch' as any).mockResolvedValue({ ok: true, json: async () => sample });
     render(<App />);
     // Wait for products (default view)
     await screen.findByRole('list', { name: /product list/i });
     const navProducts = screen.getByTestId('nav-products');
     const navCategories = screen.getByTestId('nav-categories');
-    const navLogout = screen.queryByTestId('nav-logout');
     const navProductMgmt = screen.queryByTestId('nav-product-mgmt');
+    const navLogout = screen.queryByTestId('nav-logout');
     const searchInput = screen.getByPlaceholderText('Search…');
     const categorySelect = screen.getByRole('combobox', { name: 'Filter by category' });
     const firstProductItem = screen.getAllByRole('listitem')[0];
@@ -82,13 +82,13 @@ describe('[US3] Accessibility and responsiveness', () => {
     expect(document.activeElement).toBe(navProducts);
     await user.tab();
     expect(document.activeElement).toBe(navCategories);
-    if (navLogout) {
-      await user.tab();
-      expect(document.activeElement).toBe(navLogout);
-    }
     if (navProductMgmt) {
       await user.tab();
       expect(document.activeElement).toBe(navProductMgmt);
+    }
+    if (navLogout) {
+      await user.tab();
+      expect(document.activeElement).toBe(navLogout);
     }
     await user.tab();
     expect(document.activeElement).toBe(searchInput);

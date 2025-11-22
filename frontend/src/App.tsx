@@ -41,15 +41,7 @@ const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
             aria-current={active === 'categories' ? 'page' : undefined}
             className={`px-3 py-1 rounded text-sm font-medium border ${active === 'categories' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
             data-testid="nav-categories"
-          >Categories</button>
-        )}
-        {authenticated && (
-          <button
-            type="button"
-            onClick={() => { logout(); onChange('login'); setTimeout(() => { const h = document.getElementById('login-heading'); h?.focus(); }, 0); }}
-            className="px-3 py-1 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100"
-            data-testid="nav-logout"
-          >Logout</button>
+          >Category Management</button>
         )}
         {authenticated && (
           <button
@@ -59,6 +51,14 @@ const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
             className={`px-3 py-1 rounded text-sm font-medium border ${active === 'productManagement' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
             data-testid="nav-product-mgmt"
           >Product Management</button>
+        )}
+        {authenticated && (
+          <button
+            type="button"
+            onClick={() => { logout(); onChange('login'); setTimeout(() => { const h = document.getElementById('login-heading'); h?.focus(); }, 0); }}
+            className="px-3 py-1 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100"
+            data-testid="nav-logout"
+          >Logout</button>
         )}
         {!authenticated && (
           <button
@@ -152,6 +152,7 @@ function InnerApp() {
       }
       const data: Order = await res.json();
       setOrder(data);
+      window.dispatchEvent(new CustomEvent('order:placed', { detail: { items: cart.items.map(i => ({ productId: i.productId, quantity: i.quantity })) } }));
       cart.clear();
     } catch (e) {
       // eslint-disable-next-line no-console

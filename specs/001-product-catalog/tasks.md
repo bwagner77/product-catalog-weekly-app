@@ -57,7 +57,7 @@ description: "Task list for Product Catalog MVP"
 - [X] T024 [P] [US1] Create Product type in `frontend/src/types/product.ts`
 - [X] T025 [P] [US1] Implement ProductCard component in `frontend/src/components/ProductCard.tsx`
 - [X] T026 [US1] Implement ProductList page fetching from `${import.meta.env.VITE_API_BASE_URL}/api/products` in `frontend/src/pages/ProductList.tsx`
- - [ ] T127 [US1] Add branding (Shoply logo + name) and navigation controls in amended order (Products, Category Management, Product Management (admin only), Logout) to `frontend/src/App.tsx`; rename legacy label "Categories" → "Category Management" and ensure single `aria-current` and stable focus order (FR-044, FR-045, SC-022, SC-023, SC-035, SC-036)
+- [X] T127 [US1] Add branding (Shoply logo + name) and navigation controls in amended order (Products, Category Management, Product Management (admin only), Logout) to `frontend/src/App.tsx`; rename legacy label "Categories" → "Category Management" and ensure single `aria-current` and stable focus order (FR-044, FR-045, SC-022, SC-023, SC-035, SC-036)
 
 ## Phase 4: User Story 2 - Loading, Empty, Error States (Priority: P2)
 
@@ -384,15 +384,15 @@ Completion of extended scope requires prior tasks T062–T120 plus branding/gati
 
 ## Phase N+3: Remediation & Validation (Navigation, Dynamic Stock, RBAC Consistency)
 
-- [ ] T160 [P] Dynamic zero-stock UI update implementation: After successful order POST, optimistically decrement affected product stock locally and update ProductCard; fallback minimal refetch if discrepancies. Acceptance: product reaching stock 0 displays “Out of Stock” badge/text ≤1s (FR-015, SC-037).
-- [ ] T161 [P] Dynamic zero-stock accessibility test: Assert `disabled` attribute, `aria-disabled="true"`, presence of status text (visible or sr-only), Tailwind classes `opacity-50 cursor-not-allowed`, and preserved focus order (FR-016, SC-038).
-- [ ] T162 [P] Navigation label audit test: Render primary routes/components and assert no occurrences of legacy label “Categories”; expect “Category Management” (SC-036, FR-045).
-- [ ] T163 [P] Multi-route navigation order test: Verify order (Products, Category Management, Product Management, Logout) and single `aria-current` across catalog, category, product management, login routes (SC-035, FR-045).
+- [X] T160 [P] Dynamic zero-stock UI update implementation: After successful order POST, optimistically decrement affected product stock locally and update ProductCard; fallback minimal refetch if discrepancies. Acceptance: product reaching stock 0 displays “Out of Stock” badge/text ≤1s (FR-015, SC-037).
+- [X] T161 [P] Dynamic zero-stock accessibility test: Assert `disabled` attribute, `aria-disabled="true"", presence of status text (visible or sr-only), Tailwind classes `opacity-50 cursor-not-allowed`, and preserved focus order (FR-016, SC-038).
+ - [X] T162 [P] Navigation label audit test: Render primary routes/components and assert no occurrences of legacy label “Categories”; expect “Category Management” (SC-036, FR-045).
+ - [X] T163 [P] Multi-route navigation order test: Verify order (Products, Category Management, Product Management, Logout) and single `aria-current` across catalog, category, product management, login routes (SC-035, FR-045).
 - [ ] T164 [P] Unauthorized navigation denial test: Non-admin direct route access yields AccessDenied or safe redirect without privileged control flash (SC-039, FR-059).
 - [ ] T165 [P] Admin navigation persistence test: With valid token, reload retains admin-only nav links visibility (SC-040, FR-058).
 - [ ] T166 [P] Flag absence repository scan: Automated test/utility greps for `ENABLE_CATEGORY_ADMIN` (excluding this tasks.md historical note) ensuring zero active references (SC-041).
 - [ ] T167 [P] Role-only enforcement static analysis: Scan backend routes/middleware for conditional checks referencing removed flag; ensure all protected writes depend solely on `authAdmin` (SC-042).
-- [ ] T168 [P] Consolidated error schema test: Table-driven scenarios exercise each error code (`admin_auth_required`, `token_expired`, `forbidden_admin_role`, `invalid_credentials`, `category_name_conflict`, `stock_conflict`) asserting JSON `{ error, message }` shape and absence of deprecated `insufficient_stock` (FR-060, SC-033).
+ - [X] T168 [P] Consolidated error schema test: Table-driven scenarios exercise each error code (`admin_auth_required`, `token_expired`, `forbidden_admin_role`, `invalid_credentials`, `category_name_conflict`, `stock_conflict`) asserting JSON `{ error, message }` shape and absence of deprecated `insufficient_stock` (FR-060, SC-033).
 
 ---
 
