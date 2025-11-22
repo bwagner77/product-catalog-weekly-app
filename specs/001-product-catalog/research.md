@@ -76,11 +76,19 @@ Sampling Guidance:
 - Alternatives considered: Cascade removal (data loss risk), allow deletion (creates invalid state), soft-delete (unneeded complexity).
 
 ### Stock Handling (UPDATED 2025-11-21)
-### Category Administration Gating
-- Decision: Environment flag `ENABLE_CATEGORY_ADMIN` controls write operations (POST/PUT/DELETE) for categories; default false in production.
-- Rationale: Prevents accidental public modification in unauthenticated phase; enables safe local iteration.
-- Alternatives considered: Role-based auth (deferred), unconditional write access (risk of misuse), separate admin service (overkill).
-- Validation: Backend gating tests (T142) assert 403 and no data mutation when disabled; enabling flag allows normal CRUD flows (covered by existing tests T072–T078).
+### Category Administration Gating (Replaced by JWT Role Enforcement 2025-11-21)
+- Decision: Legacy environment flag removed; gating now enforced via JWT role claim (`role: 'admin'`).
+- Rationale: Constitution mandates explicit role-based access; JWT offers stateless verification & clear expiry semantics.
+- Alternatives considered: Environment flag (removed), API key (no role granularity), session cookie (requires store), full user directory (deferred).
+- Validation: Auth middleware tests assert: 401 missing/invalid/expired token (`admin_auth_required` or `token_expired`), 403 non-admin (`forbidden_admin_role`), zero data mutation on failure.
+
+### JWT Authentication (Added 2025-11-21)
+- Decision: HS256 JWT issued by `POST /api/auth/login` containing `{ role: 'admin', iat, exp }`, exp = 1h.
+- Rationale: Minimal complexity, single admin role, easy rotation of secret via env `JWT_SECRET`.
+- Security: Token stored in `localStorage` key `shoply_admin_token` (acceptable for MVP; future migration to httpOnly cookie possible). Expired tokens purged client-side on detection.
+- Edge Cases: Expiry mid-request yields 401 `token_expired`; malformed signature 401 `admin_auth_required`; valid token wrong role 403 `forbidden_admin_role`.
+- No Refresh Tokens: User re-authenticates after expiry; reduces attack surface (no token pair lifecycle).
+- Future: Introduce multi-role matrix, refresh flow, and revocation list.
 
 ### Dual Modal Dismissal Accessibility
 - Decision: Provide both × icon and "Close" button for order confirmation modal.

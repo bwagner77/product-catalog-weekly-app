@@ -45,6 +45,7 @@ describe('[US7] Orders API', () => {
     const before = await Product.findOne({ id: prod1Id }).lean();
     const res = await request(app).post('/api/orders').send({ items: [{ productId: prod1Id, quantity: 999 }] });
     expect(res.status).toBe(409);
+    expect(res.body.error).toBe('stock_conflict');
     const after = await Product.findOne({ id: prod1Id }).lean();
     expect(after!.stock).toBe(before!.stock);
   });
@@ -62,6 +63,8 @@ describe('[US7] Orders API', () => {
   it('rejects empty items array', async () => {
     const res = await request(app).post('/api/orders').send({ items: [] });
     expect(res.status).toBe(400);
+    expect(res.body.error).toBe('validation_error');
+    expect(/items array required/i.test(res.body.message)).toBeTruthy();
   });
 
   it('handles concurrent orders; only one succeeds (stock atomicity)', async () => {
@@ -81,24 +84,30 @@ describe('[US7] Orders API', () => {
   it('rejects missing items property', async () => {
     const res = await request(app).post('/api/orders').send({});
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/items/);
+    expect(res.body.error).toBe('validation_error');
+    expect(/items array required/i.test(res.body.message)).toBeTruthy();
   });
 
   it('rejects non-integer quantity', async () => {
     const res = await request(app).post('/api/orders').send({ items: [{ productId: prod1Id, quantity: 1.5 }] });
     expect(res.status).toBe(400);
+    expect(res.body.error).toBe('validation_error');
+    expect(/quantity must be integer/i.test(res.body.message)).toBeTruthy();
   });
 
   it('rejects zero quantity', async () => {
     const res = await request(app).post('/api/orders').send({ items: [{ productId: prod1Id, quantity: 0 }] });
     expect(res.status).toBe(400);
+    expect(res.body.error).toBe('validation_error');
+    expect(/quantity must be integer/i.test(res.body.message)).toBeTruthy();
   });
 
   it('rejects unknown product id', async () => {
     const missingId = uuidv4();
     const res = await request(app).post('/api/orders').send({ items: [{ productId: missingId, quantity: 1 }] });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/not found/);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('not_found');
+    expect(/product .* not found/i.test(res.body.message)).toBeTruthy();
   });
 
   it('aborts order on simulated concurrent stock change (matchedCount mismatch)', async () => {
@@ -107,7 +116,8 @@ describe('[US7] Orders API', () => {
     const spy = jest.spyOn(Product, 'bulkWrite').mockResolvedValue({ matchedCount: 0 } as any); // force mismatch
     const res = await request(app).post('/api/orders').send({ items: [{ productId: raceProd.id, quantity: 1 }] });
     expect(res.status).toBe(409);
-    expect(res.body.error).toMatch(/concurrently/i);
+    expect(res.body.error).toBe('stock_conflict');
+    expect(/concurrent/i.test(res.body.message)).toBeTruthy();
     spy.mockRestore();
   });
 });

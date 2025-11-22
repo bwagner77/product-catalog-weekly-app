@@ -17,7 +17,7 @@ interface NavBarProps {
 
 const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
   const cart = useCart();
-  const { authenticated } = useAuth();
+  const { authenticated, logout } = useAuth();
   return (
     <header className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10" role="banner">
       <div className="flex items-center space-x-3" aria-label="Brand" data-testid="brand">
@@ -41,6 +41,14 @@ const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
             className={`px-3 py-1 rounded text-sm font-medium border ${active === 'categories' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
             data-testid="nav-categories"
           >Categories</button>
+        )}
+        {authenticated && (
+          <button
+            type="button"
+            onClick={() => { logout(); onChange('login'); setTimeout(() => { const h = document.getElementById('login-heading'); h?.focus(); }, 0); }}
+            className="px-3 py-1 rounded text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100"
+            data-testid="nav-logout"
+          >Logout</button>
         )}
         {!authenticated && (
           <button
@@ -149,7 +157,7 @@ function InnerApp() {
       <div className="flex-1 p-4 md:flex md:space-x-6" aria-live="polite" aria-relevant="additions removals">
         <div className="flex-1" data-testid="active-view">
           {active === 'products' && <ProductList />}
-          {active === 'login' && !authenticated && <Login onSuccess={() => setActive('categories')} />}
+          {active === 'login' && !authenticated && <Login onSuccess={() => setActive('categories')} focusOnMount />}
           {active === 'categories' && (
             <PrivateRoute>
               <CategoryManagement />

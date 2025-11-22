@@ -1,6 +1,6 @@
 # Data Model: Product Catalog
 
-Date: 2025-11-10 (extended 2025-11-20)
+Date: 2025-11-10 (extended 2025-11-20, amended 2025-11-21 for JWT Admin Auth)
 Branch: 001-product-catalog
 
 ## Entities
@@ -14,6 +14,28 @@ Branch: 001-product-catalog
 | price | Decimal (Number) | YES | >= 0, two decimal places | Stored as Number; formatted on output |
 | categoryId | String | NO | If present must reference existing Category id | Enables filtering (uncategorized allowed) |
 | stock | Integer | YES | >= 0 | 0 => out of stock |
+### AdminUser (Ephemeral JWT Claims)
+| Field | Type | Required | Constraints | Notes |
+|-------|------|----------|-------------|-------|
+| username | String | YES (login only) | Must match env `ADMIN_USERNAME` | Not persisted post-auth |
+| password | String | YES (login only) | Must match env `ADMIN_PASSWORD` | Not persisted; used to issue JWT |
+| role | String | YES | Fixed value 'admin' for this phase | Encoded in JWT payload |
+| iat | Number (epoch seconds) | YES | Set at issuance | Standard JWT issued-at |
+| exp | Number (epoch seconds) | YES | iat + 3600 (1h) | Token expiry; enforced on backend & client |
+
+JWT Payload Shape (HS256 signed):
+```json
+{ "role": "admin", "iat": 1732166400, "exp": 1732170000 }
+```
+
+Storage Key: `shoply_admin_token` (localStorage). Logout or expiry detection MUST remove this key and dependent UI state.
+
+Validation Rules (Auth):
+- Login rejects missing or incorrect credentials with 401 `invalid_credentials`.
+- Protected writes without valid admin JWT return 401 `admin_auth_required` or 401 `token_expired` if past exp.
+- Non-admin (future roles) would receive 403 `forbidden_admin_role`.
+
+Edge Case: Token expiry mid-interaction triggers immediate removal and access denial messaging (see spec Error Codes section).
 | imageUrl | String | YES | Non-empty string; pattern optional (e.g., product<N>.jpg) | Placeholder or real asset path |
 | createdAt | Date | YES | Auto via timestamps | ISO string in API |
 | updatedAt | Date | YES | Auto via timestamps | ISO string in API |

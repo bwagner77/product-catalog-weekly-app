@@ -53,10 +53,10 @@ describe('GET /api/products integration', () => {
     expect(invalid.length).toBe(0);
   });
 
-  it('GET /api/products limits results to 100 items when more exist', async () => {
-    // Insert additional >100 products to exceed the cap
+  it('GET /api/products limits results to 200 items when more exist', async () => {
+    // Insert additional >200 products to exceed the cap
     const bulk: Array<Partial<import('../../src/models/product').ProductDocument>> = [];
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 230; i++) {
       bulk.push({
         name: `Extra Product ${i}`,
         description: `Extra description ${i}`,
@@ -70,9 +70,9 @@ describe('GET /api/products integration', () => {
     const res = await request(app).get('/api/products');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeLessThanOrEqual(100);
-    // Given ≥125 products in DB now, we expect the hard cap to be exactly 100
-    expect(res.body.length).toBe(100);
+    expect(res.body.length).toBeLessThanOrEqual(200);
+    // Given ≥235 products in DB now, we expect the hard cap to be exactly 200
+    expect(res.body.length).toBe(200);
   });
 
   it('increments error counter when route throws', async () => {

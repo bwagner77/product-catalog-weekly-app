@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import Product from '../models/product';
 import { authAdmin } from '../middleware/authAdmin';
+import { validationError, notFound } from '../utils/errors';
 
 const router = Router();
 
@@ -24,8 +25,8 @@ router.get('/products', async (req: Request, res: Response, next: NextFunction) 
       }
     }
 
-    // Use lean for performance and exclude internal _id; cap at 100 (no pagination)
-    const products = await Product.find(filter, { _id: 0 }).limit(100).lean().exec();
+    // Use lean for performance and exclude internal _id; cap at 200 (no pagination)
+    const products = await Product.find(filter, { _id: 0 }).limit(200).lean().exec();
     res.status(200).json(products);
   } catch (err) {
     next(err);
@@ -43,7 +44,7 @@ router.post('/products', authAdmin, async (req: Request, res: Response, next: Ne
       typeof imageUrl !== 'string' || !imageUrl.trim() ||
       typeof stock !== 'number' || stock < 0
     ) {
-      return res.status(400).json({ message: 'invalid product fields' });
+      return res.status(400).json(validationError('Invalid product fields'));
     }
     const created = await Product.create({
       name: name.trim(),
@@ -70,7 +71,7 @@ router.put('/products/:id', authAdmin, async (req: Request, res: Response, next:
       (imageUrl && (typeof imageUrl !== 'string' || !imageUrl.trim())) ||
       (stock !== undefined && (typeof stock !== 'number' || stock < 0))
     ) {
-      return res.status(400).json({ message: 'invalid product fields' });
+      return res.status(400).json(validationError('Invalid product fields'));
     }
     const update: Record<string, unknown> = {};
     if (name) update.name = (name as string).trim();
@@ -80,7 +81,7 @@ router.put('/products/:id', authAdmin, async (req: Request, res: Response, next:
     if (stock !== undefined) update.stock = stock;
     if (typeof categoryId === 'string') update.categoryId = categoryId.trim();
     const updated = await Product.findOneAndUpdate({ id: req.params.id }, update, { new: true, runValidators: true }).lean();
-    if (!updated) return res.status(404).json({ message: 'Not found' });
+    if (!updated) return res.status(404).json(notFound('Product not found'));
     res.json(updated);
   } catch (err) {
     next(err);
@@ -91,7 +92,7 @@ router.put('/products/:id', authAdmin, async (req: Request, res: Response, next:
 router.delete('/products/:id', authAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const existing = await Product.findOne({ id: req.params.id }).lean();
-    if (!existing) return res.status(404).json({ message: 'Not found' });
+    if (!existing) return res.status(404).json(notFound('Product not found'));
     await Product.deleteOne({ id: req.params.id });
     res.status(204).send();
   } catch (err) {

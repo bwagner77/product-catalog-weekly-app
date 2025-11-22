@@ -44,6 +44,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => { refreshFromStorage(); }, [refreshFromStorage]);
 
+  // Auto-clear expired token to enforce redirect behavior (T167)
+  useEffect(() => {
+    if (token && exp && Date.now() / 1000 > exp) {
+      localStorage.removeItem(STORAGE_KEY);
+      setToken(null); setRole(null); setExp(null);
+    }
+  }, [token, exp]);
+
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       const base = (import.meta.env.VITE_API_BASE_URL as string) || '';

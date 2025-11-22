@@ -36,7 +36,8 @@ describe('Category CRUD API', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: '   ' });
     expect(res.status).toBe(400);
-    expect(/name required/i.test(res.body.message)).toBeTruthy();
+    expect(res.body.error).toBe('validation_error');
+    expect(/category name required/i.test(res.body.message)).toBeTruthy();
   });
 
   it('rejects duplicate category name', async () => {
@@ -52,7 +53,8 @@ describe('Category CRUD API', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Books' });
     expect(dup.status).toBe(400);
-    expect(/duplicate/i.test(dup.body.message)).toBeTruthy();
+    expect(dup.body.error).toBe('category_name_conflict');
+    expect(/already exists/i.test(dup.body.message)).toBeTruthy();
   });
 
   it('lists categories (GET)', async () => {
@@ -106,7 +108,8 @@ describe('Category CRUD API', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: '  ' });
     expect(res.status).toBe(400);
-    expect(/name required/i.test(res.body.message)).toBeTruthy();
+    expect(res.body.error).toBe('validation_error');
+    expect(/category name required/i.test(res.body.message)).toBeTruthy();
   });
 
   it.skip('rejects update causing duplicate name', async () => {
@@ -179,7 +182,7 @@ describe('Category CRUD API', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'SyntheticDupRace' });
     expect(res.status).toBe(400);
-    expect(/duplicate/i.test(res.body.message)).toBeTruthy();
+    expect(res.body.error).toBe('category_name_conflict');
     (Category as any).create = originalCreate;
   });
 
@@ -199,7 +202,7 @@ describe('Category CRUD API', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'SecondUniqueRenamed' });
     expect(res.status).toBe(400);
-    expect(/duplicate/i.test(res.body.message)).toBeTruthy();
+    expect(res.body.error).toBe('category_name_conflict');
     (Category as any).findOneAndUpdate = originalUpdate;
   });
 

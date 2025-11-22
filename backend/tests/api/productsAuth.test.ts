@@ -31,7 +31,8 @@ describe('Products Admin Auth & CRUD', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ name: '', description: '', price: -1, imageUrl: '', stock: -5 });
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('message', 'invalid product fields');
+    expect(res.body.error).toBe('validation_error');
+    expect(res.body.message).toMatch(/invalid product fields/i);
   });
 
   let createdId: string;
@@ -67,7 +68,8 @@ describe('Products Admin Auth & CRUD', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ price: -10 });
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('message', 'invalid product fields');
+    expect(res.body.error).toBe('validation_error');
+    expect(res.body.message).toMatch(/invalid product fields/i);
   });
 
   test('update product not found (404)', async () => {
@@ -76,6 +78,7 @@ describe('Products Admin Auth & CRUD', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ price: 99 });
     expect(res.status).toBe(404);
+    expect(res.body.error).toBe('not_found');
   });
 
   test('delete product not found (404)', async () => {
@@ -83,6 +86,7 @@ describe('Products Admin Auth & CRUD', () => {
       .delete(`${basePath}/00000000-0000-4000-8000-000000000000`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
+    expect(res.body.error).toBe('not_found');
   });
 
   test('delete product success (204)', async () => {

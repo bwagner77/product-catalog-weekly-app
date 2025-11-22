@@ -286,12 +286,42 @@ As an authenticated admin, I can create, view, update, and delete products (incl
  - **FR-054**: All admin product CRUD operations (create, update, delete) MUST complete within ≤ 2 seconds (p95 in typical environment) and return appropriate status codes: 201 create, 200 update, 204 delete, 400 validation failure, 403 unauthorized, 404 not found.
  - **FR-055**: Category create/update MUST enforce case-insensitive name uniqueness; duplicates (including those differing only by case) return 409 JSON `{ "error": "Category name already exists" }` with no mutation.
  - **FR-056**: Order persistence MUST NOT include customer PII (email, name, address, phone). Incoming payloads containing any such fields MUST be rejected with 400 validation and not stored; orders remain anonymous.
- - **FR-057** (new): System MUST maintain an observable frontend user state object after successful login containing at minimum: `role` ("admin"), `authenticated` (boolean), and a stable `id` or token reference.
- - **FR-058** (new): Logout MUST clear all user state and remove any persisted session indicator so subsequent protected navigation/actions are blocked until re-authentication.
- - **FR-059** (new): Admin-only pages (CategoryManagement, ProductManagement) MUST verify user state on access; non-admin users are blocked with branded "Access Denied" messaging or redirected safely without exposing controls.
- - **FR-060** (new): User state MUST persist for the active session across page reloads until explicit logout or token/session expiry (no silent privilege loss mid-session other than expiry).
- - **FR-061** (new): Unauthorized protected write attempts (category/product POST/PUT/DELETE) MUST return a consistent branded JSON error body containing machine-readable `error` and human-readable `message` fields and perform zero mutations.
- - **FR-062** (new): Admin authentication token (JWT) MUST expire within 1 hour of issuance; after expiry protected operations are blocked (401/403) until user re-authenticates via login. No silent background refresh in this phase.
+ - **FR-057**: System MUST provide a unified admin login endpoint `POST /api/auth/login` issuing a JWT containing role `admin`, `iat`, and `exp` claims with a 1 hour expiry.
+ - **FR-058**: Authenticated admin session state (role, authenticated flag, token reference) MUST persist across page reloads until explicit logout or token expiry; logout MUST clear all persisted state.
+ - **FR-059**: Admin-only areas (CategoryManagement, ProductManagement) MUST enforce access control and present branded "Access Denied" messaging (or safe redirect) to non-admin users without rendering privileged controls.
+ - **FR-060**: All unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous, non-admin, or expired token) MUST return a consistent structured JSON error body with machine-readable `error` and human-readable `message` fields and produce zero mutations.
+
+### Error Codes (Structured Responses)
+
+All protected and validation error responses MUST use the standardized JSON schema:
+
+```json
+{ "error": "<machine_code>", "message": "<human readable actionable text>" }
+```
+
+Canonical machine codes for this phase:
+- `admin_auth_required` – Missing/invalid/expired token when admin authentication is required (status 401).
+- `forbidden_admin_role` – Authenticated token present but lacks required admin role (status 403).
+- `invalid_credentials` – Login attempt failed (status 401).
+- `token_expired` – Token recognized but `exp` is in the past (status 401).
+- `validation_error` – Request body failed schema/business validation (status 400).
+- `category_name_conflict` – Case-insensitive duplicate category name on create/update (status 409).
+- `stock_conflict` – Order line(s) insufficient stock during atomic decrement (status 409).
+- `insufficient_stock` – Same as `stock_conflict` (alias kept for clarity in order endpoint tests; may consolidate later) (status 409).
+- `unauthorized_write` – Generic fallback for protected write when specific code above not emitted (status 403).
+- `not_found` – Entity requested but not found (status 404) (optional message wording).
+
+Status code decision tree (protected write):
+1. No/invalid signature OR expired → 401 `admin_auth_required` or `token_expired` (explicit expiry case).
+2. Valid token, role != admin → 403 `forbidden_admin_role`.
+3. Valid admin token, business validation fails → 400 `validation_error`.
+4. Valid admin token, domain conflict (e.g., delete category with products) → 409 domain-specific code (`category_name_conflict`, `stock_conflict`).
+
+FR-058 Clarification: Storage key MUST be `shoply_admin_token`; logout MUST clear this key and any derived user state (role, exp) and redirect focus to the login page heading.
+FR-059 Clarification: "Safe redirect" means client navigates to `/login?denied=<resource>` OR renders inline AccessDenied component retaining accessible focus management; implementation MUST avoid flashing privileged controls (no intermediate render).
+FR-060 Clarification: All emitted error codes MUST appear in the table above; tests assert schema shape and membership (SC-033).
+
+Edge Case Addition: Token expiry mid-request results in auth middleware treating token as expired (status 401 `token_expired`); no partial write occurs.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -358,13 +388,16 @@ As an authenticated admin, I can create, view, update, and delete products (incl
  - **SC-022**: 100% initial catalog views display Shoply brand name, logo, and navigation controls.
  - **SC-023**: Navigation view switches (Products ↔ Categories) median latency ≤ 200ms and p95 latency ≤ 400ms over ≥50 consecutive switches in typical environment.
  - **SC-024**: 100% order confirmations present both dismissal controls (× and Close) and either control dismisses with correct focus behavior.
- - **SC-025** (updated): 100% category write attempts by anonymous (non-admin) users return 403 and perform no data mutation.
- - **SC-029** (new): 100% unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous or expired user state) return 403 with branded error body and produce zero mutations.
+ - **SC-025**: 100% category write attempts by anonymous (non-admin) users return 403 and perform no data mutation.
  - **SC-026**: 100% ProductManagement access attempts by anonymous users are blocked with 403 and actionable messaging (no mutation).
  - **SC-027**: 100% admin stock updates persist and never produce negative stock; invalid (<0) attempts rejected with clear message.
  - **SC-028**: 95% admin product CRUD operations complete within ≤ 2 seconds (p95) under typical environment conditions.
- - **SC-029**: 100% unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous or expired user state) return 403 with branded error body and produce zero mutations.
+ - **SC-029**: 100% unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous, non-admin, or expired user state) return 403 with branded structured error body and produce zero mutations.
  - **SC-030**: 100% expired admin token attempts to perform protected writes result in 401 (invalid/expired) or 403 (unauthorized) and zero mutations; successful re-login restores access immediately.
+ - **SC-031**: 95% cart add/update/remove interactions reflect updated UI state (icon count, totals) in ≤ 500ms in typical environment.
+ - **SC-032**: 95% successful order submissions display confirmation modal with snapshot details in ≤ 1 second in typical environment.
+ - **SC-033**: 100% unauthorized protected write responses use documented error codes and structured `{ error, message }` body.
+ - **SC-034**: 100% expired token admin page access attempts hide privileged controls and show Access Denied messaging without flicker.
 
 ## Assumptions
 

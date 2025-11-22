@@ -15,6 +15,9 @@ MONGODB_URI=mongodb://mongo:27017/product_catalog
 PORT_BACKEND=3000
 PORT_FRONTEND=5173
 FRONTEND_URL=http://localhost:5173
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=secret
+JWT_SECRET=dev_jwt_secret_value
 ```
 
 Optional overrides:
@@ -35,6 +38,7 @@ Endpoints:
 - Categories: http://localhost:3000/api/categories
 - Orders: http://localhost:3000/api/orders (POST)
 - Order by Id: http://localhost:3000/api/orders/{id}
+- Admin Login: http://localhost:3000/api/auth/login (POST)
 - Health: http://localhost:3000/health | http://localhost:5173/health
 
 ## Health checks
@@ -76,3 +80,4 @@ npm test -- --runInBand tests/api/perf.test.ts
 - Accessibility: all images have descriptive alt text; fallback indicates unavailability.
 - Performance probes: set `PERF=1` to run latency sampling; p95 targets: API ≤1000ms, initial render ≤2000ms.
 - Concurrency: simultaneous orders competing for limited stock yield one success (201) and one 409 rejection.
+- Admin Authentication: Use `POST /api/auth/login` with `ADMIN_USERNAME`/`ADMIN_PASSWORD`; successful response returns JWT (HS256) exp=1h stored in `localStorage` key `shoply_admin_token`. Logout clears key; expired token triggers automatic removal and redirect to login.
