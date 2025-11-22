@@ -7,7 +7,8 @@ import { getAdminToken } from './helpers/auth';
 describe('Category admin RBAC (JWT role=admin)', () => {
   let token: string;
   beforeAll(async () => {
-    await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_test');
+    // Use an isolated database to avoid cross-suite deletions interfering with RBAC gating assertions.
+    await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_categories_gating_test');
     await Category.deleteMany({});
     token = await getAdminToken();
   });

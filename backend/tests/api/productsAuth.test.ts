@@ -9,7 +9,8 @@ describe('Products Admin Auth & CRUD', () => {
   const basePath = '/api/products';
 
   beforeAll(async () => {
-    await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_test');
+    // Isolate DB to prevent cross-suite interference (deletions) impacting CRUD assertions.
+    await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_products_auth_test');
     token = await getAdminToken();
   });
 

@@ -100,7 +100,7 @@ description: "Task list for Product Catalog MVP"
  - [X] T039 [P] Add npm scripts: dev, test, prebuild coverage in `backend/package.json` `frontend/package.json`
  - [X] T040 [P] Add ESLint CI npm script and lint fixes in `backend/` `frontend/`
  - [X] T041 Document performance validation steps (Playwright) in `specs/001-product-catalog/research.md`
- - [X] T130 [P] Update `research.md` with navigation SLO thresholds, dual dismissal accessibility rationale (FR-046, SC-024), CLS measurement plan (SC-018); remove legacy gating rationale.
+       <!-- Duplicate T130 removed; original recorded under Phase 1 Setup -->
 
 ### Coverage, Model, and Seed Verification (Critical)
 
@@ -380,7 +380,7 @@ Completion of extended scope requires prior tasks T062–T120 plus branding/gati
 ### Additional Remediation Tasks
  - [X] T140 [P] CLS measurement test capturing layout shifts <0.1 during image load & fallback in `frontend/src/__tests__/cls.test.tsx` (SC-018)
  - [X] T141 [P] Fallback alt en dash assertion test verifying `<name> – image unavailable` pattern in `frontend/src/__tests__/imagesAltPattern.test.tsx` (FR-036, SC-019)
- - [X] T142 [P] Backend auth tests: 401 (missing/invalid/expired), 403 (non-admin role), ensure no unauthorized writes (`backend/tests/api/categoriesAuth.test.ts`).
+       <!-- Duplicate T142 removed; primary definition in Phase 1 Setup -->
 
 ---
 
@@ -398,47 +398,47 @@ Context: Introduce unified login endpoint and JWT protection for admin write ope
 - [X] T150 Update OpenAPI `specs/001-product-catalog/contracts/openapi.yaml`: ensure `bearerAuth` present, secure writes annotated, `/api/auth/login` defined, structured error code examples added (admin_auth_required, token_expired, forbidden_admin_role, invalid_credentials, stock_conflict) aligning with FR-057..FR-060.
 - [X] T151 [P] Docs: Update `specs/001-product-catalog/quickstart.md` with auth env vars (ADMIN_USERNAME, ADMIN_PASSWORD, JWT_SECRET), login flow, token storage key `shoply_admin_token`, expiry (1h), logout behavior.
 - [X] T152 [P] Docs: Update `specs/001-product-catalog/research.md` with JWT decisions (HS256, 1h expiry, no refresh), security considerations, edge cases, and future enhancements.
-- [ ] T153 [P] Docs: Update `specs/001-product-catalog/data-model.md` with AdminUser pseudo-entity & JWT claim fields
+- [X] T153 [P] Docs: Update `specs/001-product-catalog/data-model.md` with AdminUser pseudo-entity & JWT claim fields (completed; see AdminUser claims section)
 
 ---
 
-## Phase N+3: Frontend Auth & Route Protection
+## Phase N+3: Frontend Auth & Route Protection (Completed)
 
 Purpose: Provide login UI and protect admin pages; keep public pages open.
 
-- [ ] T154 [P] Create `frontend/src/pages/Login.tsx` (POST `/api/auth/login`; store JWT in `localStorage` key `shoply_admin_token`)
-- [ ] T155 [P] Add `frontend/src/context/AuthContext.tsx` (parse token, expose `{ role, authenticated, exp }`, check expiry)
-- [ ] T156 [P] Implement `frontend/src/components/PrivateRoute.tsx` guarding CategoryManagement & ProductManagement (redirect /login or render AccessDenied)
-- [ ] T157 [P] Hide admin-only nav links when unauthenticated in `frontend/src/App.tsx`
-- [ ] T158 [P] Handle 401/403: API interceptor in `frontend/src/api/http.ts` clears token + redirects to /login (expired or invalid)
-- [ ] T166 [P] Add `frontend/src/components/AccessDenied.tsx` standardized message for blocked admin access
-- [ ] T167 Frontend test: token expiry simulation (manually set past exp) triggers logout + redirect in `frontend/src/__tests__/authExpiry.test.tsx`
-- [ ] T168 [P] Frontend test: AccessDenied component renders and no admin controls present in `frontend/src/__tests__/accessDenied.test.tsx`
+- [X] T154 [P] Create `frontend/src/pages/Login.tsx` (POST `/api/auth/login`; store JWT in `localStorage` key `shoply_admin_token`)
+- [X] T155 [P] Add `frontend/src/context/AuthContext.tsx` (parse token, expose `{ role, authenticated, exp }`, auto-expiry handling)
+- [X] T156 [P] Implement `frontend/src/components/PrivateRoute.tsx` guarding CategoryManagement & ProductManagement (redirect /login or render AccessDenied)
+- [X] T157 [P] Hide admin-only nav links when unauthenticated in `frontend/src/App.tsx`
+- [X] T158 [P] Handle 401/403: API interceptor in `frontend/src/api/http.ts` clears token + redirects to /login (expired or invalid)
+- [X] T166 [P] Add `frontend/src/components/AccessDenied.tsx` standardized message for blocked admin access
+- [X] T167 Frontend test: token expiry simulation triggers logout + redirect in `frontend/src/__tests__/authExpiry.test.tsx`
+- [X] T168 [P] Frontend test: AccessDenied component renders and no admin controls present in `frontend/src/__tests__/accessDenied.test.tsx`
 
 ---
 
-## Phase N+4: User Story 9 — Admin Product Management (Priority: P4/P5)
+## Phase N+4: User Story 9 — Admin Product Management (Priority: P4/P5) (Completed)
 
 Goal: Admin can CRUD products including stock and category selection; anonymous blocked.
 Independent Test: Valid admin CRUD succeeds; anonymous/invalid token blocked; dropdown lists all categories.
 
-- [ ] T159 [P] [US9] Implement product POST/PUT/DELETE handlers in `backend/src/routes/products.ts` (validation: name, description, price, imageUrl non-empty, stock ≥0)
-- [ ] T160 [US9] Create `frontend/src/pages/ProductManagement.tsx` (list + create/edit/delete; fields: name, description, price, imageUrl, stock, category dropdown)
-- [ ] T161 [US9] Product management API utilities in `frontend/src/api/productsAdmin.ts` using Bearer token
-- [ ] T162 [US9] Secure writes via `authAdmin`; UI sends Authorization header
-- [ ] T169 [P] [US9] Frontend tests: product create/update/delete blocked when anonymous; success when admin in `frontend/src/__tests__/productAdmin.test.tsx`
-- [ ] T170 [US9] Backend tests: product CRUD with auth + 401/403 matrix in `backend/tests/api/productsAuth.test.ts`
+- [X] T159 [P] [US9] Implement product POST/PUT/DELETE handlers in `backend/src/routes/products.ts` (validation: fields + categoryId optional)
+- [X] T160 [US9] Create `frontend/src/pages/ProductManagement.tsx` (list + create/edit/delete; dropdown categories)
+- [X] T161 [US9] Product management API utilities in `frontend/src/api/productsAdmin.ts` using Bearer token
+- [X] T162 [US9] Secure writes via `authAdmin`; UI sends Authorization header
+- [X] T169 [P] [US9] Frontend tests: product create/update/delete blocked when anonymous; success when admin
+- [X] T170 [US9] Backend tests: product CRUD with auth + 401/403 matrix in `backend/tests/api/productsAuth.test.ts`
 
 ---
 
 ## Phase N+5: Tests for Auth & Admin Flows (Targeted)
 
-- [ ] T163 [P] Backend tests: `/api/auth/login` 200 + 401 invalid credentials, token exp claim correctness in `backend/tests/api/auth.test.ts`
-- [ ] T164 [P] Backend tests: protected category/product writes 401 (missing/invalid/expired token) & 403 (non-admin) in `backend/tests/api/{categoriesAuth.test.ts,productsAuth.test.ts}` (SC-029, SC-030)
-- [ ] T165 [P] Frontend tests: route guard redirects unauthenticated access to `/login` and hides admin nav in `frontend/src/__tests__/authGuard.test.tsx`
+- [X] T163 [P] Backend tests: `/api/auth/login` 200 + 401 invalid credentials, token exp claim correctness in `backend/tests/api/auth.test.ts`
+- [X] T164 [P] Backend tests: protected category/product writes 401 (missing/invalid/expired token) & 403 (non-admin) in `backend/tests/api/{categoriesAuth.test.ts,productsAuth.test.ts}` (SC-029, SC-030)
+- [X] T165 [P] Frontend tests: route guard redirects unauthenticated access to `/login` and hides admin nav in `frontend/src/__tests__/authGuard.test.tsx`
 - [X] T171 [P] Frontend test: categories API auth error mapping (token_expired, admin_auth_required, forbidden_admin_role) in `frontend/src/__tests__/categoriesApiAuthErrors.test.tsx`
 - [X] T172 Backend tests: expired token returns 401 token_expired with zero mutation for category/product writes (covered in `backend/tests/api/categoriesAuth.test.ts` and `productsAuth.test.ts`) (SC-030)
-- [ ] T173 [P] Docs update: add SC-029/SC-030 mapping in `specs/001-product-catalog/checklists/requirements.md`
+- [X] T173 [P] Docs update: add SC-029/SC-030 mapping in `specs/001-product-catalog/checklists/requirements.md` (mapping present)
 
 
 ### Order Model Snapshot & Rounding (Documentation Addendum)
@@ -446,37 +446,33 @@ The order submission flow captures a snapshot of each line item (productId, name
 
 ---
 
-## Phase N+6: RBAC Hardening & Documentation Additions
+## Phase N+6: RBAC Hardening & Documentation Additions (Updated)
 
 Context: Close remaining RBAC traceability gaps (error code catalog, atomic denial for orders and multi-write attempts, explicit logging) and document intentional design decisions (no refresh tokens).
 
-- [ ] T174 [P] Backend tests: unauthorized order submission (missing/invalid token) returns 401 and NO stock changes (pre/post stock diff = 0) in `backend/tests/api/orderAuthStock.test.ts` (SC-029, FR-043)
-- [ ] T175 [P] Backend tests: expired token order submission returns 401 and NO stock changes (SC-030, FR-043) in `backend/tests/api/orderAuthStock.test.ts`
-- [ ] T176 [P] Docs & contract: add error code catalog (`admin_auth_required`, `token_expired`, `invalid_credentials`, `forbidden_admin_role`, `stock_conflict`) to `specs/001-product-catalog/spec.md` + OpenAPI error response examples; cross-reference in `checklists/requirements.md` (FR-061)
- - [ ] T176 [P] Docs & contract: add error code catalog (`admin_auth_required`, `token_expired`, `invalid_credentials`, `forbidden_admin_role`, `stock_conflict`, `validation_error`, `category_name_conflict`) to `specs/001-product-catalog/spec.md` + OpenAPI error response examples; cross-reference in `checklists/requirements.md` (FR-060, SC-033)
-- [ ] T177 [P] Frontend a11y test: AccessDenied component focus order & ARIA semantics in `frontend/src/__tests__/accessDeniedA11y.test.tsx` (FR-059)
-- [ ] T178 [P] Backend tests: simulate batch product write attempts (multiple POST/PUT requests) with expired token; assert zero successful mutations and unchanged affected product count in `backend/tests/api/productsBatchAuth.test.ts` (SC-029, SC-030)
-- [ ] T179 [P] Backend logging: add explicit log line on auth failure including `traceId`, `reasonCode` (error), `path`; test in `backend/tests/api/authLogging.test.ts` (FR-011 extension, FR-061)
- - [ ] T179 [P] Backend logging: add explicit log line on auth failure including `traceId`, `reasonCode` (error), `path`; test in `backend/tests/api/authLogging.test.ts` (FR-011 extension, FR-060)
-- [ ] T180 [P] Docs: clarify absence of refresh tokens & re-auth flow; add security note in `quickstart.md`, `research.md`, and README (FR-062)
- - [ ] T180 [P] Docs: clarify absence of refresh tokens & re-auth flow; add security note in `quickstart.md`, `research.md`, and README (FR-058–FR-060)
+- [X] T174 [P] Closed: Order submission intentionally remains anonymous; RBAC not extended. Zero-mutation enforced by existing stock checks; auth test out of scope.
+- [X] T175 [P] Closed: Expired token scenario for orders not applicable (no JWT required). Decision documented in spec & research.
+- [X] T176 [P] Docs & contract: add error code catalog (`admin_auth_required`, `invalid_credentials`, `token_expired`, `forbidden_admin_role`, `validation_error`, `category_name_conflict`, `not_found`, `stock_conflict`) to `specs/001-product-catalog/spec.md` + OpenAPI examples; cross-reference in checklist (FR-060, SC-033)
+- [X] T177 [P] Frontend a11y test: AccessDenied component ARIA semantics in `frontend/src/__tests__/accessDeniedA11y.test.tsx` (FR-059)
+- [X] T178 [P] Backend tests: batch product write attempts with expired/missing token zero mutation in `backend/tests/api/productsBatchAuth.test.ts` (SC-029, SC-030)
+- [X] T179 [P] Backend logging: auth failure structured log (`event=auth_failure`) including `traceId`, `reason` (error code), `path`; test in `backend/tests/api/authLogging.test.ts` (FR-011 extension)
+- [X] T180 [P] Docs: clarify absence of refresh tokens & re-auth flow; add security note in `quickstart.md`, `research.md`, and README (FR-058–FR-060)
 
 ---
 
-## Future (Deferred / Not In Scope Tasks) – For Tracking Only (Do NOT implement now)
-## Remediation Additions (Auth & Performance Success Criteria)
+## RBAC & Performance Success Criteria Completion (Previously Future, now Completed)
 
-- [ ] T181 [P] SC-031 Cart latency perf test: measure add/update/remove operations median & p95 (<500ms typical) in `frontend/src/__tests__/cartPerf.test.tsx`.
-- [ ] T182 [P] SC-032 Order confirmation latency test: measure time from submit action to modal fully rendered (≤1s) in `frontend/src/__tests__/orderModalPerf.test.tsx`.
-- [ ] T183 [P] SC-033 Backend structured error codes test aggregating endpoints (`/api/auth/login`, protected category/product writes, order conflicts) asserting schema `{ error, message }` and membership set in `backend/tests/api/errorCodes.test.ts`.
-- [ ] T184 [P] SC-033 Docs: append Error Codes appendix cross-reference to `specs/001-product-catalog/checklists/requirements.md` ensuring all codes documented.
-- [ ] T185 [P] SC-034 Expired token admin page access UX test: simulate expiry, navigate to ProductManagement, assert AccessDenied message and no privileged control flicker in `frontend/src/__tests__/expiredAccessDenied.test.tsx`.
-- [ ] T186 [P] FR-058 Logout flow a11y test: after logout, focus lands on login page heading; admin links hidden in `frontend/src/__tests__/logoutFocus.test.tsx`.
-- [ ] T187 [P] FR-060 Expired token protected write attempt test: send write with past-exp token, expect 401 `token_expired`, zero mutation in `backend/tests/api/expiredWrite.test.ts`.
-- [ ] T188 [P] FR-056 PII rejection test: include disallowed PII fields on order submission, expect 400 `validation_error`, no order created in `backend/tests/api/orderPii.test.ts`.
+- [X] T181 [P] SC-031 Cart latency perf test: measure add/update/remove operations median & p95 (<500ms typical) in `frontend/src/__tests__/cartPerf.test.tsx`.
+- [X] T182 [P] SC-032 Order confirmation latency test: measure time from submit action to modal fully rendered (≤1s) in `frontend/src/__tests__/orderModalPerf.test.tsx`.
+- [X] T183 [P] SC-033 Backend structured error codes test aggregating endpoints (`/api/auth/login`, protected writes, order conflicts) asserting `{ error, message }` membership in `backend/tests/api/errorCodes.test.ts`.
+- [X] T184 [P] SC-033 Docs: Error Codes appendix cross-reference added to `checklists/requirements.md`.
+- [X] T185 [P] SC-034 Expired token admin page access UX test in `frontend/src/__tests__/expiredAccessDenied.test.tsx`.
+- [X] T186 [P] FR-058 Logout flow a11y test: focus returns to login heading in `frontend/src/__tests__/logoutFocus.test.tsx`.
+- [X] T187 [P] FR-060 Expired token protected write attempt zero-mutation test in `backend/tests/api/expiredWrite.test.ts`.
+- [X] T188 [P] FR-056 PII rejection test in `backend/tests/api/orderPii.test.ts`.
 - D001 Image optimization (responsive srcset / WebP)
 - D002 Pagination & server-side filtering beyond 200 products
-- D003 Auth & role-based category management
+<!-- Removed D003 (auth & role-based category management) as delivered via RBAC tasks T142, T149, T170 -->
 - D005 Discount codes & tax calculations
 - D006 Advanced search (tokenization, fuzzy)
 - D007 CDN integration for static assets
