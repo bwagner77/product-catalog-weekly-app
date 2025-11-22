@@ -5,7 +5,7 @@
 
 ## Summary
 
-Initial MVP delivered read‑only product listing. This extension adds categories (CRUD – now environment‑gated for write operations), product search & filtering, stock display and cart gating, client‑side cart with persistence, order submission with snapshot semantics and inventory stock decrement, deterministic product images plus fallback behavior, responsive layout refinements (grid breakpoints, collapsible cart sidebar, navigation bar), Shoply branding (logo + name), and dual dismissal for the order confirmation modal. Seed volume increases (≥20 products, ≥5 categories) to better exercise filtering and search. Product images use deterministic placeholder filenames (`product<N>.jpg`); no upload or transformation pipeline. Performance, accessibility, and containerization principles remain unchanged.
+Initial MVP delivered read‑only product listing. This extension adds categories (CRUD – now RBAC‑enforced for write operations), product search & filtering, stock display and cart gating, client‑side cart with persistence, order submission with snapshot semantics and inventory stock decrement, deterministic product images plus fallback behavior, responsive layout refinements (grid breakpoints, collapsible cart sidebar, navigation bar), Shoply branding (logo + name), dual dismissal for the order confirmation modal, and admin authentication via JWT with user state–based role enforcement (anonymous vs admin). Seed volume increases (≥20 products, ≥5 categories) to better exercise filtering and search. Product images use deterministic placeholder filenames (`product<N>.jpg`); no upload or transformation pipeline. Performance, accessibility, and containerization principles remain unchanged.
 
 ## Technical Context
 
@@ -30,7 +30,7 @@ Gate evaluation per Constitution (v1.1.0):
 | Testing Standards | Unit + integration, ≥80% coverage, no E2E | PASS | Jest/Vitest configured; thresholds enforced |
 | UX Consistency | Mobile‑first, Tailwind‑only, accessibility, Shoply branding, dual modal dismissal | PASS | Branding tasks planned; modal has two dismissal controls |
 | Performance | Page ≤2s, API ≤1s, cart/order ops ≤500ms | PASS | New ops targets added; still feasible locally |
-| Security & RBAC | Admin-only write ops protected | PENDING | Enforce via JWT middleware + transitional env gating |
+| Security & RBAC | Admin-only write ops protected | PASS | Enforce via JWT middleware; legacy environment gating removed |
 | Deployment Strategy | Docker Compose multi‑service | PASS | One‑command up via compose, .env used |
 | Technology Choices | Mature, testable, container‑friendly | PASS | Express, React, Mongoose, Vite |
 | Governance | Versioning, plan/spec/tasks artifacts | PASS | Plan/spec/contracts/data‑model/quickstart present |
@@ -123,13 +123,13 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 - Search: case-insensitive substring on name + description (phrase semantics).
 - Error handling: 400 (validation), 404 (not found), 409 (category deletion conflict).
 - Stock Decrement (UPDATED 2025-11-21): Order submission performs atomic stock decrement via Mongo `bulkWrite` with conditional filters per line item. Failure of any filter (insufficient stock or race) aborts the entire operation with 409; snapshot persisted only on success. Concurrency validated in test T121.
- - Admin Authentication (NEW 2025-11-21):
+ - Admin Authentication (UPDATED 2025-11-21):
    - Endpoint `POST /api/auth/login` accepts JSON `{ username, password }` validated against env `ADMIN_USERNAME`, `ADMIN_PASSWORD`.
-   - Issues JWT (HS256) with claims: `{ role: 'admin', iat, exp }`, with `exp` ≥ 1 hour; secret `JWT_SECRET`.
-   - Middleware `authAdmin` validates Bearer token (presence, signature, expiration, role === 'admin'); on failure returns 401 JSON `{ "error": "admin_auth_required", "message": "Admin authentication required" }`.
-   - All protected write endpoints (category/product POST/PUT/DELETE) require valid token; legacy `ENABLE_CATEGORY_ADMIN` flag still honored for transitional gating (403 when disabled, even if token valid).
+   - Issues JWT (HS256) claims: `{ role: 'admin', iat, exp }` with 1h expiry; secret `JWT_SECRET`.
+   - Middleware `authAdmin` validates Bearer token (presence, signature, expiration, role === 'admin'); failures return 401 JSON `{ "error": "admin_auth_required", "message": "Admin authentication required" }`.
+   - All protected write endpoints (category/product POST/PUT/DELETE) require valid token; enforcement based solely on token role (no environment flag gating).
    - Failed login attempts logged (optional); placeholder for future rate limiting.
-   - No refresh tokens; client must re-authenticate after expiration.
+   - No refresh tokens; client re-authenticates after expiration.
 
 ### Frontend specifics (Extended & Updated 2025-11-21):
 - Vite + React 18 + TS + Tailwind; use `import.meta.env.VITE_API_BASE_URL`.
@@ -160,7 +160,7 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
   - **CategoryManagement**:
     - Admin-style CRUD interface for categories.
     - Navigation reachable via NavBar button (no page reload).
-    - Write operations (create/update/delete) subject to environment flag `ENABLE_CATEGORY_ADMIN` (disabled in production by default; reads always allowed).
+    - Write operations (create/update/delete) restricted to authenticated admin; anonymous users see access denied messaging; reads always public.
 - Local cart hook/module manages state + persistence (add/remove/update, total computation, required).
 - Order flow: capture snapshot, then decrement product stock atomically per ordered quantity, then clear cart. If any requested quantity exceeds current stock, reject order (409) with explanatory message; no partial fulfillment.
 - Accessibility:
@@ -224,14 +224,14 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 16. Modal enhancement: add explicit "Close" button to `OrderConfirmation` component; tests assert both dismissal paths restore focus.
 17. Branding integration: add `public/images/logo.svg` asset; update NavBar to display Shoply name + logo alt text; tests confirm presence.
 18. Navigation integration: add Products & Categories buttons with aria-current state; tests validate switching without reload and focus retention.
-19. Category admin gating: implement environment flag `ENABLE_CATEGORY_ADMIN`; when false, write endpoints return 403/405; tests cover disabled mode (production simulation) and enabled mode (development).
+19. (Removed legacy gating – number retained for continuity) Category write protection now solely via JWT admin role; ensure test coverage verifies anonymous attempts receive 403 and zero mutation.
 20. Product response validation: extend backend tests to assert `imageUrl` non-empty and `stock >= 0` for all products.
 21. Image fallback validation: tests for broken/missing image substituting `fallback.jpg` within 1s.
 22. Navigation SLO refinement: capture timing metrics for view switches; enforce median ≤200ms, p95 ≤400ms across ≥50 toggles, aligning with SC‑023.
 23. Update spec & plan references for new FR-044..FR-051 and SC-021..SC-025 alignment.
 24. Backend: Implement `POST /api/auth/login` (env credentials, issue HS256 JWT ≥1h exp, return `{ token, expiresInSeconds }`).
 25. Backend: Implement `authAdmin` middleware (parse Authorization bearer, verify signature/exp/role, attach `req.admin = true`, handle failures with branded 401/403).
-26. Backend: Apply `authAdmin` to category POST/PUT/DELETE and product POST/PUT/DELETE (add product write endpoints if missing); honor legacy `ENABLE_CATEGORY_ADMIN` gating (403 when disabled even with token).
+26. Backend: Apply `authAdmin` to category POST/PUT/DELETE and product POST/PUT/DELETE (add product write endpoints if missing); remove any legacy gating logic; 403 only on missing/invalid/unauthorized (role) or expired token.
 27. Backend: Extend OpenAPI (`contracts/openapi.yaml`) adding `bearerAuth` security scheme, `/api/auth/login`, and security requirements for protected endpoints.
 28. Backend: Product CRUD validation tests (create/update/delete) including category association and stock non-negative enforcement under auth.
 29. Backend: Add failed login attempt logging (count metric or log line) + test verifying log output format.
@@ -243,12 +243,21 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 35. Frontend: Add branded unauthorized error display for blocked CRUD attempts (consistent JSON parsing).
 36. Frontend Tests: Route guarding, nav visibility, login success/failure, ProductManagement CRUD, category dropdown completeness, token expiry logout.
 37. Backend Tests: Auth middleware valid/invalid/expired token paths; protected endpoints permission matrix; product/category CRUD under auth.
-38. Docs: Update `quickstart.md` with auth env vars (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `JWT_SECRET`), login instructions, token storage note, transitional gating deprecation note.
+38. Docs: Update `quickstart.md` with auth env vars (`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `JWT_SECRET`), login instructions, token storage note (flag fully removed, no transitional gating).
 39. Docs: Update `research.md` with JWT decision (HS256, ≥1h expiry, no refresh, rationale & alternatives) and future rate limiting note.
 40. Docs: Update `data-model.md` with AdminUser pseudo entity and JWT claims breakdown.
-41. Plan: Add success criterion reference SC-029 (unauthorized write blocking) to Completion Criteria if not already present.
+41. Plan: Add success criterion references SC-029 (unauthorized write blocking) & SC-030 (expired token enforcement) to Completion Criteria if not already present.
 42. Refactor: Centralize auth error responses and integrate with existing error handler.
 43. Future-proofing: Note potential consolidation of additional roles via the same `/api/auth/login` endpoint; no changes now beyond admin.
+44. Frontend: Implement user state persistence (1h token) and logout clearing plus automatic redirect on expired token detection.
+45. Frontend Tests: Add persistence & logout suite (reload retains admin until expiry; logout immediately blocks Product/Category management pages).
+46. Backend Tests: Add expired token simulation (manually craft exp in past) ensuring protected writes return 401/403 and zero mutation.
+47. Error Handling: Standardize unauthorized response body `{ "error": "admin_auth_required", "message": "Admin authentication required" }`; tests assert consistency across all protected endpoints.
+48. Frontend: Add branded "Access Denied" component or inline message for blocked admin page access; integrate with route guard.
+49. Frontend: Hide ProductManagement link when role missing; test nav visibility before/after login and after logout.
+50. Docs: Add section describing user state object shape `{ role, authenticated, id?, exp }` and persistence strategy; reference FR-057..FR-062.
+51. Accessibility: Verify focus management on redirect after expired token (focus on login form heading) and add test.
+52. Security Note: Document absence of refresh tokens and manual re-login flow; add rationale (simplicity, reduced attack surface for MVP) to `research.md`.
 
 ## Risk & Mitigation
 
@@ -260,6 +269,9 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 | Category deletion conflicts | Data integrity loss | Explicit 409 response + UI messaging |
 | Order total mismatch after price changes | User trust | Snapshot price & name at order time; never recompute |
 | Stock race conditions on concurrent orders | Inventory integrity | Conditional bulkWrite; all line filters must pass or request aborts (409). Test T121 ensures only one succeeds. |
+| Expired admin token during active session | Sudden loss of admin controls | Detect on guarded route entry & 401 responses; clear state, redirect to login with focus management (Task 44, 46, 51). |
+| Missing standardized auth error body across endpoints | Inconsistent UX & test fragility | Centralize error generator (Task 47) and assert snapshot in tests. |
+| Overexposed admin links for anonymous users | Confusing UI / false expectations | Conditional NavBar rendering based on user state (Task 49). |
 
 ## Updated Complexity Tracking
 
@@ -276,4 +288,4 @@ Release of extended e‑commerce scope requires:
 6. Documentation (quickstart, research) aligned with stock decrement behavior.
 7. Auth artifacts complete: login endpoint, middleware, protected endpoints, ProductManagement page, route guard, and docs/tests for auth flows.
 8. Unauthorized write blocking validated end-to-end: 100% unauthorized attempts produce correct 401/403 with branded body; 0 mutations.
-9. Transitional gating documented (legacy flag) and interacts correctly with JWT (disabled flag forces 403 on writes even with valid token).
+9. User-state (JWT role) enforcement validated end-to-end; no legacy gating remains; expired token attempts blocked (SC-030) with zero mutation.

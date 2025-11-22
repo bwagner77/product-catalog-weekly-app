@@ -1,0 +1,133 @@
+Please update and extend the existing Product Catalog plan in
+`plans/001-product-catalog/plan.md` **in-place** to reflect the **planned frontend login/user state management, RBAC enforcement, and admin-only product/category management requirements**, and to **remove all references to the transitional environment flag `ENABLE_CATEGORY_ADMIN`**. Do NOT create a new plan; preserve current structure, formatting, and task numbering.
+
+**This update supersedes any previous assumptions of stub-only admin access, open CRUD for non-authenticated users, or transitional environment flags.**
+
+Focus **only on new or updated sections**. Preserve existing tasks unless explicitly overridden.
+
+---
+
+## **1. Remove `ENABLE_CATEGORY_ADMIN` References**
+
+* Delete all mentions of `ENABLE_CATEGORY_ADMIN` from the plan, including:
+
+  * Questions/answers about stubbed or environment-gated mechanisms.
+  * Tasks or notes referencing the flag for CRUD gating.
+  * Any clarifications or assumptions mentioning the flag.
+
+* Ensure **all enforcement now relies solely on authenticated frontend user state** (anonymous vs admin).
+
+---
+
+## **2. Admin Authentication & Frontend User State**
+
+* Implement **frontend-admin login** with observable user state object:
+
+  * User state contains at minimum `{ id, role, authenticated }`.
+  * Login state persists in session (page reloads) and is cleared on logout.
+  * Admin-only pages check user state for access; anonymous/non-admin users are redirected or shown branded **“Access Denied”** message.
+  * Expired or cleared session triggers automatic logout and redirect to login.
+  * No transitional flags (`ENABLE_CATEGORY_ADMIN`) are used; enforcement relies solely on login/user state.
+
+* Plan tasks should include:
+
+  * Frontend login form → populates user state after successful authentication.
+
+  * Logout → clears user state and blocks access to protected pages.
+
+  * Tests verify:
+
+    * User state is maintained across reloads.
+    * Logout clears state and blocks protected pages.
+    * Expired/cleared session triggers automatic logout + redirect.
+    * Unauthorized attempts (UI or API) consistently return branded “Access Denied”.
+
+  * Optional backend endpoint for login (e.g., `POST /api/auth/login`) returning role, token, or session info (implementation deferred to backend plan).
+
+---
+
+## **3. CategoryManagement Page Tasks**
+
+* Restrict **all CRUD operations** to authenticated admins:
+
+  * Unauthorized or anonymous attempts → 403 response or UI “Access Denied”; no data mutation.
+  * Tasks/tests should verify:
+
+    * Admin can create, update, delete categories.
+    * Anonymous/non-admin access blocked consistently.
+    * Backend endpoints enforce admin role claim.
+    * UI reflects access restrictions (buttons/links hidden if non-admin).
+
+---
+
+## **4. ProductManagement Page Tasks**
+
+* Restrict **all CRUD operations** to authenticated admins:
+
+  * Editable fields: `name`, `description`, `price`, `imageUrl`, `stock`, `categoryId`.
+  * Unauthorized attempts → 403 response or UI “Access Denied”; no mutation occurs.
+  * Stock updates cannot be negative.
+  * Tasks/tests should verify:
+
+    * Admin-only access enforced on frontend and backend.
+    * CRUD success/failure for different roles.
+    * Category dropdown lists all categories.
+    * UI elements and NavBar hide admin-only controls for non-admins.
+
+---
+
+## **5. Frontend Route Protection & Access Control**
+
+* Implement **route guarding / PrivateRoute pattern** for:
+
+  * `CategoryManagement`
+  * `ProductManagement`
+
+* Behavior:
+
+  * Missing, expired, or non-admin user state → automatic logout or redirect to login; UI shows “Access Denied”.
+  * Public pages (ProductList, category browsing) remain fully accessible to anonymous users.
+  * User state persists through reloads until logout or session expiry.
+
+* Tasks/tests should verify:
+
+  * Admin access succeeds.
+  * Non-admin/anonymous users blocked.
+  * NavBar and UI elements hide admin-only controls.
+  * Expired session triggers logout + redirect automatically.
+
+---
+
+## **6. Task & Plan Integration**
+
+* Merge new tasks into existing task list:
+
+  * Assign sequential task numbers after current highest.
+  * Explicitly reference files/components/tests for frontend and backend.
+  * Preserve formatting, context, and priority ordering.
+
+---
+
+## **7. Observations / Recommendations / Clarifications (Updated)**
+
+* All CRUD enforcement is now **solely user-state gated**.
+
+* No transitional flags remain.
+
+* Frontend must proactively handle expired or cleared session → logout + redirect.
+
+* Backend endpoints must also enforce admin role claims.
+
+* Tests must cover:
+
+  * Route guarding behavior, including expired sessions.
+  * CRUD operation success/failure by role.
+  * User state persistence and clearing on logout.
+  * UI visibility of admin-only controls.
+  * Backend enforcement of role claims.
+
+* Public product browsing and category listing remain fully accessible.
+
+* Structure allows future addition of shopper login (`role: "user"`) using same backend endpoint without route changes.
+
+---
