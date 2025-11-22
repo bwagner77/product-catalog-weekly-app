@@ -16,7 +16,7 @@
 - Q: How can the order confirmation modal be dismissed? → A: Either the top-right × control or an explicit "Close" button; both accessible and keyboard operable.
 - Q: What branding changes apply? → A: Navigation banner shows **Shoply** name plus logo (accessible alt "Shoply logo").
  - Q: Are category/product management operations still open to anonymous users? → A: No. Prior assumption of open CRUD is overridden. Category and Product management (create/update/delete) now require authenticated admin role.
- - Q: Is full authentication implemented now? → A: A stub or environment-gated mechanism is assumed (e.g., existing `ENABLE_CATEGORY_ADMIN` flag) until a future phase delivers real login/token flows.
+ - Q: Is full authentication implemented now? → A: A simplified admin login (stub) exists via `POST /api/auth/login` issuing a JWT; no environment flag gating remains. Full multi-user auth deferred.
  - Q: What is the response for unauthorized admin operations? → A: 403 JSON `{ "error": "Admin access required" }` (branded messaging enforced).
  - Q: Can anonymous users still browse and order? → A: Yes. Anonymous users retain read-only catalog (products/categories), search/filter, cart interactions, and order submission.
  - Q: Does category deletion logic change under RBAC? → A: Guard remains: 409 when products reference category; only admins may invoke deletion.
@@ -26,6 +26,7 @@
 - Q: How are category name duplicates handled? → A: Case-insensitive uniqueness enforced; create/update attempts with a name differing only by case from an existing category return 409 with JSON `{ "error": "Category name already exists" }` (no mutation).
  - Q: What customer PII (email, address, name) is stored with orders? → A: None; orders remain anonymous snapshots (id/items/total/status/createdAt) with no PII fields; PII-like fields in payload are rejected (400) in this phase.
  - Q: Which authentication login endpoint path is used? → A: Use unified `POST /api/auth/login` issuing a JWT with `{ role: 'admin', iat, exp }`.
+ - Q: What is the admin JWT expiry duration? → A: 1 hour; requires re-login after expiry (no silent silent auto-refresh in this phase).
 
 ### Session 2025-11-14 (updated 2025-11-20)
 
@@ -279,13 +280,18 @@ As an authenticated admin, I can create, view, update, and delete products (incl
  - **FR-048**: CategoryManagement page MUST be reachable via navigation and render its management heading after activation.
  - **FR-049**: New/updated UI elements (brand/logo, navigation buttons, modal Close button) MUST meet accessibility standards (focus order, roles/ARIA, alt text, keyboard operability).
  - **FR-050**: Acceptance tests MUST cover: dual modal dismissal (each independently closes and restores focus), navigation switching (Products ↔ Categories), presence of Shoply brand & logo, and backend product response including imageUrl & stock ≥ 0.
- - **FR-051**: Category write operations (POST, PUT, DELETE) MUST be disabled when environment flag `ENABLE_CATEGORY_ADMIN=false` (default production). Disabled operations return 403 with JSON `{ "error": "Category administration disabled" }`. Reads/list always enabled.
- - **FR-051** (updated): Category write operations (POST, PUT, DELETE) MUST be restricted to authenticated admin users (or enabled gating stub). Unauthorized attempts return 403 JSON `{ "error": "Admin access required" }` and perform no mutation. Reads/list remain public.
+ - **FR-051** (updated): Category write operations (POST, PUT, DELETE) MUST be restricted to authenticated admin users. Unauthorized attempts return 403 JSON `{ "error": "Admin access required" }` and perform no mutation. Reads/list remain public.
  - **FR-052**: ProductManagement CRUD interface MUST be accessible only to authenticated admin users; anonymous attempts to access page or invoke POST/PUT/DELETE product endpoints return 403 JSON `{ "error": "Admin access required" }`.
  - **FR-053**: Admin users MUST be able to update product stock ensuring resulting value is a non-negative integer; attempts to set stock < 0 are rejected with validation messaging (no partial update).
  - **FR-054**: All admin product CRUD operations (create, update, delete) MUST complete within ≤ 2 seconds (p95 in typical environment) and return appropriate status codes: 201 create, 200 update, 204 delete, 400 validation failure, 403 unauthorized, 404 not found.
  - **FR-055**: Category create/update MUST enforce case-insensitive name uniqueness; duplicates (including those differing only by case) return 409 JSON `{ "error": "Category name already exists" }` with no mutation.
  - **FR-056**: Order persistence MUST NOT include customer PII (email, name, address, phone). Incoming payloads containing any such fields MUST be rejected with 400 validation and not stored; orders remain anonymous.
+ - **FR-057** (new): System MUST maintain an observable frontend user state object after successful login containing at minimum: `role` ("admin"), `authenticated` (boolean), and a stable `id` or token reference.
+ - **FR-058** (new): Logout MUST clear all user state and remove any persisted session indicator so subsequent protected navigation/actions are blocked until re-authentication.
+ - **FR-059** (new): Admin-only pages (CategoryManagement, ProductManagement) MUST verify user state on access; non-admin users are blocked with branded "Access Denied" messaging or redirected safely without exposing controls.
+ - **FR-060** (new): User state MUST persist for the active session across page reloads until explicit logout or token/session expiry (no silent privilege loss mid-session other than expiry).
+ - **FR-061** (new): Unauthorized protected write attempts (category/product POST/PUT/DELETE) MUST return a consistent branded JSON error body containing machine-readable `error` and human-readable `message` fields and perform zero mutations.
+ - **FR-062** (new): Admin authentication token (JWT) MUST expire within 1 hour of issuance; after expiry protected operations are blocked (401/403) until user re-authenticates via login. No silent background refresh in this phase.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -352,10 +358,13 @@ As an authenticated admin, I can create, view, update, and delete products (incl
  - **SC-022**: 100% initial catalog views display Shoply brand name, logo, and navigation controls.
  - **SC-023**: Navigation view switches (Products ↔ Categories) median latency ≤ 200ms and p95 latency ≤ 400ms over ≥50 consecutive switches in typical environment.
  - **SC-024**: 100% order confirmations present both dismissal controls (× and Close) and either control dismisses with correct focus behavior.
- - **SC-025**: 100% category write attempts when `ENABLE_CATEGORY_ADMIN=false` return 403 and perform no data mutation.
+ - **SC-025** (updated): 100% category write attempts by anonymous (non-admin) users return 403 and perform no data mutation.
+ - **SC-029** (new): 100% unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous or expired user state) return 403 with branded error body and produce zero mutations.
  - **SC-026**: 100% ProductManagement access attempts by anonymous users are blocked with 403 and actionable messaging (no mutation).
  - **SC-027**: 100% admin stock updates persist and never produce negative stock; invalid (<0) attempts rejected with clear message.
  - **SC-028**: 95% admin product CRUD operations complete within ≤ 2 seconds (p95) under typical environment conditions.
+ - **SC-029**: 100% unauthorized protected write attempts (category/product POST/PUT/DELETE by anonymous or expired user state) return 403 with branded error body and produce zero mutations.
+ - **SC-030**: 100% expired admin token attempts to perform protected writes result in 401 (invalid/expired) or 403 (unauthorized) and zero mutations; successful re-login restores access immediately.
 
 ## Assumptions
 
@@ -368,7 +377,7 @@ As an authenticated admin, I can create, view, update, and delete products (incl
 - Category deletion is blocked if any products reference the category (chosen for data integrity in absence of cascade rule).
 - Category names are enforced case-insensitive unique; duplicates (including those differing only by case) return 409 with JSON error `{ "error": "Category name already exists" }`.
  - Orders are anonymous: no customer PII stored (reduces compliance scope for MVP).
- - Authentication mechanism is stubbed or environment-gated (e.g., `ENABLE_CATEGORY_ADMIN`) pending full login/token implementation; specification focuses on WHAT is enforced (role separation), not HOW.
+ - Authentication mechanism uses a simplified login (stub) via `POST /api/auth/login` returning a JWT with role claim; no legacy environment flag gating is used; full multi-user auth deferred.
  - Prior assumption of open CRUD without authentication is overridden: only authenticated admin may perform category or product create/update/delete.
 - No pricing adjustments (tax, discounts, promotions) applied; totals are simple sums.
 - Stock decrementation on order submission is in scope: orders reduce stock atomically; insufficient stock rejects order (no partial fulfillment).
@@ -383,7 +392,7 @@ As an authenticated admin, I can create, view, update, and delete products (incl
  - Navigation switching is client-side state only (no router dependency required this phase) and performance target defined (SC-023 median ≤200ms, p95 ≤400ms).
  - Logo asset is a static SVG placed in public images directory.
  - Dual modal dismissal requires no confirmation; future enhancement may add animations.
- - Category administration gating: `ENABLE_CATEGORY_ADMIN=false` in production disables write endpoints (POST, PUT, DELETE) responding with 403; development/test may enable by setting true.
- - Category/Product administration may continue to use gating flag until real auth; messaging standardized as `Admin access required` for unauthorized attempts.
+ - Category/Product administration enforcement derives solely from user state (JWT role claim) validated on each protected request; unauthorized attempts receive consistent branded 403 error.
  - Admin authentication login endpoint is standardized to a unified `POST /api/auth/login` that issues a JWT for admins (role claim `admin`).
+ - Admin JWT lifetime is 1 hour; operations after expiry require re-login (no silent refresh cycle in scope).
  - Fallback alt text MUST use en dash (–) in pattern `<product name> – image unavailable`.

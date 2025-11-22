@@ -1,0 +1,104 @@
+Please update the existing Product Catalog specification in
+`specs/001-product-catalog/spec.md` to reflect **Shoply frontend login/user state management and RBAC enforcement**, and to **remove all references to the transitional environment flag `ENABLE_CATEGORY_ADMIN`**. Do NOT create a new folder; only update the spec in place.
+
+**This update supersedes any previous assumptions of stub-only admin access, open CRUD for non-authenticated users, or transitional environment flags.**
+
+Focus **only on new or updated sections**. Preserve all prior content, numbering, and context, except where explicitly overridden.
+
+Apply the following updates:
+
+---
+
+## 1. Remove `ENABLE_CATEGORY_ADMIN` References
+
+* Delete **all mentions** of `ENABLE_CATEGORY_ADMIN` from the spec, including:
+
+  * Questions/answers, e.g., “A stub or environment-gated mechanism is assumed (e.g., existing `ENABLE_CATEGORY_ADMIN` flag)…”
+  * Functional requirements or success criteria referring to the flag.
+  * Any clarifications, assumptions, or gating notes that mention the flag.
+
+* Ensure **no part of the spec still implies that access control or CRUD enforcement depends on a feature flag**. Enforcement must rely **solely on authenticated frontend user state (anonymous vs admin).**
+
+---
+
+## 2. User Authentication & State Updates
+
+* Introduce a **frontend user state model**:
+
+  * **Anonymous users** – default state; can browse products, search/filter, add to cart, submit orders. Cannot access admin-only pages or perform management operations.
+  * **Admin users** – authenticated; can access CategoryManagement and ProductManagement pages and perform CRUD operations.
+
+* Login state must **persist in session** and be cleared on logout.
+
+* Unauthorized attempts on admin pages or CRUD endpoints trigger a branded “Access Denied” message.
+
+* Override previous assumptions of stub-only admin access, no frontend user state, and any transitional environment flags.
+
+---
+
+## 3. CategoryManagement Page Updates
+
+* **FR-051 (updated):** Category write operations (POST, PUT, DELETE) MUST be restricted to authenticated admin users; unauthorized attempts return 403 with:
+
+```json
+{ "error": "Admin access required" }
+```
+
+and perform no data mutation.
+**Note:** Enforcement is **solely based on user state**; all references to `ENABLE_CATEGORY_ADMIN` are removed.
+
+* **SC-025 (updated):** All anonymous attempts to access CategoryManagement CRUD endpoints return 403 and perform no data mutation.
+
+---
+
+## 4. ProductManagement Page Updates
+
+* **FR-052 → FR-054:** ProductManagement CRUD operations (create, update, delete, stock adjustment) MUST be restricted to authenticated admin users; unauthorized or anonymous attempts return 403 with:
+
+```json
+{ "error": "Admin access required" }
+```
+
+and perform no data mutation.
+**Note:** Enforcement is **solely based on user state**; all references to `ENABLE_CATEGORY_ADMIN` are removed.
+
+* **SC-026 → SC-028:** Anonymous access blocked; admin stock updates persist and are never negative; CRUD operations complete within ≤ 2 seconds (p95).
+
+---
+
+## 5. Frontend User State Functional Requirements (New)
+
+* **FR-055:** Maintain observable user state object after login (`id`, `role`, `authenticated`).
+
+* **FR-056:** Logout clears user state.
+
+* **FR-057:** Admin-only pages (CategoryManagement, ProductManagement) MUST verify user state on access; block non-admins with “Access Denied” or safe redirect.
+
+* **FR-058:** User state MUST persist for the active frontend session (including page reloads) until explicit logout or session expiry.
+
+* **FR-059:** Unauthorized operations (UI or API write attempts to protected endpoints) MUST consistently return branded error body with machine-readable `error` field and human-readable `message`.
+
+* **SC-029:** 100% of unauthorized protected write attempts (category/product POST/PUT/DELETE) return 403 with branded error body and produce 0 mutations (includes expired or cleared user state).
+
+---
+
+## 6. Clarifications & Assumptions Updates
+
+* Admin login may be stubbed or environment-gated; exact auth implementation deferred.
+* User state applies at page/endpoint level; spec describes **observable effects only**.
+* Anonymous users retain full catalog, cart, search/filter, and order functionality.
+* Previous assumptions of no frontend user state, stub-only admin access, or transitional flags are **overridden**.
+
+---
+
+## 7. Spec Integrity Notes
+
+* Merge updates without removing prior content.
+* Maintain numbering consistency; only update FRs, SCs, and User Stories affected by RBAC and user state.
+* **Ensure all references to `ENABLE_CATEGORY_ADMIN` are removed.** Access control now relies solely on login/user state.
+* ProductManagement and CategoryManagement CRUD enforcement must now be clearly documented as **user-state guarded only**.
+* Ensure **spec describes what is enforced**, not how it is implemented internally.
+
+**Goal:** Update `spec.md` with **Shoply frontend login/user state management**, RBAC enforcement, admin page protections, and **completely remove all mentions of the transitional environment flag `ENABLE_CATEGORY_ADMIN`**.
+
+---

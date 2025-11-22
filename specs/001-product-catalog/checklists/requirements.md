@@ -1,57 +1,50 @@
-# Specification Quality Checklist: Product Catalog E-Commerce + Images Extension
+# Specification Quality Checklist: Product Catalog RBAC & User State Update
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2025-11-20 (updated with image support)
+**Purpose**: Validate specification completeness and quality after RBAC (admin) & user state integration and flag removal
+**Created**: 2025-11-21 (updated with RBAC + user state + flag removal)
 **Feature**: ../spec.md
 
 ## Content Quality
 
-- [x] No implementation details (languages, frameworks, APIs) beyond previously accepted baseline
-- [x] Focused on user value and business needs
-- [x] Written for non-technical stakeholders
-- [x] All mandatory sections completed (original + previous extension + images)
+- [x] No implementation details added (remains technology-agnostic; JWT mention limited to endpoint path clarity)
+- [x] Focused on user value (catalog browsing, admin maintenance) and business needs (data integrity, RBAC enforcement)
+- [x] Written for non-technical stakeholders (observable effects, outcomes, roles)
+- [x] All mandatory sections completed (stories, FRs, Success Criteria, Assumptions, Entities)
 
 ## Requirement Completeness
 
 - [x] No [NEEDS CLARIFICATION] markers remain
-- [x] Requirements are testable and unambiguous (including image fallback & responsiveness)
-- [x] Success criteria are measurable
-- [x] Success criteria are technology-agnostic (no implementation details)
-- [x] All acceptance scenarios are defined (including new user stories)
-- [x] Edge cases are identified (original + extended list + image absence/broken cases)
-- [x] Scope is clearly bounded (≤ 200 products, no auth, no pagination, no inventory mutation, no image upload)
-- [x] Dependencies and assumptions identified (cart persistence, category deletion rule, uniqueness, static image assets, fallback behavior)
+- [x] Requirements are testable & unambiguous (includes RBAC write blocking, user state persistence, image fallback, atomic stock)
+- [x] Success criteria are measurable (latency, percentages, zero-mutation guarantees)
+- [x] Success criteria are technology-agnostic (RBAC described via roles, not implementation internals)
+- [x] All acceptance scenarios defined (admin vs anonymous flows, CRUD restrictions)
+- [x] Edge cases identified (auth failures, expired state, negative stock, image issues, deletion conflicts)
+- [x] Scope bounded (≤200 products, basic RBAC, no pagination, no discounts, no image upload)
+- [x] Dependencies & assumptions identified (client persistence, anonymous order model, role-based enforcement, atomic stock logic)
 
 ## Feature Readiness
 
-- [x] All functional requirements have clear acceptance criteria or implicit observable outcomes
-- [x] User scenarios cover primary flows + extended commerce activities
-- [x] Feature meets measurable outcomes defined in Success Criteria
-- [x] No implementation details leak into specification beyond preserved original endpoint mention (image presentation remains technology-agnostic)
+- [x] All functional requirements (FR-001..FR-061) have observable outcomes
+- [x] User scenarios cover shopper, admin maintenance, order lifecycle
+- [x] Success Criteria cover performance, integrity, accessibility, RBAC enforcement (SC-001..SC-029)
+- [x] Specification avoids HOW (no libraries/stack specifics); JWT mention limited to endpoint path for clarity
 
 ## Notes
 
-- E-Commerce + Images extension integrated 2025-11-20. Ready for `/speckit.plan`.
+- RBAC & user state integrated 2025-11-21; legacy flag removed.
+- Ready for `/speckit.plan` or refinement passes (tests & implementation planning).
 
-## Success Criteria Tracking (SC-001 .. SC-020)
+## Success Criteria Presence (Defined in spec)
 
-- [x] SC-001 API latency p95 GET /api/products ≤1000ms (local probe)
-- [x] SC-002 Initial render p95 ≤2000ms (manual/Playwright guidance)
-- [x] SC-003 Structured request logging present
-- [x] SC-004 Error logging increments counter
-- [x] SC-005 Seed idempotency (counts stable on re-run)
-- [x] SC-006 Error counter surfaced via /health
-- [x] SC-007 Category CRUD responsiveness ≤2s typical local
-- [x] SC-008 Cart persistence across refresh
-- [x] SC-009 Cart cleared post successful order
-- [x] SC-010 Single rounding step for order total
-- [x] SC-011 Order POST latency p95 ≤1000ms (probe)
-- [x] SC-012 Blocked category deletion returns 409 & message
-- [x] SC-013 100% blocked deletions have explanation text
-- [x] SC-014 Snapshot immutability after product price change
-- [x] SC-015 All products include non-empty imageUrl
-- [x] SC-016 Every product card renders an image or fallback
-- [x] SC-017 Fallback substitution <1000ms simulated failure
-- [x] SC-018 Reserved 200x200 prevents CLS >0.1 (manual)
-- [x] SC-019 Alt pattern `<name> – image unavailable` validated
-- [x] SC-020 Focus returns to body after order confirmation close
+- [x] SC-001 .. SC-024 (catalog performance, UX, branding)
+- [x] SC-025 updated (anonymous category writes blocked)
+- [x] SC-026 anonymous product management blocked
+- [x] SC-027 non-negative stock updates
+- [x] SC-028 admin CRUD responsiveness
+- [x] SC-029 zero-mutation guarantee for unauthorized protected writes
+
+## Outstanding Items (for implementation phase, not spec quality)
+
+- [ ] Auth token expiry handling tests (future phase)
+- [ ] Expired session UX messaging consistency audit
+- [ ] Performance sampling for protected endpoints under load
