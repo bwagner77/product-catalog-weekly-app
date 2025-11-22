@@ -11,7 +11,8 @@ describe('Products search & filter API', () => {
   let catB: string;
 
   beforeAll(async () => {
-    await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_test');
+    // Use an isolated DB to avoid cross-test contamination from other suites sharing product_catalog_test
+    await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_products_search_test');
     await Product.deleteMany({});
     await Category.deleteMany({});
     const a = await (Category as any).create({ name: 'AlphaCat' });
