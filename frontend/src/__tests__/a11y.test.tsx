@@ -70,6 +70,7 @@ describe('[US3] Accessibility and responsiveness', () => {
     await screen.findByRole('list', { name: /product list/i });
     const navProducts = screen.getByTestId('nav-products');
     const navCategories = screen.getByTestId('nav-categories');
+    const navLogout = screen.queryByTestId('nav-logout');
     const searchInput = screen.getByPlaceholderText('Search…');
     const categorySelect = screen.getByRole('combobox', { name: 'Filter by category' });
     const firstProductItem = screen.getAllByRole('listitem')[0];
@@ -80,6 +81,10 @@ describe('[US3] Accessibility and responsiveness', () => {
     expect(document.activeElement).toBe(navProducts);
     await user.tab();
     expect(document.activeElement).toBe(navCategories);
+    if (navLogout) {
+      await user.tab();
+      expect(document.activeElement).toBe(navLogout);
+    }
     await user.tab();
     expect(document.activeElement).toBe(searchInput);
     await user.tab();

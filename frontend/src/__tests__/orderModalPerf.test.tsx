@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import App from '../App';
 
@@ -18,7 +18,12 @@ beforeEach(() => {
       ] });
     }
     if (url.includes('/api/orders')) {
-      return Promise.resolve({ ok: true, json: async () => ({ id: 'o-1', items: [{ productId: 'p-1', name: 'Prod', price: 5, quantity: 1 }], createdAt: new Date().toISOString() }) });
+      return Promise.resolve({ ok: true, json: async () => ({
+        id: 'o-1',
+        items: [{ productId: 'p-1', name: 'Prod', price: 5, quantity: 1 }],
+        total: 5,
+        createdAt: new Date().toISOString()
+      }) });
     }
     if (url.includes('/api/categories')) {
       return Promise.resolve({ ok: true, json: async () => [] });
@@ -45,12 +50,11 @@ describe('Order confirmation performance (SC-032)', () => {
       fireEvent.click(addBtn);
       const checkout = screen.getByTestId('checkout-btn');
       const t0 = performance.now();
-      // Act ensures state flush for measuring UI readiness
-      await act(async () => {
-        fireEvent.click(checkout);
-        // Wait for modal element
-        await screen.findByTestId('order-confirmation-modal');
-      });
+      fireEvent.click(checkout);
+      // Use waitFor to reliably wait for modal
+      await waitFor(() => {
+        expect(screen.getByTestId('order-confirmation')).toBeInTheDocument();
+      }, { timeout: 1500 });
       const dt = performance.now() - t0;
       durations.push(dt);
       unmount();

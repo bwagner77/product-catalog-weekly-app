@@ -168,13 +168,24 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 - Layout responsiveness:
   - Grid adapts per breakpoints, sidebar collapsible, top components sticky/responsive (required).
 - Interactions/UX:
-   - Admin Auth & Management (NEW 2025-11-21):
-     - Login Page collects credentials, calls `/api/auth/login`, stores JWT in `localStorage` (or `sessionStorage`) under key `shoply_admin_token`.
-     - Route Guard `PrivateRoute` restricts `CategoryManagement` and `ProductManagement`; checks token presence/exp and role claim.
-     - ProductManagement Page provides CRUD with fields: name, description, price, imageUrl, stock, category (dropdown of all categories via GET /api/categories).
-     - NavBar hides admin-only links unless token present and valid.
-     - Expired token triggers automatic logout (clear storage) and redirect to login with user messaging.
-     - Unauthorized responses surface standardized error messaging.
+   - Admin Auth & RBAC Enforcement (UPDATED 2025-11-22):
+     - Login Page collects credentials, calls `/api/auth/login`, stores JWT in `localStorage` under key `shoply_admin_token`.
+     - Observable user state object `{ id, role, authenticated }` is updated on login/logout and persisted.
+     - Route Guard `PrivateRoute` restricts `CategoryManagement` and `ProductManagement` to users with `role: "admin"` only; anonymous or non-admin users see branded "Access Denied" messaging or are redirected to login.
+     - ProductManagement Page provides full CRUD for products (`name`, `description`, `price`, `imageUrl`, `stock`, `categoryId`), accessible only to authenticated admins. Category dropdown lists all categories. Stock cannot go negative. UI hides admin-only controls for non-admin users.
+     - NavBar and other UI elements hide admin-only links for unauthorized users.
+     - Expired sessions (JWT exp) automatically trigger logout and redirect to login, with focus on login heading.
+     - Backend endpoints for all CRUD operations enforce admin role claims via JWT. Unauthorized UI or API attempts produce zero mutations and standardized error responses (401/403).
+     - Tests verify: admin CRUD success, non-admin/anonymous access blocked (UI + API), route guarding, user state persistence, expired session handling, and UI hiding of admin-only links.
+    - **Login & User State Management (NEW 2025-11-22):**
+      - Observable user state object `{ id, role, authenticated }` maintained in frontend context/provider.
+      - Login persists user state and JWT across page reloads (localStorage); logout clears state and storage.
+      - Expired sessions (JWT exp) automatically trigger logout and redirect to login page, with focus management.
+      - No transitional environment flags (e.g., ENABLE_CATEGORY_ADMIN); all enforcement is via user state and JWT claims.
+    - **CategoryManagement (UPDATED 2025-11-22):**
+      - CRUD operations remain restricted to admins only (UI and backend).
+      - Anonymous/non-admin access is blocked consistently, both frontend and backend.
+      - UI reflects access restrictions (buttons/links hidden if non-admin).
   - Add-to-cart triggers toast/notification (optional animation/enhancement).
   - Zero-stock products clearly labeled; add-to-cart button disabled (required).
   - Empty cart triggers `EmptyState` component (required).
@@ -224,7 +235,10 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 16. Modal enhancement: add explicit "Close" button to `OrderConfirmation` component; tests assert both dismissal paths restore focus.
 17. Branding integration: add `public/images/logo.svg` asset; update NavBar to display Shoply name + logo alt text; tests confirm presence.
 18. Navigation integration: add Products & Categories buttons with aria-current state; tests validate switching without reload and focus retention.
-19. (Removed legacy gating – number retained for continuity) Category write protection now solely via JWT admin role; ensure test coverage verifies anonymous attempts receive 403 and zero mutation.
+19. (Removed legacy gating – number retained for continuity) Category write protection now solely via JWT admin role; ensure test coverage verifies anonymous attempts receive 403 and zero mutation. All references to ENABLE_CATEGORY_ADMIN removed.
+20. ProductManagement: Implement full CRUD interface for products (name, description, price, imageUrl, stock, categoryId) accessible only to authenticated admins. Category dropdown lists all categories. Stock cannot go negative. UI hides admin-only controls for non-admin users. Tests verify: admin CRUD success, non-admin/anonymous access blocked (UI + API), route guarding, user state persistence, expired session handling, and UI hiding of admin-only links.
+21. CategoryManagement: CRUD operations remain restricted to admins only. Anonymous/non-admin access blocked consistently, both frontend and backend. UI reflects access restrictions (buttons/links hidden if non-admin).
+22. Frontend login/user state: Implement observable user state object { id, role, authenticated }. Login persists state across reloads and clears on logout. Expired sessions auto-logout and redirect to login. No environment flags used for gating.
 20. Product response validation: extend backend tests to assert `imageUrl` non-empty and `stock >= 0` for all products.
 21. Image fallback validation: tests for broken/missing image substituting `fallback.jpg` within 1s.
 22. Navigation SLO refinement: capture timing metrics for view switches; enforce median ≤200ms, p95 ≤400ms across ≥50 toggles, aligning with SC‑023.
@@ -277,7 +291,7 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 
 Complexity increased moderately (additional entities, client persistence, filtering, stock mutation). Mitigated by: clear boundaries (no auth/uploads), deterministic seed, atomic stock decrement, local-only cart. No constitution violations.
 
-## Completion Criteria (Extended)
+## Completion Criteria (Extended & Updated 2025-11-22)
 
 Release of extended e‑commerce scope requires:
 1. All tasks through Phase 11 including stock decrement implementation & tests (order creation rejects insufficient stock, decrements inventory accurately, no negative stock values).
@@ -289,3 +303,6 @@ Release of extended e‑commerce scope requires:
 7. Auth artifacts complete: login endpoint, middleware, protected endpoints, ProductManagement page, route guard, and docs/tests for auth flows.
 8. Unauthorized write blocking validated end-to-end: 100% unauthorized attempts produce correct 401/403 with branded body; 0 mutations.
 9. User-state (JWT role) enforcement validated end-to-end; no legacy gating remains; expired token attempts blocked (SC-030) with zero mutation.
+10. ProductManagement access attempts by anonymous/non-admin users are blocked with 403, no mutation, and actionable branded messaging (SC-026).
+11. ProductManagement CRUD interface is accessible only to authenticated admins (FR-052).
+12. Admin-only areas enforce access control with branded messaging (FR-059).

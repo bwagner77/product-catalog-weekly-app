@@ -1,0 +1,51 @@
+Please update and extend the existing Product Catalog plan in
+`plans/001-product-catalog/plan.md` **in-place** to reflect the following:
+
+1. **Frontend login / user state management**
+
+   * Implement an observable user state object `{ id, role, authenticated }`.
+   * Login persists state across page reloads and clears on logout.
+   * Expired sessions automatically trigger logout and redirect to login.
+   * No transitional environment flags (e.g., `ENABLE_CATEGORY_ADMIN`) are used; enforcement relies solely on login/user state.
+
+2. **RBAC enforcement**
+
+   * Admin-only pages (CategoryManagement, ProductManagement) are restricted to users with `role: "admin"`.
+   * Anonymous or non-admin access triggers branded **“Access Denied”** messaging or safe redirect.
+   * Backend endpoints for all CRUD operations enforce admin role claims via JWT.
+   * Unauthorized UI or API attempts produce zero mutations and standardized error responses (401/403).
+
+3. **ProductManagement page updates**
+
+   * Full CRUD interface for products (`name`, `description`, `price`, `imageUrl`, `stock`, `categoryId`) accessible only to authenticated admins.
+   * Category dropdown lists all categories.
+   * Stock cannot go negative.
+   * UI hides admin-only controls for non-admin users.
+   * Tests verify:
+
+     * Admin CRUD success (list, create, update, delete).
+     * Non-admin/anonymous access blocked (UI + API).
+     * Route guarding (`PrivateRoute`) works correctly.
+     * User state persists across reloads and clears on logout.
+     * Expired sessions trigger automatic logout and redirect.
+     * NavBar and other UI elements hide admin-only links for unauthorized users.
+
+4. **CategoryManagement updates**
+
+   * CRUD operations remain restricted to admins only.
+   * Anonymous/non-admin access blocked consistently, both frontend and backend.
+   * UI reflects access restrictions (buttons/links hidden if non-admin).
+
+5. **Task list integration**
+
+   * Merge new or updated tasks into existing plan.md in-place, continuing sequential numbering.
+   * Preserve existing structure, formatting, and context.
+   * Remove all references to `ENABLE_CATEGORY_ADMIN` completely.
+
+6. **Acceptance criteria / success criteria updates**
+
+   * SC‑026: ProductManagement access attempts by anonymous/non-admin users blocked with 403, no mutation, actionable messaging.
+   * FR‑052: ProductManagement CRUD interface accessible only to authenticated admins.
+   * FR‑059: Admin-only areas enforce access control with branded messaging.
+
+---
