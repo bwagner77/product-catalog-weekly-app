@@ -174,8 +174,10 @@ function InnerApp() {
   const checkout = async () => {
     if (cart.items.length === 0) return;
     setLoading(true);
+    const base = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:3000';
+    const root = `${base.replace(/\/$/, '')}/api/orders`;
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch(root, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: cart.items.map(i => ({ productId: i.productId, quantity: i.quantity })) }),
