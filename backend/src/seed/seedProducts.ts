@@ -208,7 +208,9 @@ export async function seedProducts(): Promise<SeedResult> {
   let inserted = 0;
   let matched = 0;
 
-  for (const p of SEED_PRODUCTS) {
+  for (let i = 0; i < SEED_PRODUCTS.length; i += 1) {
+    const p = SEED_PRODUCTS[i];
+    // Perform upsert identical to original behavior for idempotency & validation consistency.
     const res = await Product.updateOne(
       { id: p.id },
       { $setOnInsert: p },
@@ -217,8 +219,28 @@ export async function seedProducts(): Promise<SeedResult> {
     const upserted = (res as { upsertedCount?: number; upsertedId?: unknown }).upsertedCount === 1 || Boolean(
       (res as { upsertedId?: unknown }).upsertedId
     );
-    if (upserted) inserted += 1;
-    else matched += 1;
+    if (upserted) {
+      inserted += 1;
+      continue; // Newly inserted already has imageUrl & stock from seed definition.
+    }
+    matched += 1;
+    // Existing product: patch ONLY missing fields (do not overwrite present values).
+    const existing = await Product.findOne({ id: p.id }, { imageUrl: 1, stock: 1 }).lean();
+    if (!existing) continue; // Defensive; should not occur since upsert said matched.
+    const update: Record<string, unknown> = {};
+    const needsImage = !('imageUrl' in existing) || !existing.imageUrl;
+    if (needsImage) {
+      // Pad image number to two digits for deterministic fallback ONLY when missing.
+      const num = String(i + 1).padStart(2, '0');
+      update.imageUrl = `images/product${num}.jpg`;
+    }
+    const needsStock = !('stock' in existing) || existing.stock === undefined || existing.stock === null;
+    if (needsStock) {
+      update.stock = p.stock;
+    }
+    if (Object.keys(update).length > 0) {
+      await Product.updateOne({ id: p.id }, { $set: update });
+    }
   }
 
   const afterCount = await Product.countDocuments({});
