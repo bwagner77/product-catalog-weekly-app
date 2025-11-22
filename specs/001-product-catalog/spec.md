@@ -7,7 +7,7 @@
 
 ## Clarifications
 
-### Session 2025-11-20 (updated 2025-11-21 for Shoply branding, navigation, modal)
+### Session 2025-11-20 (updated 2025-11-21 for Shoply branding, navigation, modal; amended 2025-11-21 RBAC)
 
 - Q: What is the product search matching rule? → A: Case-insensitive partial substring match across both name and description fields; multiple words treated as a single phrase (no token AND logic).
 - Q: What pattern is used for seeded product images? → A: Deterministic placeholder filenames using the pattern "product<N>.jpg" starting at 1 (e.g., product1.jpg) matching seed insertion order; stable across runs.
@@ -15,6 +15,16 @@
 - Q: How is Category Management accessed? → A: Via top navigation banner button "Categories" beside the Shoply brand/logo.
 - Q: How can the order confirmation modal be dismissed? → A: Either the top-right × control or an explicit "Close" button; both accessible and keyboard operable.
 - Q: What branding changes apply? → A: Navigation banner shows **Shoply** name plus logo (accessible alt "Shoply logo").
+ - Q: Are category/product management operations still open to anonymous users? → A: No. Prior assumption of open CRUD is overridden. Category and Product management (create/update/delete) now require authenticated admin role.
+ - Q: Is full authentication implemented now? → A: A stub or environment-gated mechanism is assumed (e.g., existing `ENABLE_CATEGORY_ADMIN` flag) until a future phase delivers real login/token flows.
+ - Q: What is the response for unauthorized admin operations? → A: 403 JSON `{ "error": "Admin access required" }` (branded messaging enforced).
+ - Q: Can anonymous users still browse and order? → A: Yes. Anonymous users retain read-only catalog (products/categories), search/filter, cart interactions, and order submission.
+ - Q: Does category deletion logic change under RBAC? → A: Guard remains: 409 when products reference category; only admins may invoke deletion.
+
+### Session 2025-11-21
+
+- Q: How are category name duplicates handled? → A: Case-insensitive uniqueness enforced; create/update attempts with a name differing only by case from an existing category return 409 with JSON `{ "error": "Category name already exists" }` (no mutation).
+ - Q: What customer PII (email, address, name) is stored with orders? → A: None; orders remain anonymous snapshots (id/items/total/status/createdAt) with no PII fields; PII-like fields in payload are rejected (400) in this phase.
 
 ### Session 2025-11-14 (updated 2025-11-20)
 
@@ -89,17 +99,17 @@ As a shopper using any device, I can access and navigate the catalog with keyboa
 [Add more user stories as needed, each with an assigned priority]
 
 ### User Story 4 - Manage Categories (Priority: P4)
+As a catalog maintainer (authenticated admin), I can view, create, edit, and remove product categories so that products can be organized for shopper filtering.
 
-As a catalog maintainer (non-authenticated in this phase), I can view, create, edit, and remove product categories so that products can be organized for shopper filtering.
-
-**Independent Test**: Populate several categories; perform create, edit, delete; verify list updates and constraints honored.
+**Independent Test**: Log in or enable admin stub; perform create, edit, delete on categories; verify unauthorized (anonymous) attempts are blocked; verify deletion blocking when products assigned.
 
 **Acceptance Scenarios**:
 
-1. Given categories exist, When I activate the Categories navigation button, Then I see a management view list showing id and name.
-2. Given I enter a valid category name, When I submit the create form, Then the new category appears in the list.
-3. Given a category has no assigned products, When I delete it, Then it is removed from the list.
-4. Given a category has assigned products, When I attempt deletion (per assumption), Then the system prevents deletion and shows a clear message.
+1. Given I am an authenticated admin and categories exist, When I activate the Categories navigation button, Then I see a management view list showing id and name.
+2. Given I am an authenticated admin, When I submit a valid new category name, Then the category appears in the list with status 201.
+3. Given I am an authenticated admin and a category has no assigned products, When I delete it, Then it is removed (204) and subsequent GET by id returns 404.
+4. Given I am an authenticated admin and a category has assigned products, When I attempt deletion, Then the system returns 409 and shows a clear message (no deletion performed).
+5. Given I am anonymous, When I attempt to access the CategoryManagement page or invoke POST/PUT/DELETE /api/categories endpoints, Then I receive 403 with actionable branded message and no data mutation.
 
 ### User Story 5 - Search & Filter Products (Priority: P4)
 
@@ -154,6 +164,23 @@ As a shopper, I can see a product image alongside its name, description, price, 
 2. Given a product image fails to load or imageUrl is missing, When the catalog loads, Then a fallback placeholder image of the same dimensions displays with alt text indicating the product name plus "image unavailable".
 3. Given viewport changes (mobile to desktop), When images resize, Then aspect ratio is preserved and layout remains stable (no overlap or distortion).
 
+### User Story 9 - Admin Product Management (Priority: P4/P5)
+
+As an authenticated admin, I can create, view, update, and delete products (including stock adjustments) so that I can maintain accurate catalog data for shoppers.
+
+**Why this priority**: Enables ongoing catalog curation and stock accuracy, foundational for scaling operations.
+
+**Independent Test**: Authenticate (stub/flag). Perform product create (with imageUrl, stock), update name/description/price/stock, delete product without dependencies. Attempt unauthorized (anonymous) operations and verify 403 and no mutation.
+
+**Acceptance Scenarios**:
+
+1. Given I am an authenticated admin, When I open ProductManagement, Then I see a list of products with edit/delete controls.
+2. Given valid product data, When I submit a create form, Then the product is added and visible with non-negative stock.
+3. Given I am an authenticated admin, When I update product stock to a new non-negative value, Then the change persists and is reflected in subsequent product browsing.
+4. Given I attempt to set stock below 0, When I submit, Then the system rejects with a validation message (no partial update).
+5. Given I am anonymous, When I attempt product create/update/delete, Then I receive 403 JSON error and product data remains unchanged.
+6. Given normal network conditions, When I perform a valid product CRUD operation, Then the response completes within ≤ 2 seconds (p95).
+
 ### Edge Cases
 
 <!--
@@ -185,6 +212,12 @@ As a shopper, I can see a product image alongside its name, description, price, 
 - Mixed presence of images and fallbacks in the same view
  - Both modal dismissal mechanisms operate independently (× and Close button)
  - Navigation focus order includes brand logo without skipping interactive elements
+ - Admin attempts to set negative stock (rejected with clear validation messaging)
+ - Anonymous attempts product CRUD (blocked 403, logged, no mutation)
+ - Anonymous attempts category CRUD (blocked 403, no mutation)
+ - Admin deletes product referenced only in cart (allowed; cart snapshot retains stale name/price)
+ - Attempt to create/update a category whose name differs only by casing from an existing one (blocked 409 Conflict with explanatory JSON message)
+ - Order submission including disallowed PII fields (email/name/address/phone) (rejected 400; order not created)
 
 ## Requirements *(mandatory)*
 
@@ -246,6 +279,12 @@ As a shopper, I can see a product image alongside its name, description, price, 
  - **FR-049**: New/updated UI elements (brand/logo, navigation buttons, modal Close button) MUST meet accessibility standards (focus order, roles/ARIA, alt text, keyboard operability).
  - **FR-050**: Acceptance tests MUST cover: dual modal dismissal (each independently closes and restores focus), navigation switching (Products ↔ Categories), presence of Shoply brand & logo, and backend product response including imageUrl & stock ≥ 0.
  - **FR-051**: Category write operations (POST, PUT, DELETE) MUST be disabled when environment flag `ENABLE_CATEGORY_ADMIN=false` (default production). Disabled operations return 403 with JSON `{ "error": "Category administration disabled" }`. Reads/list always enabled.
+ - **FR-051** (updated): Category write operations (POST, PUT, DELETE) MUST be restricted to authenticated admin users (or enabled gating stub). Unauthorized attempts return 403 JSON `{ "error": "Admin access required" }` and perform no mutation. Reads/list remain public.
+ - **FR-052**: ProductManagement CRUD interface MUST be accessible only to authenticated admin users; anonymous attempts to access page or invoke POST/PUT/DELETE product endpoints return 403 JSON `{ "error": "Admin access required" }`.
+ - **FR-053**: Admin users MUST be able to update product stock ensuring resulting value is a non-negative integer; attempts to set stock < 0 are rejected with validation messaging (no partial update).
+ - **FR-054**: All admin product CRUD operations (create, update, delete) MUST complete within ≤ 2 seconds (p95 in typical environment) and return appropriate status codes: 201 create, 200 update, 204 delete, 400 validation failure, 403 unauthorized, 404 not found.
+ - **FR-055**: Category create/update MUST enforce case-insensitive name uniqueness; duplicates (including those differing only by case) return 409 JSON `{ "error": "Category name already exists" }` with no mutation.
+ - **FR-056**: Order persistence MUST NOT include customer PII (email, name, address, phone). Incoming payloads containing any such fields MUST be rejected with 400 validation and not stored; orders remain anonymous.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -262,7 +301,7 @@ As a shopper, I can see a product image alongside its name, description, price, 
 
 - **Category**: Organizational label applied to products.
   - id: UUID or unique string
-  - name: string (unique within catalog; assumption)
+  - name: string (case-insensitive unique; duplicates differing only by case rejected with 409 Conflict)
   - Performance & Feedback References: SC-007 (≤2s p95 for allowed create/update/delete) and SC-013 (explanatory messaging for 100% blocked deletions when products assigned)
 
 - **CartItem**: A shopper-selected intended purchase item.
@@ -277,6 +316,7 @@ As a shopper, I can see a product image alongside its name, description, price, 
   - total: decimal (two decimals)
   - status: "submitted" (only state in this phase)
   - createdAt: ISO date-time string
+  - PII: none (no email/name/address/phone captured in this phase)
 
 ## Success Criteria *(mandatory)*
 
@@ -312,18 +352,23 @@ As a shopper, I can see a product image alongside its name, description, price, 
  - **SC-023**: Navigation view switches (Products ↔ Categories) median latency ≤ 200ms and p95 latency ≤ 400ms over ≥50 consecutive switches in typical environment.
  - **SC-024**: 100% order confirmations present both dismissal controls (× and Close) and either control dismisses with correct focus behavior.
  - **SC-025**: 100% category write attempts when `ENABLE_CATEGORY_ADMIN=false` return 403 and perform no data mutation.
+ - **SC-026**: 100% ProductManagement access attempts by anonymous users are blocked with 403 and actionable messaging (no mutation).
+ - **SC-027**: 100% admin stock updates persist and never produce negative stock; invalid (<0) attempts rejected with clear message.
+ - **SC-028**: 95% admin product CRUD operations complete within ≤ 2 seconds (p95) under typical environment conditions.
 
 ## Assumptions
 
 - Currency symbol: USD ($) for this phase. Future localization may adjust.
-- Single catalog view only; no CRUD or authentication in this iteration.
+ - RBAC introduced: two roles (anonymous, admin). Anonymous retains browse/search/cart/order; admin gains category & product CRUD.
 - Persistent storage available per project deployment environment.
 - Product volume ≤ 200 items; single-page list with no pagination.
 - Long product names/descriptions should wrap across lines (no truncation required in MVP).
 - “Typical load” for performance measurements refers to local development with Docker Compose, seeded database, and no network throttling.
 - Category deletion is blocked if any products reference the category (chosen for data integrity in absence of cascade rule).
-- Category names are unique within the catalog (simplifies user recognition).
-- No authentication or user accounts in this phase; all actions treated as open access within session.
+- Category names are enforced case-insensitive unique; duplicates (including those differing only by case) return 409 with JSON error `{ "error": "Category name already exists" }`.
+ - Orders are anonymous: no customer PII stored (reduces compliance scope for MVP).
+ - Authentication mechanism is stubbed or environment-gated (e.g., `ENABLE_CATEGORY_ADMIN`) pending full login/token implementation; specification focuses on WHAT is enforced (role separation), not HOW.
+ - Prior assumption of open CRUD without authentication is overridden: only authenticated admin may perform category or product create/update/delete.
 - No pricing adjustments (tax, discounts, promotions) applied; totals are simple sums.
 - Stock decrementation on order submission is in scope: orders reduce stock atomically; insufficient stock rejects order (no partial fulfillment).
 - No pagination required up to 200 products, search expected to be instantaneous within success criteria.
@@ -338,4 +383,5 @@ As a shopper, I can see a product image alongside its name, description, price, 
  - Logo asset is a static SVG placed in public images directory.
  - Dual modal dismissal requires no confirmation; future enhancement may add animations.
  - Category administration gating: `ENABLE_CATEGORY_ADMIN=false` in production disables write endpoints (POST, PUT, DELETE) responding with 403; development/test may enable by setting true.
+ - Category/Product administration may continue to use gating flag until real auth; messaging standardized as `Admin access required` for unauthorized attempts.
  - Fallback alt text MUST use en dash (–) in pattern `<product name> – image unavailable`.

@@ -1,0 +1,128 @@
+Please update and extend the existing Product Catalog specification in
+`specs/001-product-catalog/spec.md` to align with the new **Shoply authentication and admin features**. Do NOT create a new folder; update the spec in place.
+
+Be aware: previous assumptions and user stories allowed **full category CRUD for non-authenticated users** and assumed **no authentication in this phase**. These must now be overridden in favor of **role-based access control (RBAC)**.
+
+Apply the following changes:
+
+---
+
+## 1. Admin Authentication Overview
+
+* Introduce a **role-based access control (RBAC) model** with two primary roles:
+
+  * **Anonymous users** – can browse products, search/filter, add to cart, and submit orders. Cannot perform management operations.
+  * **Admin users** – must authenticate before accessing management pages; can perform CRUD on categories and products, including stock updates.
+
+* Clarify that authentication is **required for all admin operations**. Non-admins attempting access must receive a branded, actionable “Access Denied” message.
+
+* Update **Clarifications** and **Assumptions** to explicitly **override prior assumptions** about open CRUD access:
+
+  * A login mechanism exists for admins (implementation deferred to future phase; currently stubbed or environment-gated).
+  * Anonymous users retain browsing, search/filter, cart, and order functionality, but **cannot perform any CRUD operations on categories or products**.
+  * Previous assumptions stating “no authentication” or “full CRUD for non-authenticated users” are now superseded.
+
+---
+
+## 2. CategoryManagement Page Protection
+
+* User Story 4 / Manage Categories must now enforce **access control**:
+
+  * Anonymous users attempting to access CategoryManagement page receive an “Access Denied” message or safe redirect.
+  * Only authenticated admins can perform create, update, or delete operations.
+
+* Functional Requirements additions:
+
+  * **FR-051 (updated)**: Category write operations (POST, PUT, DELETE) MUST be restricted to authenticated admin users; unauthorized attempts return 403 with JSON `{ "error": "Admin access required" }`.
+  * Reading/listing categories remains available to all users unless otherwise gated.
+
+* Success Criteria additions:
+
+  * **SC-025 (updated)**: Attempts by anonymous users to access CategoryManagement CRUD endpoints return 403 and perform no data mutation.
+
+* **Update User Story 4** to reflect that **only authenticated admins** can manage categories:
+
+  ```markdown
+  ### User Story 4 - Manage Categories (Priority: P4)
+
+  As a catalog maintainer (authenticated admin), I can view, create, edit, and remove product categories so that products can be organized for shopper filtering.
+
+  **Acceptance Criteria:**
+  - Only authenticated admins can access CategoryManagement page.  
+  - Anonymous users attempting access see “Access Denied” or are redirected safely.  
+  - Category CRUD operations are restricted to admins; unauthorized attempts return 403.  
+  - Viewing/listing categories remains available to all users.
+  ```
+
+---
+
+## 3. ProductManagement Page Introduction
+
+* Introduce a new **ProductManagement page** for admin users with full CRUD operations, including the ability to update product stock.
+
+* User Story 8 / View Product Images (and/or new User Story 9) should define **admin management flows**:
+
+  * Admin users can create, view, update, and delete products.
+  * Stock quantity field is editable; updates must remain non-negative.
+  * Non-admins attempting access are blocked with “Access Denied”.
+
+* Functional Requirements additions:
+
+  * **FR-052**: ProductManagement CRUD page MUST be accessible **only** to authenticated admin users.
+  * **FR-053**: Admins can update stock quantity for any product; stock cannot be negative.
+  * **FR-054**: Attempted access by anonymous users triggers 403 response with clear, branded message.
+
+* Edge Cases updates:
+
+  * Admin attempts to update stock below 0 → rejected with message.
+  * Unauthorized users attempting Product CRUD → blocked and logged.
+
+* Success Criteria additions:
+
+  * **SC-026**: 100% of ProductManagement access attempts by anonymous users are blocked with actionable messaging.
+  * **SC-027**: Admin stock updates persist and never go negative; invalid inputs rejected with clear messaging.
+  * **SC-028**: Admin product CRUD operations complete successfully within ≤ 2 seconds (p95) in local environment.
+
+---
+
+## 4. Spec Section Updates
+
+* **Clarifications**:
+
+  * Admin login and token-based authentication is stubbed or environment-gated.
+  * Only admins can access CategoryManagement and ProductManagement CRUD operations.
+  * Anonymous users retain existing browsing, search/filter, cart, and order functionality.
+  * **Previous “no authentication / open CRUD” assumptions are now overridden**.
+
+* **Functional Requirements**:
+
+  * Merge new FR-051 → FR-054 with existing FR numbering.
+  * Ensure all RBAC-related FRs specify **what is enforced**, not how it is implemented.
+
+* **Success Criteria**:
+
+  * Add SC-026 → SC-028 for RBAC enforcement, stock updates, and admin CRUD performance.
+
+* **User Stories**:
+
+  * Update User Story 4 as above.
+  * Add User Story 9 – Admin Product Management (Priority: P4-P5 depending on roadmap).
+  * Acceptance criteria must specify access control, CRUD capabilities, and stock validation.
+
+* **Assumptions**:
+
+  * Admin login mechanism may be environment-gated or stubbed; exact auth implementation deferred.
+  * Role enforcement applies at page/endpoint level.
+  * **Explicitly overrides prior assumptions of open CRUD and no authentication.**
+
+---
+
+## 5. Spec Integrity
+
+* Preserve all previous content, formatting, user stories, edge cases, functional requirements, and success criteria where still valid.
+* Merge RBAC, admin login, and product management updates **without removing prior context**.
+* Ensure FR and SC numbering remains sequential and consistent.
+
+**Goal:** Produce an updated `spec.md` reflecting **Shoply RBAC, admin login, protected CategoryManagement, and ProductManagement CRUD/stock functionality** while **overriding previous open-access assumptions** and maintaining all existing product catalog features and accessibility standards.
+
+---
