@@ -33,18 +33,6 @@ It was developed using the 🌱[GitHub Spec Kit](https://github.com/github/spec-
 
 <h2 id="design-artifacts">📦 Design Artifacts</h2>
 
-Design artifacts were systematically transformed into actionable specifications using **Spec Kit**. These artifacts inform both functional and non-functional requirements, API schema, frontend components, and automated tasks.
-
-| Artifact            | Description                                                                                             | Link                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Class Diagram       | Represents the core data model, including the `Product` class and its attributes.                       | [class-diagram.png](#)     |
-| Component Diagram   | High-level overview of components: UI, Backend, Database, and their interactions.                       | [component-diagram.png](#) |
-| Sequence Diagram    | Illustrates interactions between the User and Product Catalog App.                                      | [sequence-diagram.png](#)  |
-| Use Case Diagram    | Depicts primary and secondary use cases, such as “View Product List”.                                   | [use-case-diagram.png](#)  |
-| Constitution Prompt | Defines project rules, constraints, and architecture principles for Spec Kit.                           | [constitution.txt](#)      |
-| Specify Prompt      | Instructions for the agent to create functional requirements, API contracts, and component definitions. | [specify.txt](#)           |
-| Plan Prompt         | Guides the agent to generate a structured plan and phases for implementation.                           | [plan.txt](#)              |
-
 ---
 
 <h2 id="goals-requirements">📊 Goals & Requirements</h2>
