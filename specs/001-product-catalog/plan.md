@@ -139,6 +139,8 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
     - Left: site logo SVG + brand name "Shoply" (accessible alt "Shoply logo").
     - Right: navigation controls (Products, Categories), cart count indicator.
     - Responsive: collapses menu on mobile; sticky behavior.
+    - Implemented in `frontend/src/components/NavBar.tsx` with conditional rendering of admin-only `ProductManagement` link (hidden unless `role === 'admin'`).
+    - Adds route link to `/admin/product-management` guarded by `PrivateRoute` in `frontend/src/App.tsx`.
   - **SearchBar + CategoryFilter**:
     - Positioned at top of ProductList page, horizontally aligned.
     - Filters/search query backend dynamically.
@@ -169,19 +171,19 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
   - Grid adapts per breakpoints, sidebar collapsible, top components sticky/responsive (required).
 - Interactions/UX:
    - Admin Auth & RBAC Enforcement (UPDATED 2025-11-22):
-     - Login Page collects credentials, calls `/api/auth/login`, stores JWT in `localStorage` under key `shoply_admin_token`.
-     - Observable user state object `{ id, role, authenticated }` is updated on login/logout and persisted.
-     - Route Guard `PrivateRoute` restricts `CategoryManagement` and `ProductManagement` to users with `role: "admin"` only; anonymous or non-admin users see branded "Access Denied" messaging or are redirected to login.
-     - ProductManagement Page provides full CRUD for products (`name`, `description`, `price`, `imageUrl`, `stock`, `categoryId`), accessible only to authenticated admins. Category dropdown lists all categories. Stock cannot go negative. UI hides admin-only controls for non-admin users.
-     - NavBar and other UI elements hide admin-only links for unauthorized users.
-     - Expired sessions (JWT exp) automatically trigger logout and redirect to login, with focus on login heading.
-     - Backend endpoints for all CRUD operations enforce admin role claims via JWT. Unauthorized UI or API attempts produce zero mutations and standardized error responses (401/403).
-     - Tests verify: admin CRUD success, non-admin/anonymous access blocked (UI + API), route guarding, user state persistence, expired session handling, and UI hiding of admin-only links.
+    - Login Page collects credentials, calls `/api/auth/login`, stores JWT in `localStorage` under key `shoply_admin_token`.
+    - Observable user state object `{ id, role, authenticated }` is updated on login/logout and persisted.
+    - Route Guard `PrivateRoute` restricts `CategoryManagement` and `ProductManagement` to users with `role: "admin"` only; anonymous or non-admin users see branded "Access Denied" messaging or are redirected to login.
+    - ProductManagement Page provides full CRUD for products (`name`, `description`, `price`, `imageUrl`, `stock`, `categoryId`), accessible only to authenticated admins. Category dropdown lists all categories. Stock cannot go negative. UI hides admin-only controls for non-admin users.
+    - NavBar and other UI elements hide admin-only links for unauthorized users.
+    - Expired sessions (JWT exp) automatically trigger logout and redirect to login, with focus on login heading.
+    - Backend endpoints for all CRUD operations enforce admin role claims via JWT. Unauthorized UI or API attempts produce zero mutations and standardized error responses (401/403).
+    - Tests verify: admin CRUD success, non-admin/anonymous access blocked (UI + API), route guarding, user state persistence, expired session handling, and UI hiding of admin-only links (SC‑026, FR‑052, FR‑059).
     - **Login & User State Management (NEW 2025-11-22):**
       - Observable user state object `{ id, role, authenticated }` maintained in frontend context/provider.
       - Login persists user state and JWT across page reloads (localStorage); logout clears state and storage.
       - Expired sessions (JWT exp) automatically trigger logout and redirect to login page, with focus management.
-      - No transitional environment flags (e.g., ENABLE_CATEGORY_ADMIN); all enforcement is via user state and JWT claims.
+      - No transitional environment flags; all enforcement is via user state and JWT claims.
     - **CategoryManagement (UPDATED 2025-11-22):**
       - CRUD operations remain restricted to admins only (UI and backend).
       - Anonymous/non-admin access is blocked consistently, both frontend and backend.
@@ -235,8 +237,8 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 16. Modal enhancement: add explicit "Close" button to `OrderConfirmation` component; tests assert both dismissal paths restore focus.
 17. Branding integration: add `public/images/logo.svg` asset; update NavBar to display Shoply name + logo alt text; tests confirm presence.
 18. Navigation integration: add Products & Categories buttons with aria-current state; tests validate switching without reload and focus retention.
-19. (Removed legacy gating – number retained for continuity) Category write protection now solely via JWT admin role; ensure test coverage verifies anonymous attempts receive 403 and zero mutation. All references to ENABLE_CATEGORY_ADMIN removed.
-20. ProductManagement: Implement full CRUD interface for products (name, description, price, imageUrl, stock, categoryId) accessible only to authenticated admins. Category dropdown lists all categories. Stock cannot go negative. UI hides admin-only controls for non-admin users. Tests verify: admin CRUD success, non-admin/anonymous access blocked (UI + API), route guarding, user state persistence, expired session handling, and UI hiding of admin-only links.
+19. (Removed legacy gating – number retained for continuity) Category write protection now solely via JWT admin role; ensure test coverage verifies anonymous attempts receive 403 and zero mutation.
+20. ProductManagement: Implement full CRUD interface for products (name, description, price, imageUrl, stock, categoryId) accessible only to authenticated admins. Category dropdown lists all categories. Stock cannot go negative. UI hides admin-only controls for non-admin users. Route path `/admin/product-management` added to `frontend/src/App.tsx` wrapped in `PrivateRoute`. Tests verify: admin CRUD success, non-admin/anonymous access blocked (UI + API), route guarding, user state persistence, expired session handling, and UI hiding of admin-only links.
 21. CategoryManagement: CRUD operations remain restricted to admins only. Anonymous/non-admin access blocked consistently, both frontend and backend. UI reflects access restrictions (buttons/links hidden if non-admin).
 22. Frontend login/user state: Implement observable user state object { id, role, authenticated }. Login persists state across reloads and clears on logout. Expired sessions auto-logout and redirect to login. No environment flags used for gating.
 20. Product response validation: extend backend tests to assert `imageUrl` non-empty and `stock >= 0` for all products.
@@ -272,6 +274,7 @@ Phase 1 (Design & Contracts): Completed — `data-model.md`, `contracts/openapi.
 50. Docs: Add section describing user state object shape `{ role, authenticated, id?, exp }` and persistence strategy; reference FR-057..FR-062.
 51. Accessibility: Verify focus management on redirect after expired token (focus on login form heading) and add test.
 52. Security Note: Document absence of refresh tokens and manual re-login flow; add rationale (simplicity, reduced attack surface for MVP) to `research.md`.
+53. ProductManagement Implementation File: Create `frontend/src/pages/ProductManagement.tsx` with full product CRUD UI (fields: name, description, price, imageUrl, stock, categoryId). Enforce admin-only access via `PrivateRoute`. Include category dropdown (all categories), prevent negative stock, hide admin controls for non-admin/anonymous users. Add unit & integration tests covering: admin CRUD success, unauthorized (anonymous/non-admin) access blocked (UI + API) with branded messaging (SC‑026), route guarding reliability, user state persistence across reloads, expired session auto-logout + redirect focus, NavBar admin link visibility toggling (FR‑052, FR‑059). Acceptance Criteria: SC‑026, FR‑052, FR‑059 all satisfied.
 
 ## Risk & Mitigation
 

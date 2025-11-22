@@ -1,0 +1,56 @@
+Please update and extend the existing Product Catalog plan in
+`plans/001-product-catalog/plan.md` **in-place** to include the following updates related to the ProductManagement page and RBAC/admin CRUD enforcement:
+
+# Instruction for Spec Kit to Update plan.md
+
+### Goal:
+Update `plan.md` to reflect the creation of the `ProductManagement.tsx` page, routing, and access control logic for admin users only. This will include hiding admin-only UI components for non-admin users and testing all related functionality.
+
+### Requirements:
+
+#### 1. ProductManagement Page
+- **Page Creation**: Add tasks to create `ProductManagement.tsx` in `frontend/src/pages/`.
+  - This page should allow for full CRUD functionality of products, including fields like:
+    - `name`
+    - `description`
+    - `price`
+    - `imageUrl`
+    - `stock`
+    - `categoryId` (with a dropdown of categories)
+  - The page should fetch product data from the backend API and allow the admin to modify it.
+
+#### 2. Routing Setup
+- **Add Routing**: In `frontend/src/App.tsx`, add the route for `/admin/product-management`.
+  - This route should be protected by a `PrivateRoute` that ensures only authenticated users with the `admin` role can access it.
+
+#### 3. Admin Access Control
+- **Access Control**:
+  - Implement a `PrivateRoute` component to restrict access to `ProductManagement` for authenticated admins only.
+  - Non-admin users or unauthenticated users should be redirected to the login page with a branded "Access Denied" message.
+  - The `ProductManagement` link should only be visible in the NavBar for admins.
+
+#### 4. UI Hiding for Non-Admins
+- **Navbar Modification**: In `frontend/src/components/NavBar.tsx`, hide the `ProductManagement` link for non-admin users. 
+  - Admin users should see the link; others should not.
+
+#### 5. Testing
+- **Test CRUD Operations**:
+  - Create tasks for testing CRUD operations in `ProductManagement` for admins only.
+  - Ensure tests for admin role-based access control, including:
+    - Successful CRUD operations when logged in as an admin.
+    - Blocked access for non-admin users, with “Access Denied” messaging.
+
+---
+
+### Expected Outcome:
+1. Generate tasks to create the `ProductManagement` page.
+2. Add routing for the `/admin/product-management` page with role-based access control.
+3. Update the Navbar to conditionally hide the `ProductManagement` link for non-admin users.
+4. Add tests to ensure correct functionality, including access control, CRUD actions, and UI hiding.
+
+---
+
+### Next Step:
+Run this prompt to generate tasks for the above steps and update `plan.md` with the correct details.
+
+---

@@ -1,0 +1,29 @@
+Please update and extend the existing Product Catalog plan in
+`plans/001-product-catalog/plan.md` **in-place** to include the following updates related to the ProductManagement page and RBAC/admin CRUD enforcement:
+
+1. **ProductManagement Page Implementation**
+   - Add a task to implement `frontend/src/pages/ProductManagement.tsx`.
+   - Page must provide full CRUD UI for products (`name`, `description`, `price`, `imageUrl`, `stock`, `categoryId`).
+   - Admin-only access enforced via `PrivateRoute`.
+   - Category dropdown lists all categories.
+   - Stock cannot go negative.
+   - UI hides admin-only controls for non-admin users.
+   - Include frontend unit tests and integration tests verifying:
+     - Admin CRUD success.
+     - Non-admin / anonymous access blocked (UI + API).
+     - Route guarding works correctly.
+     - User state persists across reloads and clears on logout.
+     - Expired sessions trigger automatic logout + redirect.
+     - NavBar hides admin-only links for unauthorized users.
+
+2. **Merge with Existing Plan**
+   - Preserve current structure, formatting, and task numbering.
+   - Append new ProductManagement task after the last existing task number in the admin/US9 section.
+   - Ensure all references to the legacy environment flag `ENABLE_CATEGORY_ADMIN` are removed.
+
+3. **Acceptance Criteria**
+   - SC‑026: ProductManagement access attempts by anonymous/non-admin users blocked with 403, no mutation, actionable messaging.
+   - FR‑052: ProductManagement CRUD interface accessible only to authenticated admins.
+   - FR‑059: Admin-only areas enforce access control with branded messaging.
+
+Focus **only on new or updated sections** related to the ProductManagement page and admin RBAC. Do NOT create a new plan; update the current one in-place.

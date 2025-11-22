@@ -1,6 +1,7 @@
 import React from 'react';
 import ProductList from './pages/ProductList';
 import CategoryManagement from './pages/CategoryManagement';
+import ProductManagement from './pages/ProductManagement';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
@@ -8,7 +9,7 @@ import { CartProvider, useCart } from './hooks/useCart';
 import OrderConfirmation from './components/OrderConfirmation';
 import type { Order } from './types/order';
 
-type ActiveView = 'products' | 'categories' | 'login';
+type ActiveView = 'products' | 'categories' | 'productManagement' | 'login';
 
 interface NavBarProps {
   active: ActiveView;
@@ -41,6 +42,15 @@ const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
             className={`px-3 py-1 rounded text-sm font-medium border ${active === 'categories' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
             data-testid="nav-categories"
           >Categories</button>
+        )}
+        {authenticated && (
+          <button
+            type="button"
+            onClick={() => onChange('productManagement')}
+            aria-current={active === 'productManagement' ? 'page' : undefined}
+            className={`px-3 py-1 rounded text-sm font-medium border ${active === 'productManagement' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+            data-testid="nav-product-mgmt"
+          >Product Management</button>
         )}
         {authenticated && (
           <button
@@ -161,6 +171,11 @@ function InnerApp() {
           {active === 'categories' && (
             <PrivateRoute>
               <CategoryManagement />
+            </PrivateRoute>
+          )}
+          {active === 'productManagement' && (
+            <PrivateRoute>
+              <ProductManagement />
             </PrivateRoute>
           )}
         </div>
