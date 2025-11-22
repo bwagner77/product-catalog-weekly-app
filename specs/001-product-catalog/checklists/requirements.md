@@ -43,19 +43,19 @@
 - [x] SC-028 admin CRUD responsiveness
 - [x] SC-029 zero-mutation guarantee for unauthorized protected writes
 - [x] SC-030 expired token protected writes yield 401 token_expired and zero mutation
-- [x] SC-031 cart operations latency (<500ms typical for add/update/remove median & p95 thresholds) – tests pending
-- [x] SC-032 order confirmation render latency (≤1000ms) – tests pending
+- [x] SC-031 cart operations latency (<500ms typical for add/update/remove median & p95 thresholds)
+- [x] SC-032 order confirmation render latency (≤1000ms)
 - [x] SC-033 standardized error code catalog responses (`{ error, message }` set membership enforced) – backend aggregation test added
-- [x] SC-034 expired admin page access yields consistent AccessDenied UX with no privileged flicker – test pending
+- [x] SC-034 expired admin page access yields consistent AccessDenied UX with no privileged flicker
 
 ## Outstanding Items (for implementation phase, not spec quality)
 
 - [x] Auth token expiry handling tests (covered via backend categories/products auth expired token cases + new frontend UX test)
 - [x] Expired session UX messaging consistency audit (frontend CategoryManagement expired session message standardized)
 - [x] Performance sampling for protected endpoints under load (protectedPerf.test.ts added documenting p95 values)
-- [ ] Cart latency perf test (SC-031) `cartPerf.test.tsx`
-- [ ] Order confirmation latency test (SC-032) `orderModalPerf.test.tsx`
-- [ ] Expired admin access UX test (SC-034) `expiredAccessDenied.test.tsx`
+- [X] Cart latency perf test (SC-031) `cartPerf.test.tsx`
+- [X] Order confirmation latency test (SC-032) `orderModalPerf.test.tsx`
+- [X] Expired admin access UX test (SC-034) `expiredAccessDenied.test.tsx`
 
 ## Error Codes Catalog Cross-Reference (SC-033)
 
@@ -85,7 +85,7 @@ Spec alignment adjustments:
 - Clarifications & FR-051/FR-052 updated to structured error codes (admin_auth_required / token_expired / forbidden_admin_role).
 - Decision tree clarified (401 vs 403) and `insufficient_stock` marked deprecated alias.
 
-No remaining uncovered FR or SC after integration of T189–T191 (pending completion of cart/order latency tests already scheduled: T181, T182).
+No remaining uncovered FR or SC; cart/order latency tests (T181, T182) completed and passing.
 
 ## Traceability Updates (2025-11-22)
 

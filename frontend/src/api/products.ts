@@ -52,8 +52,10 @@ export interface ProductInput {
 async function handle<T>(res: Response): Promise<T> {
   if (res.ok) {
     // DELETE returns 204 with no body
-    // @ts-expect-error allow void return
-    return (res.status === 204 ? undefined : await res.json()) as T;
+    if (res.status === 204) {
+      return undefined as unknown as T;
+    }
+    return (await res.json()) as T;
   }
   let raw: string | undefined;
   let parsed: unknown = null;

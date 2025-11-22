@@ -426,8 +426,8 @@ Independent Test: Valid admin CRUD succeeds; anonymous/invalid token blocked; dr
 - [X] T160 [US9] Create `frontend/src/pages/ProductManagement.tsx` (list + create/edit/delete; dropdown categories)
 - [X] T161 [US9] Product management API utilities in `frontend/src/api/productsAdmin.ts` using Bearer token
 - [X] T162 [US9] Secure writes via `authAdmin`; UI sends Authorization header
-- [ ] T169 [P] [US9] Frontend tests: product create/update/delete blocked when anonymous; success when admin
-- [ ] T170 [US9] Backend tests: product CRUD with auth + 401/403 matrix in `backend/tests/api/productsAuth.test.ts`
+- [X] T169 [P] [US9] Frontend tests: product create/update/delete blocked when anonymous; success when admin (Implemented: `frontend/src/__tests__/productMgmtCrudAuth.test.tsx`)
+- [X] T170 [US9] Backend tests: product CRUD with auth + 401/403 matrix in `backend/tests/api/productsAuth.test.ts` (Satisfied by T164; consolidated. See existing `backend/tests/api/productsAuth.test.ts`.)
 
 ---
 
