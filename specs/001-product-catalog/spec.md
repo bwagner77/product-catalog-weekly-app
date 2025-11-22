@@ -25,6 +25,7 @@
 
 - Q: How are category name duplicates handled? → A: Case-insensitive uniqueness enforced; create/update attempts with a name differing only by case from an existing category return 409 with JSON `{ "error": "Category name already exists" }` (no mutation).
  - Q: What customer PII (email, address, name) is stored with orders? → A: None; orders remain anonymous snapshots (id/items/total/status/createdAt) with no PII fields; PII-like fields in payload are rejected (400) in this phase.
+ - Q: Which authentication login endpoint path is used? → A: Use unified `POST /api/auth/login` issuing a JWT with `{ role: 'admin', iat, exp }`.
 
 ### Session 2025-11-14 (updated 2025-11-20)
 
@@ -384,4 +385,5 @@ As an authenticated admin, I can create, view, update, and delete products (incl
  - Dual modal dismissal requires no confirmation; future enhancement may add animations.
  - Category administration gating: `ENABLE_CATEGORY_ADMIN=false` in production disables write endpoints (POST, PUT, DELETE) responding with 403; development/test may enable by setting true.
  - Category/Product administration may continue to use gating flag until real auth; messaging standardized as `Admin access required` for unauthorized attempts.
+ - Admin authentication login endpoint is standardized to a unified `POST /api/auth/login` that issues a JWT for admins (role claim `admin`).
  - Fallback alt text MUST use en dash (–) in pattern `<product name> – image unavailable`.
