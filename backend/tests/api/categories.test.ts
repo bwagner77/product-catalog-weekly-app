@@ -7,6 +7,9 @@ import Product from '../../src/models/product';
 describe('Category CRUD API', () => {
   beforeAll(async () => {
     await connectDB(process.env.MONGODB_URI || 'mongodb://localhost:27017/product_catalog_test');
+    // Ensure isolation from other suites using same DB name; remove any pre-existing docs.
+    await Category.deleteMany({});
+    await Product.deleteMany({});
   });
 
   afterAll(async () => {
@@ -88,8 +91,10 @@ describe('Category CRUD API', () => {
   });
 
   it('blocks deletion when products reference category (DELETE 409)', async () => {
-    const created = await request(app).post('/api/categories').send({ name: 'Electronics' });
+    const created = await request(app).post('/api/categories').send({ name: `Electronics-${Date.now()}` });
+    expect(created.status).toBe(201);
     const categoryId = created.body.id;
+    expect(categoryId).toBeDefined();
     // create a product referencing this category
     await (Product as any).create({
       name: 'Phone',

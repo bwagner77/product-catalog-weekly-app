@@ -99,4 +99,18 @@ describe('Product model validation', () => {
   (Product as any).create({ id: 'not-a-uuid', name: 'Bad ID', description: 'desc', price: 1, stock: 1, imageUrl: 'images/x.jpg' })
     ).rejects.toThrow(/id must be a valid UUID v4/);
   });
+
+  // T131: Valid creation includes non-empty imageUrl and non-negative integer stock (SC-021)
+  it('accepts valid product with imageUrl pattern and integer stock >=0', async () => {
+    const prod = await (Product as any).create({
+      name: 'Pattern OK',
+      description: 'desc',
+      price: 3.5,
+      stock: 0,
+      imageUrl: 'images/product99.jpg',
+      categoryId: '11111111-1111-4111-8111-111111111111'
+    });
+    expect(prod.imageUrl).toMatch(/^images\/product\d+\.jpg$/);
+    expect(prod.stock).toBe(0);
+  });
 });

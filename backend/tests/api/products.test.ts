@@ -36,6 +36,23 @@ describe('GET /api/products integration', () => {
     expect(first).toHaveProperty('updatedAt');
   });
 
+  // T126: Assert imageUrl non-empty & stock >= 0 for a sample of products and aggregate all entries (SC-021, FR-047)
+  it('GET /api/products each product has non-empty imageUrl and non-negative stock', async () => {
+    const res = await request(app).get('/api/products');
+    expect(res.status).toBe(200);
+    const products: any[] = res.body;
+    expect(products.length).toBeGreaterThanOrEqual(5);
+    // Sample first 5
+    for (const p of products.slice(0, 5)) {
+      expect(typeof p.imageUrl).toBe('string');
+      expect(p.imageUrl.length).toBeGreaterThan(0);
+      expect(p.stock).toBeGreaterThanOrEqual(0);
+    }
+    // Aggregate check
+    const invalid = products.filter(p => !p.imageUrl || p.stock < 0);
+    expect(invalid.length).toBe(0);
+  });
+
   it('GET /api/products limits results to 100 items when more exist', async () => {
     // Insert additional >100 products to exceed the cap
     const bulk: Array<Partial<import('../../src/models/product').ProductDocument>> = [];

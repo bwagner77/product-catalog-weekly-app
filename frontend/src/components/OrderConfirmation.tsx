@@ -36,6 +36,9 @@ const OrderConfirmation: React.FC<Props> = ({ order, onClose }) => {
           ))}
         </ul>
         <p className="text-[11px] text-gray-500" data-testid="snapshot-note">Prices captured at time of order and may not reflect future changes.</p>
+        <div className="pt-2 flex justify-end">
+          <button type="button" onClick={onClose} className="text-sm px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700" aria-label="Close order confirmation" data-testid="close-btn-secondary">Close</button>
+        </div>
       </div>
     </div>
   );

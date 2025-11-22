@@ -4,6 +4,14 @@ import Product from '../models/product';
 
 const router = Router();
 
+// Environment gating: block write operations when ENABLE_CATEGORY_ADMIN === 'false'
+function gateCategoryAdmin(_req: Request, res: Response, next: NextFunction) {
+  if (process.env.ENABLE_CATEGORY_ADMIN === 'false') {
+    return res.status(403).json({ error: 'Category administration disabled' });
+  }
+  return next();
+}
+
 // GET /api/categories
 router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
@@ -26,7 +34,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // POST /api/categories
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', gateCategoryAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name } = req.body || {};
     if (typeof name !== 'string' || !name.trim()) {
@@ -48,7 +56,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // PUT /api/categories/:id
-router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', gateCategoryAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name } = req.body || {};
     if (typeof name !== 'string' || !name.trim()) {
@@ -75,7 +83,7 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // DELETE /api/categories/:id (guarded)
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', gateCategoryAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id;
     const existing = await Category.findOne({ id }).lean();

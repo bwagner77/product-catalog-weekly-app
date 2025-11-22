@@ -93,8 +93,8 @@ Sampling Guidance:
 - Validation: Benchmark test T137 logs mean, stddev, final aggregate difference; fail if drift ≥ $0.01.
 
 ### CLS Measurement Plan
-- Decision: Use JSDOM + synthetic layout constants or Playwright visual diff to approximate layout shift; assert no unexpected reflow beyond reserved image container; treat cumulative layout shift score ≥0.1 as failure.
-- Validation: T140 collects layout change events (mutation observer approximations) and computes shift; consider optional Lighthouse run (manual) for confirmation.
+ - Decision: Use JSDOM + synthetic layout constants or Playwright visual diff to approximate layout shift; assert no unexpected reflow beyond reserved image container; treat cumulative layout shift score ≥0.1 as failure.
+ - Validation: Implemented T135 (dimension reservation), T140 (CLS proxy test), and T141 (alt pattern en dash test) confirming image container stability and accessible fallback semantics. Optional Lighthouse run (manual) may further confirm CLS <0.1.
 - Decision: Display stock, gate cart additions when stock = 0 or requested quantity > stock, and decrement stock atomically on successful order submission (bulkWrite conditional filters). No partial fulfillment.
 - Rationale: Keeps catalog availability accurate post-purchase while preserving simple, low-contention integrity without full transactions.
 - Alternatives considered: Deferred decrement (stale availability), non-atomic sequential updates (race window), multi-document transaction (unnecessary complexity at current scale).

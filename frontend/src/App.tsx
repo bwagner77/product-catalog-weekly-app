@@ -1,15 +1,42 @@
 import React from 'react';
 import ProductList from './pages/ProductList';
+import CategoryManagement from './pages/CategoryManagement';
 import { CartProvider, useCart } from './hooks/useCart';
-import React from 'react';
 import OrderConfirmation from './components/OrderConfirmation';
 import type { Order } from './types/order';
 
-const NavBar: React.FC = () => {
+type ActiveView = 'products' | 'categories';
+
+interface NavBarProps {
+  active: ActiveView;
+  onChange(view: ActiveView): void;
+}
+
+const NavBar: React.FC<NavBarProps> = ({ active, onChange }) => {
   const cart = useCart();
   return (
-    <header className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10">
-      <h1 className="text-xl font-semibold">Product Catalog</h1>
+    <header className="p-4 border-b border-gray-200 flex items-center justify-between bg-white sticky top-0 z-10" role="banner">
+      <div className="flex items-center space-x-3" aria-label="Brand" data-testid="brand">
+        {/* Inline SVG logo (placeholder) */}
+        <div className="w-8 h-8 flex items-center justify-center rounded bg-indigo-600 text-white font-bold" aria-label="Shoply logo" data-testid="logo">S</div>
+        <h1 className="text-xl font-semibold" data-testid="brand-name">Shoply Catalog</h1>
+      </div>
+      <nav aria-label="Primary" className="flex items-center space-x-2" role="navigation">
+        <button
+          type="button"
+          onClick={() => onChange('products')}
+          aria-current={active === 'products' ? 'page' : undefined}
+          className={`px-3 py-1 rounded text-sm font-medium border ${active === 'products' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+          data-testid="nav-products"
+        >Products</button>
+        <button
+          type="button"
+          onClick={() => onChange('categories')}
+          aria-current={active === 'categories' ? 'page' : undefined}
+          className={`px-3 py-1 rounded text-sm font-medium border ${active === 'categories' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+          data-testid="nav-categories"
+        >Categories</button>
+      </nav>
       <div className="flex items-center space-x-4" aria-label="Cart summary">
         <span className="text-sm" data-testid="cart-count">Cart: {cart.count}</span>
         <span className="text-sm" data-testid="cart-total">Total: ${cart.total.toFixed(2)}</span>
@@ -72,6 +99,7 @@ function InnerApp() {
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(false);
   const cart = useCart();
+  const [active, setActive] = React.useState<ActiveView>('products');
 
   const checkout = async () => {
     if (cart.items.length === 0) return;
@@ -101,10 +129,11 @@ function InnerApp() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-      <NavBar />
-      <div className="flex-1 p-4 md:flex md:space-x-6">
-        <div className="flex-1">
-          <ProductList />
+      <NavBar active={active} onChange={setActive} />
+      <div className="flex-1 p-4 md:flex md:space-x-6" aria-live="polite" aria-relevant="additions removals">
+        <div className="flex-1" data-testid="active-view">
+          {active === 'products' && <ProductList />}
+          {active === 'categories' && <CategoryManagement />}
         </div>
         <CartSidebar onCheckout={checkout} loading={loading} />
       </div>

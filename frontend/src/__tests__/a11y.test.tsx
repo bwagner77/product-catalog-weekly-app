@@ -59,18 +59,23 @@ describe('[US3] Accessibility and responsiveness', () => {
     expect(className).toContain('sm:grid-cols-2');
     expect(className).toContain('lg:grid-cols-3');
   });
-  it('focus order: tab sequence reaches search, category filter, then first product item', async () => {
+  it('focus order: Products nav → Categories nav → search → category filter → first product item', async () => {
     vi.spyOn(global, 'fetch' as any).mockResolvedValue({ ok: true, json: async () => sample });
-    render(<ProductList />);
-    // Wait for products
+    render(<App />);
+    // Wait for products (default view)
     await screen.findByRole('list', { name: /product list/i });
+    const navProducts = screen.getByTestId('nav-products');
+    const navCategories = screen.getByTestId('nav-categories');
     const searchInput = screen.getByPlaceholderText('Search…');
     const categorySelect = screen.getByRole('combobox', { name: 'Filter by category' });
     const firstProductItem = screen.getAllByRole('listitem')[0];
-
     const user = userEvent.setup();
     // Ensure initial focus is body
     expect(document.activeElement?.tagName).toBe('BODY');
+    await user.tab();
+    expect(document.activeElement).toBe(navProducts);
+    await user.tab();
+    expect(document.activeElement).toBe(navCategories);
     await user.tab();
     expect(document.activeElement).toBe(searchInput);
     await user.tab();
@@ -79,9 +84,9 @@ describe('[US3] Accessibility and responsiveness', () => {
     expect(document.activeElement).toBe(firstProductItem);
   });
 
-  it('after typing in search, focus stays on input; tab moves to category then (updated) first product item', async () => {
+  it('after typing in search, focus stays then proceeds category filter → first product item (updated)', async () => {
     vi.spyOn(global, 'fetch' as any).mockResolvedValue({ ok: true, json: async () => sample });
-    render(<ProductList />);
+    render(<App />);
     await screen.findByRole('list', { name: /product list/i });
     const user = userEvent.setup();
     const searchInput = screen.getByPlaceholderText('Search…');
