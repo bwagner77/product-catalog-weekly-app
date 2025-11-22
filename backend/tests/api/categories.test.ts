@@ -40,7 +40,7 @@ describe('Category CRUD API', () => {
     expect(/category name required/i.test(res.body.message)).toBeTruthy();
   });
 
-  it('rejects duplicate category name', async () => {
+  it('rejects duplicate category name (409)', async () => {
     const first = await request(app)
       .post('/api/categories')
       .set('Authorization', `Bearer ${token}`)
@@ -52,7 +52,7 @@ describe('Category CRUD API', () => {
       .post('/api/categories')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Books' });
-    expect(dup.status).toBe(400);
+    expect(dup.status).toBe(409);
     expect(dup.body.error).toBe('category_name_conflict');
     expect(/already exists/i.test(dup.body.message)).toBeTruthy();
   });
@@ -174,19 +174,19 @@ describe('Category CRUD API', () => {
     expect(res.status).toBe(404);
   });
 
-  it('handles create path E11000 duplicate error catch branch', async () => {
+  it('handles create path E11000 duplicate error catch branch (409)', async () => {
     const originalCreate = (Category as any).create;
     (Category as any).create = () => { throw new Error('E11000 duplicate key error collection: categories index: name_1 dup key'); };
     const res = await request(app)
       .post('/api/categories')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'SyntheticDupRace' });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(409);
     expect(res.body.error).toBe('category_name_conflict');
     (Category as any).create = originalCreate;
   });
 
-  it('handles update path E11000 duplicate error catch branch', async () => {
+  it('handles update path E11000 duplicate error catch branch (409)', async () => {
     await request(app)
       .post('/api/categories')
       .set('Authorization', `Bearer ${token}`)
@@ -201,7 +201,7 @@ describe('Category CRUD API', () => {
       .put(`/api/categories/${c2.body.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'SecondUniqueRenamed' });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(409);
     expect(res.body.error).toBe('category_name_conflict');
     (Category as any).findOneAndUpdate = originalUpdate;
   });

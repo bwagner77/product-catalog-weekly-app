@@ -17,7 +17,7 @@
 - Q: What branding changes apply? → A: Navigation banner shows **Shoply** name plus logo (accessible alt "Shoply logo").
  - Q: Are category/product management operations still open to anonymous users? → A: No. Prior assumption of open CRUD is overridden. Category and Product management (create/update/delete) now require authenticated admin role.
  - Q: Is full authentication implemented now? → A: A simplified admin login (stub) exists via `POST /api/auth/login` issuing a JWT; no environment flag gating remains. Full multi-user auth deferred.
- - Q: What is the response for unauthorized admin operations? → A: 403 JSON `{ "error": "Admin access required" }` (branded messaging enforced).
+ - Q: What is the response for unauthorized admin operations? → A: Structured JSON per decision tree. Missing/invalid/expired token → 401 `{ "error": "admin_auth_required", "message": "Admin authentication required" }` (or `{ "error": "token_expired", "message": "Admin token expired" }` when exp elapsed). Valid token lacking admin role → 403 `{ "error": "forbidden_admin_role", "message": "Admin role required" }`.
  - Q: Can anonymous users still browse and order? → A: Yes. Anonymous users retain read-only catalog (products/categories), search/filter, cart interactions, and order submission.
  - Q: Does category deletion logic change under RBAC? → A: Guard remains: 409 when products reference category; only admins may invoke deletion.
 
@@ -280,8 +280,8 @@ As an authenticated admin, I can create, view, update, and delete products (incl
  - **FR-048**: CategoryManagement page MUST be reachable via navigation and render its management heading after activation.
  - **FR-049**: New/updated UI elements (brand/logo, navigation buttons, modal Close button) MUST meet accessibility standards (focus order, roles/ARIA, alt text, keyboard operability).
  - **FR-050**: Acceptance tests MUST cover: dual modal dismissal (each independently closes and restores focus), navigation switching (Products ↔ Categories), presence of Shoply brand & logo, and backend product response including imageUrl & stock ≥ 0.
- - **FR-051** (updated): Category write operations (POST, PUT, DELETE) MUST be restricted to authenticated admin users. Unauthorized attempts return 403 JSON `{ "error": "Admin access required" }` and perform no mutation. Reads/list remain public.
- - **FR-052**: ProductManagement CRUD interface MUST be accessible only to authenticated admin users; anonymous attempts to access page or invoke POST/PUT/DELETE product endpoints return 403 JSON `{ "error": "Admin access required" }`.
+ - **FR-051** (updated): Category write operations (POST, PUT, DELETE) MUST be restricted to authenticated admin users. Unauthorized attempts follow decision tree: 401 `admin_auth_required` (missing/invalid), 401 `token_expired` (expired), 403 `forbidden_admin_role` (wrong role); all produce zero mutation. Reads/list remain public.
+ - **FR-052**: ProductManagement CRUD interface MUST be accessible only to authenticated admin users; anonymous or non-admin attempts return structured 401/403 per decision tree and no mutation.
  - **FR-053**: Admin users MUST be able to update product stock ensuring resulting value is a non-negative integer; attempts to set stock < 0 are rejected with validation messaging (no partial update).
  - **FR-054**: All admin product CRUD operations (create, update, delete) MUST complete within ≤ 2 seconds (p95 in typical environment) and return appropriate status codes: 201 create, 200 update, 204 delete, 400 validation failure, 403 unauthorized, 404 not found.
  - **FR-055**: Category create/update MUST enforce case-insensitive name uniqueness; duplicates (including those differing only by case) return 409 JSON `{ "error": "Category name already exists" }` with no mutation.
@@ -306,16 +306,16 @@ Canonical machine codes for this phase:
 - `token_expired` – Token recognized but `exp` is in the past (status 401).
 - `validation_error` – Request body failed schema/business validation (status 400).
 - `category_name_conflict` – Case-insensitive duplicate category name on create/update (status 409).
-- `stock_conflict` – Order line(s) insufficient stock during atomic decrement (status 409).
-- `insufficient_stock` – Same as `stock_conflict` (alias kept for clarity in order endpoint tests; may consolidate later) (status 409).
+ - `stock_conflict` – Order line(s) insufficient stock during atomic decrement (status 409).
+ - `insufficient_stock` – Deprecated alias of `stock_conflict` retained temporarily for backward-compatible tests; future removal planned (status 409).
 - `unauthorized_write` – Generic fallback for protected write when specific code above not emitted (status 403).
 - `not_found` – Entity requested but not found (status 404) (optional message wording).
 
 Status code decision tree (protected write):
-1. No/invalid signature OR expired → 401 `admin_auth_required` or `token_expired` (explicit expiry case).
-2. Valid token, role != admin → 403 `forbidden_admin_role`.
+1. Missing/invalid signature OR expired → 401 `admin_auth_required` (invalid/missing) or `token_expired` (elapsed).
+2. Valid signature, role != admin → 403 `forbidden_admin_role`.
 3. Valid admin token, business validation fails → 400 `validation_error`.
-4. Valid admin token, domain conflict (e.g., delete category with products) → 409 domain-specific code (`category_name_conflict`, `stock_conflict`).
+4. Valid admin token, domain conflict (e.g., delete category with products or insufficient stock) → 409 domain-specific code (`category_name_conflict`, `stock_conflict`).
 
 FR-058 Clarification: Storage key MUST be `shoply_admin_token`; logout MUST clear this key and any derived user state (role, exp) and redirect focus to the login page heading.
 FR-059 Clarification: "Safe redirect" means client navigates to `/login?denied=<resource>` OR renders inline AccessDenied component retaining accessible focus management; implementation MUST avoid flashing privileged controls (no intermediate render).

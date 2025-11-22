@@ -480,3 +480,25 @@ Context: Close remaining RBAC traceability gaps (error code catalog, atomic deni
 ## Meta Execution Tasks
 - [X] Final validation: Full backend & frontend test suites executed; all tests pass; coverage thresholds (≥80%) exceeded.
 - [X] Implementation summary & handoff: Comprehensive summary generated per speckit prompt step 9.
+
+---
+
+## Gap Remediation (Added After Mapping)
+
+The following tasks are newly added to close uncovered requirement & success criteria gaps discovered during formal FR/SC ↔ task mapping (see `checklists/mapping-fr-sc-tasks.md`).
+
+ - [X] T189 [P] Backend performance test for Category CRUD (SC-007, FR-054)
+       - Implement `backend/tests/api/categoryPerf.test.ts` measuring create/update/delete allowed operations (excluding blocked 409 cases) across ≥20 iterations; compute median & p95; assert p95 ≤2000ms.
+       - Logs formatted similar to existing perf tests; failure produces descriptive message.
+       - Ensures explicit evidence for SC-007 and the performance portion of FR-054.
+ - [X] T190 [P] Backend performance test for Product CRUD (SC-028, FR-054)
+       - Implement `backend/tests/api/productCrudPerf.test.ts` covering create/update/delete for typical payload sizes; ≥20 iterations; assert p95 ≤2000ms.
+       - Reuses rounding/helper where applicable; ensures product write timings tracked.
+ - [X] T191 [P] Case-insensitive Category name uniqueness negative test (FR-055)
+       - Extend or add `backend/tests/api/categoriesUnique.test.ts` creating a category then attempting same name with different casing; expect 409 and error code `category_name_conflict`; assert zero mutation.
+       - Confirms explicit coverage separate from general CRUD tests.
+- [ ] T192 [P] Requirements checklist update referencing new perf & uniqueness tests
+       - Update `specs/001-product-catalog/checklists/requirements.md` to mark SC-007, SC-028, FR-055 covered by T189–T191.
+- [ ] T193 [P] Add mapping artifact file `checklists/mapping-fr-sc-tasks.md` summarizing FR/SC ↔ task linkage for audit traceability.
+
+---

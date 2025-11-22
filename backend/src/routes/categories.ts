@@ -37,15 +37,16 @@ router.post('/', authAdmin, async (req: Request, res: Response, next: NextFuncti
       return res.status(400).json(validationError('Category name required'));
     }
     // Explicit duplicate check to avoid relying solely on background index creation timing.
-    const existing = await Category.findOne({ name: name.trim() }).lean();
+    const patternCreate = '^' + name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$';
+    const existing = await Category.findOne({ name: { $regex: patternCreate, $options: 'i' } }).lean();
     if (existing) {
-      return res.status(400).json(categoryNameConflict());
+      return res.status(409).json(categoryNameConflict());
     }
     const created = await Category.create({ name: name.trim() });
     res.status(201).json(created.toJSON());
   } catch (err: unknown) {
     if (err instanceof Error && /E11000/.test(err.message)) {
-      return res.status(400).json(categoryNameConflict());
+      return res.status(409).json(categoryNameConflict());
     }
     next(err);
   }
@@ -59,9 +60,10 @@ router.put('/:id', authAdmin, async (req: Request, res: Response, next: NextFunc
       return res.status(400).json(validationError('Category name required'));
     }
     const trimmed = name.trim();
-    const duplicate = await Category.findOne({ name: trimmed, id: { $ne: req.params.id } }).lean();
+    const patternUpdate = '^' + trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$';
+    const duplicate = await Category.findOne({ name: { $regex: patternUpdate, $options: 'i' }, id: { $ne: req.params.id } }).lean();
     if (duplicate) {
-      return res.status(400).json(categoryNameConflict());
+      return res.status(409).json(categoryNameConflict());
     }
     const updated = await Category.findOneAndUpdate(
       { id: req.params.id },
@@ -72,7 +74,7 @@ router.put('/:id', authAdmin, async (req: Request, res: Response, next: NextFunc
     res.json(updated);
   } catch (err: unknown) {
     if (err instanceof Error && /E11000/.test(err.message)) {
-      return res.status(400).json(categoryNameConflict());
+      return res.status(409).json(categoryNameConflict());
     }
     next(err);
   }

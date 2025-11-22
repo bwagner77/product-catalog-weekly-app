@@ -73,3 +73,16 @@ Documented in `spec.md` and enforced via `errorCodes.test.ts`:
 | stock_conflict | Insufficient or concurrently changed stock | order POST |
 
 All error responses follow `{ error, message }` shape; alias `insufficientStock` unified under `stock_conflict`.
+
+## Traceability Updates (2025-11-21)
+
+Validated new gap remediation tasks:
+- T189: SC-007 category CRUD p95 latency ≤ 2000ms (create/update/delete) – passing.
+- T190: SC-028 product CRUD p95 latency ≤ 2000ms (create/update/delete) – passing.
+- T191: FR-055 case-insensitive category name uniqueness now returns 409 `category_name_conflict` (previously 400) – updated route & tests.
+
+Spec alignment adjustments:
+- Clarifications & FR-051/FR-052 updated to structured error codes (admin_auth_required / token_expired / forbidden_admin_role).
+- Decision tree clarified (401 vs 403) and `insufficient_stock` marked deprecated alias.
+
+No remaining uncovered FR or SC after integration of T189–T191 (pending completion of cart/order latency tests already scheduled: T181, T182).
