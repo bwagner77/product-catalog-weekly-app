@@ -34,7 +34,7 @@ It was developed using the 🌱[GitHub Spec Kit](https://github.com/github/spec-
 - [**Use Case Diagram**](./docs/design-artifacts/shoply_use-case-diagram.jpg)  
   Captures the main interactions between actors (Shopper, Admin) and the system, outlining user goals and system functionality.
 
-- [**System Sequence Diagram (SSD)**](./docs/design-artifacts/shopy_sdd.png)  
+- [**System Sequence Diagram (SSD)**](./docs/design-artifacts/shopy_ssd.png)  
   Shows the high-level message flow between users and the Shoply system across key journeys (browsing, cart management, checkout, admin tasks, authentication, mobile navigation).
 
 - [**Domain Model**](./docs/design-artifacts/shoply_domain-model.jpg)  
