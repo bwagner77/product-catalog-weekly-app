@@ -8,9 +8,7 @@ It was developed using the 🌱[GitHub Spec Kit](https://github.com/github/spec-
 
 > Initialize → Constitution → Specify → Plan → Tasks → Implement (via Agents) → Validate → Containerize & Deploy → Document Everything
 
----
-
-📂 Detailed documentation including **design artifacts, screenshots, demo video, AI prompts, and AI outputs**, can be found in the project [/docs](./docs) folder.
+📂 Documentation including **design artifacts, screenshots, demo video, AI prompts, and AI outputs**, can be found in the project's [/docs](./docs) folder.
 
 ---
 
@@ -32,6 +30,15 @@ It was developed using the 🌱[GitHub Spec Kit](https://github.com/github/spec-
 ---
 
 <h2 id="design-artifacts">📦 Design Artifacts</h2>
+
+- [**Use Case Diagram**](./docs/design-artifacts/shoply_use-case-diagram.jpg)  
+  Captures the main interactions between actors (Shopper, Admin) and the system, outlining user goals and system functionality.
+
+- [**System Sequence Diagram (SSD)**](./docs/design-artifacts/shopy_sdd.png)  
+  Shows the high-level message flow between users and the Shoply system across key journeys (browsing, cart management, checkout, admin tasks, authentication, mobile navigation).
+
+- [**Domain Model**](./docs/design-artifacts/shoply_domain-model.jpg)  
+  Defines the entities, relationships, aggregates, and composites in the Shoply domain (User, Cart, CartItem, Order, OrderItem, Product, Category).
 
 ---
 
