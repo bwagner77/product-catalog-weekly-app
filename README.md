@@ -1,4 +1,4 @@
-# Shoply E-commerce Web Application
+# Shoply E-Commerce Web Application
 
 ⚠️ This is a milestone submission for the **SDD Weekly Project**.
 
@@ -8,7 +8,9 @@ It was developed using the 🌱[GitHub Spec Kit](https://github.com/github/spec-
 
 > Initialize → Constitution → Specify → Plan → Tasks → Implement (via Agents) → Validate → Containerize & Deploy → Document Everything
 
-📂 Documentation including **design artifacts, screenshots, demo video, AI prompts, and AI outputs**, can be found in the project's [/docs](./docs) folder.
+📂 **Documentation** including design artifacts, screenshots, AI prompts, and AI outputs, can be found in the project's [/docs](./docs) folder.
+
+🎥 **Demo Video** walkthrough of Shoply in action on [Loom](https://www.loom.com/share/d76942c1e5f44ba2a4c45e51ce111162).
 
 ---
 
