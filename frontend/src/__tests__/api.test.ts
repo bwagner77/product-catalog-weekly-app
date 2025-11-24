@@ -21,6 +21,8 @@ describe('API utils: fetchProducts', () => {
 
   it('uses VITE_API_BASE_URL when provided and trims trailing slash', async () => {
     (import.meta as any).env.VITE_API_BASE_URL = 'http://localhost:3000/';
+    // Provide global override to accommodate dynamic runtime resolution.
+    ;(globalThis as any).VITE_API_BASE_URL = 'http://localhost:3000/';
     const mock = vi
       .spyOn(global, 'fetch' as any)
       .mockResolvedValue({ ok: true, json: async () => [] });

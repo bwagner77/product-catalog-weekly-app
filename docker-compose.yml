@@ -3,7 +3,7 @@ version: "3.9"
 services:
   mongo:
     image: mongo:7.0
-    container_name: product-catalog-mongo
+    container_name: shoply-mongo
     ports:
       - "27017:27017"
     volumes:
@@ -18,11 +18,11 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: product-catalog-backend
+    container_name: shoply-backend
     env_file:
       - .env
     environment:
-      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/product_catalog}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/shoply_db}
       - PORT=${BACKEND_PORT:-3000}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
       - NODE_ENV=development
@@ -42,7 +42,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000}
-    container_name: product-catalog-frontend
+    container_name: shoply-frontend
     ports:
       - "${PORT_FRONTEND:-5173}:80"
     depends_on:
