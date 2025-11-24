@@ -9,8 +9,18 @@ type FetchOptions = {
 };
 
 function buildApiUrl(baseUrl?: string, search?: string, categoryId?: string): string {
-  const envBase = (import.meta.env.VITE_API_BASE_URL as string) || '';
-  const rawBase = (baseUrl ?? envBase).trim();
+  let dynamicValue = '';
+  try {
+    const envContainer = (import.meta as any)['env'];
+    if (envContainer && typeof envContainer === 'object') {
+      dynamicValue = Reflect.get(envContainer, 'VITE_API_BASE_URL') || '';
+    }
+  } catch (_e) {
+    dynamicValue = '';
+  }
+  const fallbackValue = (globalThis as any).VITE_API_BASE_URL || process.env?.VITE_API_BASE_URL || '';
+  const effectiveBase = baseUrl !== undefined ? baseUrl : (dynamicValue || fallbackValue);
+  const rawBase = (effectiveBase || '').trim();
   const base = rawBase.replace(/\/$/, '');
   // If no base provided, fall back to relative path (supports dev proxy / same-origin)
   if (!base) {
@@ -75,8 +85,8 @@ async function handle<T>(res: Response): Promise<T> {
   throw new Error(display);
 }
 
-const baseEnv = (import.meta.env.VITE_API_BASE_URL as string) || '';
-const productsRoot = `${baseEnv.replace(/\/$/, '')}/api/products`;
+const runtimeEnv = ((import.meta as any).env?.VITE_API_BASE_URL || process.env?.VITE_API_BASE_URL || '') as string;
+const productsRoot = `${runtimeEnv.replace(/\/$/, '')}/api/products`;
 
 export async function createProduct(input: ProductInput): Promise<Product> {
   const res = await apiFetch(productsRoot, {
